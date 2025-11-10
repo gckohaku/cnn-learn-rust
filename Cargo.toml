@@ -5,3 +5,10 @@ edition = "2024"
 
 [dependencies]
 ndarray = { version = "0.17", default-features = false, features = ["std", "rayon", "blas"] }
+
+[profile.dev]
+opt-level = 1
+overflow-checks = false
+
+[profile.release]
+opt-level = 3
