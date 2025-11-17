@@ -20,7 +20,8 @@
     "editor.wordWrap": "on",
     "cSpell.words": [
         "blas",
-        "ndarray"
+        "ndarray",
+        "ndim"
     ],
     "editor.comments.insertSpace": true,
 }
