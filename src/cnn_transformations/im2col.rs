@@ -39,8 +39,6 @@ pub fn im2col(inputs: &Array4<f64>, filters: &Array4<f64>, stride: usize, paddin
         output_size.1,
     ));
 
-    println!("tensor: {:?}", processing_tensor.shape());
-
     for h in 0..filter_size.0 {
         for w in 0..filter_size.1 {
             processing_tensor
@@ -49,9 +47,10 @@ pub fn im2col(inputs: &Array4<f64>, filters: &Array4<f64>, stride: usize, paddin
         }
     }
 
-    processing_tensor.swap_axes(0, 1);
-    processing_tensor.swap_axes(1, 2);
-    processing_tensor.swap_axes(2, 3);
+    // processing_tensor.swap_axes(0, 1);
+    // processing_tensor.swap_axes(1, 2);
+    // processing_tensor.swap_axes(2, 3);
+    processing_tensor.permute_axes([1, 2, 3, 0, 4, 5]);
 
     let input_col_matrix = processing_tensor
         .to_shape((

@@ -19,5 +19,5 @@ fn main() {
 
     let (a, b) = im2col(&x, &f, 0, 0);
 
-    println!("{:?}", a.dot(&b));
+    println!("{:?}", b.dot(&a));
 }
