@@ -24,4 +24,5 @@
         "ndim"
     ],
     "editor.comments.insertSpace": true,
+    "editor.guides.bracketPairs": false,
 }
