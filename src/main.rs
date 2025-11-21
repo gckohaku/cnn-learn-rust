@@ -15,7 +15,7 @@ fn main() {
         .to_owned();
 
     let stride = 2;
-    let padding = 0;
+    let padding = 1;
 
     let (a, b) = im2col(&x, &f, stride, padding);
     println!("{:?}\n", (&a, &b));

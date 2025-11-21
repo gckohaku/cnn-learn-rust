@@ -36,7 +36,7 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 name = "cnn-learn-rust"
 version = "0.1.0"
 dependencies = [
- "ndarray 0.17.1",
+ "ndarray",
  "ndarray-ndimage",
 ]
 
@@ -136,21 +136,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "882ed72dce9365842bf196bdeedf5055305f11fc8c03dee7bb0194a6cad34841"
 dependencies = [
  "approx",
- "matrixmultiply",
- "num-complex",
- "num-integer",
- "num-traits",
- "portable-atomic",
- "portable-atomic-util",
- "rawpointer",
-]
-
-[[package]]
-name = "ndarray"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c7c9125e8f6f10c9da3aad044cc918cf8784fa34de857b1aa68038eb05a50a9"
-dependencies = [
  "cblas-sys",
  "libc",
  "matrixmultiply",
@@ -169,7 +154,7 @@ version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d7efa9b0052e8362f6309dfde4b980cf075b26d7fb1cb447d0c29a44fb9c2d2"
 dependencies = [
- "ndarray 0.16.1",
+ "ndarray",
  "ndarray-stats",
  "num-traits",
 ]
@@ -182,7 +167,7 @@ checksum = "17ebbe97acce52d06aebed4cd4a87c0941f4b2519b59b82b4feb5bd0ce003dfd"
 dependencies = [
  "indexmap",
  "itertools",
- "ndarray 0.16.1",
+ "ndarray",
  "noisy_float",
  "num-integer",
  "num-traits",

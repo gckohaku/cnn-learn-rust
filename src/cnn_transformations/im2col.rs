@@ -1,6 +1,7 @@
 use std::fs;
 
 use ndarray::{Array2, Array4, Array6, ArrayD, Shape, Slice, s};
+use ndarray_ndimage::{PadMode, pad};
 
 pub fn im2col(
     inputs: &Array4<f64>,
@@ -17,13 +18,11 @@ pub fn im2col(
         panic!("次元数が4でない");
     }
 
-    if padding > 0 {
-        inputs
-    }
+    let padded_inputs = pad(inputs, &[[0, 0], [0, 0], [padding, padding], [padding, padding]], PadMode::Constant(0.0));
 
     // 出力データ (行列) のサイズを計算
     // そのために、まずは入力データのそれぞれの次元のサイズを取得
-    let inputs_shape = inputs.shape();
+    let inputs_shape = padded_inputs.shape();
     let filters_shape = filters.shape();
 
     let batch_value = inputs_shape[0];
@@ -55,7 +54,7 @@ pub fn im2col(
         for w in 0..filter_size.1 {
             processing_tensor
                 .slice_mut(s![.., .., h, w, .., ..])
-                .assign(&inputs.slice(s![
+                .assign(&padded_inputs.slice(s![
                     ..,
                     ..,
                     Slice::from(h..(h + output_size.0 * stride).min(inputs_shape[2])).step_by(stride.try_into().unwrap()),
@@ -64,7 +63,9 @@ pub fn im2col(
         }
     }
 
-    processing_tensor.permute_axes([1, 2, 3, 0, 4, 5]);
+    processing_tensor.swap_axes(0, 1);
+    processing_tensor.swap_axes(1, 2);
+    processing_tensor.swap_axes(2, 3);
 
     let input_col_matrix = processing_tensor
         .to_shape((
