@@ -3,6 +3,8 @@ use ndarray::{Array, Array2, Array4};
 use crate::cnn_transformations::im2col::im2col;
 
 mod cnn_transformations;
+mod cnn_network;
+mod cnn_information;
 
 fn main() {
     let x: Array4<f64> = Array::from_vec((1..(3 * 3 * 4 * 4 + 1)).map(|x| x as f64).collect())
