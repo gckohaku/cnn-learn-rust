@@ -1,5 +1,7 @@
 use std::marker::PhantomData;
 
+use crate::{makeHList, type_utilities::{Here, Member}};
+
 pub enum LayerType {
     Convolution,
     Pooling,
@@ -22,9 +24,15 @@ pub enum OutputType {
     MultiClassClassification,
 }
 
-pub struct LayerInformation<T: TellLayerInformation> {
-    pub layer_type: LayerType,
-    pub information: T,
+// pub struct LayerInformationUnion<T>
+// where T: Member<InformationList, Here>{
+//     pub layer_type: LayerType,
+//     pub information: T,
+// }
+
+pub enum LayerInformation {
+    ConvolutionInInformation(ConvolutionInInformation),
+    
 }
 
 pub struct ConvolutionInInformation {
@@ -47,9 +55,11 @@ pub struct OutputInformation {
     pub output_type: OutputType,
 }
 
-pub trait TellLayerInformation {}
+pub type InformationList = makeHList!(ConvolutionInInformation, PoolingInformation, FullConnectedInformation, OutputInformation);
 
-impl TellLayerInformation for ConvolutionInInformation {}
-impl TellLayerInformation for PoolingInformation {}
-impl TellLayerInformation for FullConnectedInformation {}
-impl TellLayerInformation for OutputInformation {}
+// pub trait TellLayerInformation {}
+
+// impl TellLayerInformation for ConvolutionInInformation {}
+// impl TellLayerInformation for PoolingInformation {}
+// impl TellLayerInformation for FullConnectedInformation {}
+// impl TellLayerInformation for OutputInformation {}

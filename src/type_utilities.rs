@@ -1,11 +1,13 @@
+#[macro_use]
+
 // 型リストの終点
-struct HNil;
+pub struct HNil;
 
 // 二つの型をリストにする HCons を再帰的に利用することでリストを作成する
-struct HCons<Head, Tail>(Head, Tail);
+pub struct HCons<Head, Tail>(Head, Tail);
 
 // 型リストであることを示す
-trait HList {}
+pub trait HList {}
 
 impl HList for HNil {}
 impl<Head, Tail> HList for HCons<Head, Tail> {}
@@ -14,11 +16,11 @@ impl<Head, Tail> HList for HCons<Head, Tail> {}
     型リスト全体にトレイトを適用する
 */
 // 型リストのメンバーであることを示す
-trait Member<H, Index> {}
+pub trait Member<H, Index> {}
 
 // 型リストのインデックスで利用
-struct Here;
-struct There<Index>(Index);
+pub struct Here;
+pub struct There<Index>(Index);
 
 // トレイト適用部分
 // まず、型リストの先頭に対して適用
@@ -30,8 +32,9 @@ impl<T, Head, Tail, Index> Member<HCons<Head, Tail>, There<Index>> for T where T
 {}
 
 // 型リスト作成マクロ
-macro_rules! HList {
-	() => {HNil};
-	($head:ty $(,)*) => {HCons<$head, HNill>};
-	($head:ty, $($tail:tt)*) => {HCons<$head, HCons!($($tail)*)>}
+#[macro_export]
+macro_rules! makeHList {
+	() => {crate::type_utilities::HNil};
+	($head:ty $(,)*) => {crate::type_utilities::HCons<$head, crate::type_utilities::HNil>};
+	($head:ty, $($tail:tt)*) => {crate::type_utilities::HCons<$head, makeHList!($($tail)*)>}
 }
