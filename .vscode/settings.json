@@ -21,7 +21,8 @@
     "cSpell.words": [
         "blas",
         "ndarray",
-        "ndim"
+        "ndim",
+        "relu"
     ],
     "editor.comments.insertSpace": true,
     "editor.guides.bracketPairs": false,
