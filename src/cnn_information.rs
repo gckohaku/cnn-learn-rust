@@ -10,30 +10,70 @@ pub enum LayerType {
     Output,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum PoolingType {
     MaxPooling,
     AveragePooling,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum ActivationType {
     ReLU,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum OutputType {
     Regression,
     BinaryClassification,
     MultiClassClassification,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum LayerInformationContent {
-    Convolution(ConvolutionInInformation),
+    Convolution(ConvolutionInformation),
     Pooling(PoolingInformation),
     FullConnected(FullConnectedInformation),
     Output(OutputInformation),
+}
+
+impl LayerInformationContent {
+    // fn get_info(&self) -> &LayerInformationContent
+    // {
+    //     match self {
+    //         LayerInformationContent::Convolution(c) => c,
+    //         LayerInformationContent::Pooling(p) => p,
+    //         LayerInformationContent::FullConnected(f) => f,
+    //         LayerInformationContent::Output(o) => o,
+    //     }
+    // }
+
+    pub fn as_convolution(&self) -> Option<&ConvolutionInformation> {
+        match self {
+            LayerInformationContent::Convolution(c) => Some(c),
+            _ => None,
+        }
+    }
+
+    pub fn as_pooling(&self) -> Option<&PoolingInformation> {
+        match self {
+            LayerInformationContent::Pooling(p) => Some(p),
+            _ => None,
+        }
+    }
+
+    pub fn as_full_connected(&self) -> Option<&FullConnectedInformation> {
+        match self {
+            LayerInformationContent::FullConnected(f) => Some(f),
+            _ => None,
+        }
+    }
+
+    pub fn as_output(&self) -> Option<&OutputInformation> {
+        match self {
+            LayerInformationContent::Output(o) => Some(o),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -42,8 +82,8 @@ pub struct LayerInformation {
     pub information: LayerInformationContent,
 }
 
-#[derive(Debug)]
-pub struct ConvolutionInInformation {
+#[derive(Debug, Clone, Copy)]
+pub struct ConvolutionInformation {
     pub filter_size: (usize, usize),
     pub filter_value: usize,
     pub stride: usize,
@@ -51,20 +91,22 @@ pub struct ConvolutionInInformation {
     pub activation_type: ActivationType,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct PoolingInformation {
     pub window_size: (usize, usize),
     pub pooling_type: PoolingType,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone,  Copy)]
 pub struct FullConnectedInformation {
     pub node_value: usize,
     pub activation_type: ActivationType,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone,  Copy)]
 pub struct OutputInformation {
     pub node_value: usize,
     pub output_type: OutputType,
 }
+
+type InformationContentList = makeHList!(ConvolutionInformation, PoolingInformation, FullConnectedInformation, OutputInformation);

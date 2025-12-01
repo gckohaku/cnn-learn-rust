@@ -1,48 +1,25 @@
 use std::any::Any;
 
-use ndarray::{Array1, Array4, ArrayD};
+use ndarray::{Array, Array1, Array2, Array4, ArrayD, Axis};
 
 use crate::cnn_information::{
-    ConvolutionInInformation, LayerInformation, LayerType, PoolingInformation,
+    ConvolutionInformation, FullConnectedInformation, LayerInformation, LayerInformationContent, LayerType, OutputInformation, OutputType, PoolingInformation
 };
 
 pub struct NeuralNetworkCNN {
+    pub output_type: OutputType,
     pub layers_information: Vec<LayerInformation>,
-    pub weights: Vec<ArrayD<f64>>,
-    pub biases: Vec<Array1<f64>>,
-    pub values: Vec<ArrayD<f64>>,
-    pub values_after_activation: Vec<ArrayD<f64>>,
+    pub convolution_filters: Vec<Array4<f64>>,
+    pub convolution_biases: Vec<Array1<f64>>,
+    pub full_connected_weights: Vec<Array2<f64>>,
+    pub full_connected_biases: Vec<Array1<f64>>,
+    pub convolution_values: Vec<Array4<f64>>,
+    pub convolution_after_activation: Vec<Array4<f64>>,
+    pub fc_values: Vec<Array2<f64>>,
+    pub fc_after_activation: Vec<Array2<f64>>,
 }
 
 impl NeuralNetworkCNN {
-    pub fn new(
-        batch_size: usize,
-        input_channel_value: usize,
-        input_image_size: (usize, usize),
-        layers_information: Vec<LayerInformation>,
-    ) -> Self {
-        let mut weights = Vec::<ArrayD<f64>>::new();
-        let mut biases = Vec::<Array1<f64>>::new();
-        let mut values = Vec::<ArrayD<f64>>::new();
-        let mut values_after_activation = Vec::<ArrayD<f64>>::new();
-
-        for i in 0..layers_information.len() {
-            if layers_information[i].layer_type == LayerType::Convolution {
-                let image_shape = values[i - 1].shape();
-                // let input_image_height =
-                let outputImageHeight = () + 1;
-            }
-        }
-
-        Self {
-            layers_information,
-            weights,
-            biases,
-            values,
-            values_after_activation,
-        }
-    }
-
     pub fn forward(&mut self, inputs: Array4<f64>, expects: Array4<f64>) {}
 
     pub fn view_layers_information_state(&self) {
@@ -53,7 +30,7 @@ impl NeuralNetworkCNN {
         batch_size: usize,
         input_channel_value: usize,
         input_image_size: (usize, usize),
-        info: ConvolutionInInformation,
+        info: &ConvolutionInformation,
     ) -> (Array4<f64>, Array1<f64>, Array4<f64>) {
         let output_channel_value = info.filter_value;
         let stride = info.stride;
@@ -89,7 +66,7 @@ impl NeuralNetworkCNN {
         batch_size: usize,
         input_channel_value: usize,
         input_image_size: (usize, usize),
-        info: PoolingInformation,
+        info: &PoolingInformation,
     ) -> (Array4<f64>, Array4<f64>) {
         let output_channel_value = input_channel_value;
         let window_size = info.window_size;
@@ -101,5 +78,19 @@ impl NeuralNetworkCNN {
         let output = Array4::zeros([batch_size, output_channel_value, output_image_size.0, output_image_size.1]);
 
         (output.clone(), output)
+    }
+
+    fn create_full_connected_layer(batch_size: usize, input_node_value: usize, info: &FullConnectedInformation) -> (Array2<f64>, Array2<f64>, Array2<f64>) {
+        let weight = Array2::zeros([input_node_value, info.node_value]);
+        let bias = Array2::zeros([batch_size, info.node_value]);
+
+        (weight, bias.clone(), bias)
+    }
+
+    fn create_output_layer(batch_size: usize, input_node_value: usize, info: &OutputInformation) -> (Array2<f64>, Array2<f64>, Array2<f64>) {
+        let weight = Array2::zeros([input_node_value, info.node_value]);
+        let bias = Array2::zeros([batch_size, info.node_value]);
+
+        (weight, bias.clone(), bias)
     }
 }
