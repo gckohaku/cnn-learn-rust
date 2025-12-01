@@ -41,14 +41,12 @@ impl ConvolutionNetwork {
                     info,
                 );
 
-				before_image_shape = value.shape();
+				before_image_shape = value.shape().try_into().unwrap();
 
 				filters.push(weight);
 				biases.push(bias);
 				values.push(value.clone());
 				values_after_activation.push(value);
-
-
             }
 			else if layers_information[i].layer_type == LayerType::Pooling {
 
