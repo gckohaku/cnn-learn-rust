@@ -1,3 +1,5 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use ndarray::{Array1, Array2};
 
 use crate::cnn_information::{LayerInformation, OutputType};
@@ -27,7 +29,9 @@ impl FullyConnectedNetwork {
 		let error = 0.0;
 		let mut deltas = Vec::<Array2<f64>>::new();
 
-		let mut r = rand_pcg::Lcg128Xsl64::new();
+		let random_seed = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() | 0x1;
+		let random_stream: u128 = (random_seed as u128 + ((random_seed as u128) << 63)) ^ (random_seed as u128) << 35;
+		let mut r = rand_pcg::Lcg128Xsl64::new(random_seed as u128, random_stream);
 
 		for i in 0..nodes_values.len() {
 			// ノード行列のサイズは サンプル数 x 現在の層のノードの数
