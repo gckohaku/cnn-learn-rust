@@ -4,6 +4,7 @@ use crate::cnn_information::{
     ConvolutionInformation, LayerInformation, LayerType, OutputType, PoolingInformation,
 };
 
+#[derive(Debug, Clone)]
 pub struct ConvolutionNetwork {
     pub layers_information: Vec<LayerInformation>,
     pub filters: Vec<Array4<f64>>,

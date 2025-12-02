@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::{makeHList, type_utilities::{Here, Member}};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum LayerType {
     Convolution,
     Pooling,
@@ -37,16 +37,6 @@ pub enum LayerInformationContent {
 }
 
 impl LayerInformationContent {
-    // fn get_info(&self) -> &LayerInformationContent
-    // {
-    //     match self {
-    //         LayerInformationContent::Convolution(c) => c,
-    //         LayerInformationContent::Pooling(p) => p,
-    //         LayerInformationContent::FullConnected(f) => f,
-    //         LayerInformationContent::Output(o) => o,
-    //     }
-    // }
-
     pub fn as_convolution(&self) -> Option<&ConvolutionInformation> {
         match self {
             LayerInformationContent::Convolution(c) => Some(c),
@@ -76,7 +66,7 @@ impl LayerInformationContent {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LayerInformation {
     pub layer_type: LayerType,
     pub information: LayerInformationContent,
