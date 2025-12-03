@@ -39,10 +39,18 @@ impl FullyConnectedNetwork {
 
 			if i > 0 {
 				// 重み行列のサイズは 直前の層のノードの数 x 現在の層のノードの数
-				let mut layer_waights = Array2::zeros([nodes_values[i - 1], nodes_values[i]]);
+				let mut layer_weights = Array2::zeros([nodes_values[i - 1], nodes_values[i]]);
 				// 重み行列を He 初期化する
-				layer_waights.map_inplace(|x| *x = r.normal(0.0, (nodes_values[i - 1] as f64).sqrt()));
+				layer_weights.mapv_inplace(|_x| r.normal(0.0, (nodes_values[i - 1] as f64).sqrt()));
+				
+				weights.push(layer_weights);
+				// バイアス行列のサイズは 1 x 現在の層のノードの数
+				biases.push(Array1::zeros([nodes_values[i]]));
+				// デルタ行列のサイズも現在の層のノードのサイズと同じ
+				deltas.push(Array2::zeros([batch_size, nodes_values[i]]));
 			}
+
+			
 		}
         Self {
             layers_information,

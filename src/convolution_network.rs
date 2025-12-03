@@ -12,6 +12,7 @@ pub struct ConvolutionNetwork {
     pub windows: Vec<Array2<f64>>,
     pub switches: Vec<Array2<(usize, usize)>>,
     pub values: Vec<Array4<f64>>,
+    pub im2col_values: Vec<Array2<f64>>,
     pub values_after_activation: Vec<Array4<f64>>,
 }
 
@@ -27,6 +28,7 @@ impl ConvolutionNetwork {
         let mut windows = Vec::<Array2<f64>>::new();
         let mut switches = Vec::<Array2<(usize, usize)>>::new();
         let mut values = Vec::<Array4<f64>>::new();
+        let im2col_values = Vec::<Array2<f64>>::new();
         let mut values_after_activation = Vec::<Array4<f64>>::new();
 
         let mut before_image_shape = [
@@ -77,8 +79,14 @@ impl ConvolutionNetwork {
             windows,
             switches,
             values,
+            im2col_values,
             values_after_activation,
         }
+    }
+
+    pub fn forward(&mut self, inputs: Array4<f64>) -> Array4<f64> {
+        self.values[0] = inputs.clone();
+        self.values_after_activation[0] = inputs.clone();
     }
 
     fn create_convolution_layer(
