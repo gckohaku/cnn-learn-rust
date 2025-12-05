@@ -1,9 +1,6 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-
 use ndarray::{Array1, Array2};
 
-use crate::{cnn_information::{LayerInformation, OutputType}, rand::Rand};
-use rand_pcg::rand_core::SeedableRng;
+use crate::{cnn_information::LayerInformation, rand::Rand};
 
 #[derive(Debug, Clone)]
 pub struct FullyConnectedNetwork {

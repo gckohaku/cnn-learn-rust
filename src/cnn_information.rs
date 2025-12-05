@@ -1,6 +1,4 @@
-use std::marker::PhantomData;
-
-use crate::{makeHList, type_utilities::{Here, Member}};
+use crate::makeHList;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum LayerType {
@@ -10,25 +8,25 @@ pub enum LayerType {
     Output,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum PoolingType {
     MaxPooling,
     AveragePooling,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum ActivationType {
     ReLU,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum OutputType {
     Regression,
     BinaryClassification,
     MultiClassClassification,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum LayerInformationContent {
     Convolution(ConvolutionInformation),
     Pooling(PoolingInformation),
@@ -72,7 +70,7 @@ pub struct LayerInformation {
     pub information: LayerInformationContent,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct ConvolutionInformation {
     pub filter_size: (usize, usize),
     pub filter_value: usize,
@@ -81,22 +79,27 @@ pub struct ConvolutionInformation {
     pub activation_type: ActivationType,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct PoolingInformation {
     pub window_size: (usize, usize),
     pub pooling_type: PoolingType,
 }
 
-#[derive(Debug,Clone,  Copy)]
+#[derive(Debug, Clone)]
 pub struct FullConnectedInformation {
     pub node_value: usize,
     pub activation_type: ActivationType,
 }
 
-#[derive(Debug,Clone,  Copy)]
+#[derive(Debug, Clone)]
 pub struct OutputInformation {
     pub node_value: usize,
     pub output_type: OutputType,
 }
 
-type InformationContentList = makeHList!(ConvolutionInformation, PoolingInformation, FullConnectedInformation, OutputInformation);
+type InformationContentList = makeHList!(
+    ConvolutionInformation,
+    PoolingInformation,
+    FullConnectedInformation,
+    OutputInformation
+);

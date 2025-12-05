@@ -1,8 +1,8 @@
-use ndarray::{Array1, Array2, Array4, Dimension};
+use ndarray::{Array1, Array2, Array4};
 
-use crate::cnn_information::{
-    ConvolutionInformation, LayerInformation, LayerType, OutputType, PoolingInformation,
-};
+use crate::{cnn_information::{
+    ConvolutionInformation, LayerInformation, LayerType, PoolingInformation,
+}, cnn_transformations::im2col::im2col};
 
 #[derive(Debug, Clone)]
 pub struct ConvolutionNetwork {
@@ -85,8 +85,42 @@ impl ConvolutionNetwork {
     }
 
     pub fn forward(&mut self, inputs: Array4<f64>) -> Array4<f64> {
+        let mut convolution_count = 0;
+        let mut pooling_count = 0;
+
         self.values[0] = inputs.clone();
         self.values_after_activation[0] = inputs.clone();
+
+        for i in 0..self.layers_information.len() {
+            let info = &self.layers_information[i];
+
+            if info.layer_type == LayerType::Convolution {
+                let convolution_info = info.information.as_convolution().unwrap();
+
+                let input_shape = self.values_after_activation[i].shape();
+
+                let (spread_image, spread_filter) = im2col(&self.values_after_activation[i], &self.filters[convolution_count], convolution_info.stride, convolution_info.padding);
+
+                let spread_result = spread_filter.dot(&spread_image);
+
+                let output_size = (
+                    ((input_shape[2] - convolution_info.filter_size.0 + 2 * convolution_info.padding) / convolution_info.stride) + 1,
+                    ((input_shape[3] - convolution_info.filter_size.1 + 2 * convolution_info.padding) / convolution_info.stride) + 1,
+                );
+
+                let mut reshape_result = &mut spread_result.to_shape([convolution_info.filter_value, input_shape[0], output_size.0, output_size.1]).unwrap();
+                reshape_result.swap_axes(0, 1);
+
+                self.im2col_values.push(spread_result);
+
+                convolution_count += 1;
+            }
+            else if info.layer_type == LayerType::Pooling {
+                let pooling_info = info.information.as_pooling();
+            }
+        }
+
+        Array4::zeros([0, 0, 0, 0])
     }
 
     fn create_convolution_layer(

@@ -1,5 +1,3 @@
-#[macro_use]
-
 // 型リストの終点
 pub struct HNil;
 

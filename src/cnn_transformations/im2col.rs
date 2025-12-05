@@ -1,6 +1,5 @@
-use std::fs;
 
-use ndarray::{Array2, Array4, Array6, ArrayD, Shape, Slice, s};
+use ndarray::{Array2, Array4, Array6, Slice, s};
 use ndarray_ndimage::{PadMode, pad};
 
 pub fn im2col(

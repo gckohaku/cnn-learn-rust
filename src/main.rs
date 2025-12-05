@@ -1,4 +1,4 @@
-use ndarray::{Array1, Array3};
+use ndarray::Array3;
 
 use crate::rand::Rand;
 

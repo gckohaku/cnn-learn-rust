@@ -23,6 +23,7 @@
         "inplace",
         "ndarray",
         "ndim",
+        "ndimage",
         "relu"
     ],
     "editor.comments.insertSpace": true,
