@@ -1,9 +1,12 @@
-use ndarray::{Array1, Array2, Array4};
+use ndarray::{Array, Array1, Array2, Array4, parallel::prelude::IntoParallelRefIterator};
 
 use crate::{
     cnn_information::{ConvolutionInformation, LayerInformation, LayerType, PoolingInformation},
-    cnn_transformations::im2col::im2col, rand::Rand,
+    cnn_transformations::im2col::im2col,
+    rand::Rand,
 };
+
+use ndarray::parallel::prelude::*;
 
 #[derive(Debug, Clone)]
 pub struct ConvolutionNetwork {
@@ -87,7 +90,7 @@ impl ConvolutionNetwork {
         self.values.push(inputs.clone());
         self.values_after_activation.push(inputs.clone());
 
-        for i in (0..self.layers_information.len()) {
+        for i in 0..self.layers_information.len() {
             let info = &self.layers_information[i];
 
             if info.layer_type == LayerType::Convolution {
@@ -102,8 +105,6 @@ impl ConvolutionNetwork {
                     convolution_info.padding,
                 );
 
-                let spread_result = spread_filter.dot(&spread_image);
-
                 let output_size = (
                     ((input_shape[2] - convolution_info.filter_size.0
                         + 2 * convolution_info.padding)
@@ -115,23 +116,50 @@ impl ConvolutionNetwork {
                         + 1,
                 );
 
-                let mut reshape_result = &mut spread_result
+                let bias_length = self.biases[convolution_count].len();
+                let spread_result = spread_filter.dot(&spread_image)
+                    + self.biases[convolution_count]
+                        .to_shape((bias_length, 1))
+                        .unwrap();
+
+                let activated_spread_result: Array2<f64> = Array::from_shape_vec(
+                    (convolution_info.filter_value, input_shape[0] * output_size.0 * output_size.1),
+                    spread_result.par_iter().map(|x| x.max(0.0)).collect(),
+                )
+                .unwrap();
+
+                let reshape_result = &mut spread_result
                     .to_shape([
                         convolution_info.filter_value,
                         input_shape[0],
                         output_size.0,
                         output_size.1,
                     ])
-                    .unwrap()
-                    .to_owned();
+                    .unwrap();
                 reshape_result.swap_axes(0, 1);
 
-                self.im2col_values.push(spread_result);
+                let activated_reshape_result = &mut activated_spread_result.to_shape([
+                        convolution_info.filter_value,
+                        input_shape[0],
+                        output_size.0,
+                        output_size.1,
+                    ])
+                    .unwrap();
+
+                self.im2col_values.push(activated_spread_result.to_owned());
                 self.values.push(reshape_result.to_owned());
+                self.values_after_activation.push(activated_reshape_result.to_owned());
 
+                
+
+                dbg!(
+                    &self.filters[convolution_count],
+                    &self.biases[convolution_count],
+                    &self.values[convolution_count + 1],
+                    &self.values_after_activation[convolution_count + 1],
+                );
+                
                 convolution_count += 1;
-
-                dbg!(&self.filters[convolution_count - 1], &self.values[convolution_count]);
             } else if info.layer_type == LayerType::Pooling {
                 let pooling_info = info.information.as_pooling();
             }
@@ -166,7 +194,12 @@ impl ConvolutionNetwork {
             filter_size.1,
         ]);
         // フィルターを He 初期化
-        weight.mapv_inplace(|_x| r.normal(0.0, (2.0 / (input_channel_value * filter_size.0 * filter_size.1) as f64).sqrt()));
+        weight.mapv_inplace(|_x| {
+            r.normal(
+                0.0,
+                (2.0 / (input_channel_value * filter_size.0 * filter_size.1) as f64).sqrt(),
+            )
+        });
 
         // バイアス生成
         let bias = Array1::zeros([info.filter_value]);
