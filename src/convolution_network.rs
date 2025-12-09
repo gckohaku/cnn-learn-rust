@@ -136,7 +136,7 @@ impl ConvolutionNetwork {
                         output_size.1,
                     ])
                     .unwrap();
-                reshape_result.swap_axes(0, 1);
+                
 
                 let activated_reshape_result = &mut activated_spread_result.to_shape([
                         convolution_info.filter_value,
@@ -145,6 +145,9 @@ impl ConvolutionNetwork {
                         output_size.1,
                     ])
                     .unwrap();
+                
+                reshape_result.swap_axes(0, 1);
+                activated_reshape_result.swap_axes(0, 1);
 
                 self.im2col_values.push(activated_spread_result.to_owned());
                 self.values.push(reshape_result.to_owned());
