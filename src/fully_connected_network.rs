@@ -1,9 +1,15 @@
-use ndarray::{Array1, Array2};
+use ndarray::{Array, Array1, Array2, parallel::prelude::IntoParallelRefIterator};
 
-use crate::{cnn_information::{LayerInformation, OutputType}, rand::Rand};
+use crate::{
+    cnn_information::{LayerInformation, OutputInformation, OutputType},
+    rand::Rand,
+};
+
+use ndarray::parallel::prelude::*;
 
 #[derive(Debug, Clone)]
 pub struct FullyConnectedNetwork {
+    output_information: OutputInformation,
     weights: Vec<Array2<f64>>,
     biases: Vec<Array1<f64>>,
     activations: Vec<fn(&f64) -> f64>,
@@ -18,7 +24,7 @@ impl FullyConnectedNetwork {
     pub fn new(
         batch_size: usize,
         nodes_values: Vec<usize>,
-        output_type: OutputType,
+        output_information: OutputInformation,
     ) -> Self {
         let mut weights = Vec::<Array2<f64>>::new();
         let mut biases = Vec::<Array1<f64>>::new();
@@ -52,6 +58,7 @@ impl FullyConnectedNetwork {
             }
         }
         Self {
+            output_information,
             weights,
             biases,
             activations,
@@ -63,8 +70,43 @@ impl FullyConnectedNetwork {
         }
     }
 
-	fn forward(&mut self, inputs: &Vec<Array2<f64>>, expects: &Vec<Array2<f64>>) {
-		self.values.push(inputs[0].clone());
-		self.values_after_activation.push(inputs[0].clone());
-	}
+    fn forward(&mut self, inputs: &Vec<Array2<f64>>, expects: &Vec<Array2<f64>>) {
+        let batch_size = inputs[0].nrows();
+        let output_index = self.weights.len() - 1;
+
+        self.values.push(inputs[0].clone());
+        self.values_after_activation.push(inputs[0].clone());
+
+        for i in 0..self.weights.len() {
+            let node_value = self.weights[i].ncols();
+
+            // 線型変換およびバイアスの加算
+            let transposed_value = &self.weights[i].dot(&self.values_after_activation[i])
+                + &self.biases[i].to_shape((node_value, 1)).unwrap();
+
+            if i == output_index {
+                // ここに出力層での処理
+                if self.output_information.output_type == OutputType::MultiClassClassification {
+                    // 多クラス分類問題では必ず softmax と交差エントロピーを用いる
+                    // これを rayon を用いて並列化できないか
+                    let max_transposed_value =
+                        transposed_value.iter().fold(0.0 / 0.0, |m, v| v.max(m));
+                }
+
+                break;
+            }
+
+            // 中間層では単純に ReLU 関数を利用する (max を使って実装)
+            let activated_value = Array::from_shape_vec(
+                (batch_size, node_value),
+                transposed_value.par_iter().map(|x| x.max(0.0)).collect(),
+            )
+            .unwrap();
+
+            self.values.push(transposed_value);
+            self.values_after_activation.push(activated_value);
+        }
+
+        // 誤差を求める
+    }
 }

@@ -21,10 +21,13 @@
     "cSpell.words": [
         "blas",
         "inplace",
+        "ncols",
         "ndarray",
         "ndim",
         "ndimage",
-        "relu"
+        "nrows",
+        "relu",
+        "softmax"
     ],
     "editor.comments.insertSpace": true,
     "editor.guides.bracketPairs": false,

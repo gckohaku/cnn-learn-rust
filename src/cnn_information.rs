@@ -19,7 +19,7 @@ pub enum ActivationType {
     ReLU,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum OutputType {
     Regression,
     BinaryClassification,
