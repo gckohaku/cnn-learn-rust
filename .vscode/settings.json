@@ -20,9 +20,15 @@
     "editor.wordWrap": "on",
     "cSpell.words": [
         "blas",
+        "fcnn",
+        "inplace",
+        "ncols",
         "ndarray",
         "ndim",
-        "relu"
+        "ndimage",
+        "nrows",
+        "relu",
+        "softmax"
     ],
     "editor.comments.insertSpace": true,
     "editor.guides.bracketPairs": false,

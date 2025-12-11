@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 ndarray = { version = "0.16", default-features = false, features = ["std", "rayon", "blas"] }
 ndarray-ndimage = "0.5"
+rand_pcg = "0.9"
 
 [profile.dev]
 opt-level = 1
