@@ -8,7 +8,7 @@ pub enum LayerType {
     Output,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum PoolingType {
     MaxPooling,
     AveragePooling,
@@ -83,6 +83,7 @@ pub struct ConvolutionInformation {
 pub struct PoolingInformation {
     pub window_size: (usize, usize),
     pub pooling_type: PoolingType,
+    pub stride: usize,
 }
 
 #[derive(Debug, Clone)]

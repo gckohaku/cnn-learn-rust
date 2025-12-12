@@ -1,8 +1,10 @@
-use ndarray::{Array, Array1, Array2, Array4, parallel::prelude::IntoParallelRefIterator};
+use ndarray::{Array, Array1, Array2, Array4, Axis, parallel::prelude::IntoParallelRefIterator};
 
 use crate::{
-    cnn_information::{ConvolutionInformation, LayerInformation, LayerType, PoolingInformation},
-    cnn_transformations::im2col::im2col,
+    cnn_information::{
+        ConvolutionInformation, LayerInformation, LayerType, PoolingInformation, PoolingType,
+    },
+    cnn_transformations::im2col::{im2col, im2col_for_pooling},
     rand::Rand,
 };
 
@@ -123,7 +125,10 @@ impl ConvolutionNetwork {
                         .unwrap();
 
                 let activated_spread_result: Array2<f64> = Array::from_shape_vec(
-                    (convolution_info.filter_value, input_shape[0] * output_size.0 * output_size.1),
+                    (
+                        convolution_info.filter_value,
+                        input_shape[0] * output_size.0 * output_size.1,
+                    ),
                     spread_result.par_iter().map(|x| x.max(0.0)).collect(),
                 )
                 .unwrap();
@@ -136,39 +141,41 @@ impl ConvolutionNetwork {
                         output_size.1,
                     ])
                     .unwrap();
-                
 
-                let activated_reshape_result = &mut activated_spread_result.to_shape([
+                let activated_reshape_result = &mut activated_spread_result
+                    .to_shape([
                         convolution_info.filter_value,
                         input_shape[0],
                         output_size.0,
                         output_size.1,
                     ])
                     .unwrap();
-                
+
                 reshape_result.swap_axes(0, 1);
                 activated_reshape_result.swap_axes(0, 1);
 
                 self.im2col_values.push(activated_spread_result.to_owned());
                 self.values.push(reshape_result.to_owned());
-                self.values_after_activation.push(activated_reshape_result.to_owned());
+                self.values_after_activation
+                    .push(activated_reshape_result.to_owned());
 
-                
-
-                dbg!(
-                    &self.filters[convolution_count],
-                    &self.biases[convolution_count],
-                    &self.values[convolution_count + 1],
-                    &self.values_after_activation[convolution_count + 1],
-                );
-                
                 convolution_count += 1;
             } else if info.layer_type == LayerType::Pooling {
-                let pooling_info = info.information.as_pooling();
+                let pooling_info = info.information.as_pooling().unwrap();
+
+                if pooling_info.pooling_type == PoolingType::MaxPooling {
+                    let col_matrix = im2col_for_pooling(
+                        &self.values_after_activation[i],
+                        pooling_info.stride,
+                        pooling_info.window_size,
+                    );
+
+                    let after_pooling = col_matrix.axis_chunks_iter(Axis(0), pooling_info.window_size.0);
+                }
             }
         }
 
-        Array4::zeros([0, 0, 0, 0])
+        self.values_after_activation.last().unwrap().clone()
     }
 
     fn create_convolution_layer(
