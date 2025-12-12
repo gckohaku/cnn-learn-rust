@@ -133,14 +133,13 @@ pub fn im2col_for_pooling(
         }
     }
 
-    processing_tensor.swap_axes(0, 1);
-    processing_tensor.swap_axes(1, 2);
-    processing_tensor.swap_axes(2, 3);
+    processing_tensor.swap_axes(0, 2);
+    processing_tensor.swap_axes(1, 3);
 
     let input_col_matrix = processing_tensor
         .to_shape((
-            input_channel_value * window_size.0 * window_size.1,
-            batch_value * output_size.0 * output_size.1,
+            window_size.0 * window_size.1,
+            batch_value * input_channel_value * output_size.0 * output_size.1,
         ))
         .unwrap();
 

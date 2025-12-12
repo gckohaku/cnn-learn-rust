@@ -2,8 +2,12 @@ use ndarray::{Array2, Array3, Array4, arr2, array};
 
 use crate::{
     cnn_information::{
-        OutputInformation, OutputType,
-    }, cnn_transformations::im2col::im2col_for_pooling, fully_connected_network::FullyConnectedNetwork
+        ActivationType, ConvolutionInformation, LayerInformation, LayerInformationContent,
+        LayerType, OutputInformation, OutputType, PoolingInformation, PoolingType,
+    },
+    cnn_transformations::im2col::im2col_for_pooling,
+    convolution_network::ConvolutionNetwork,
+    fully_connected_network::FullyConnectedNetwork, rand::Rand,
 };
 
 mod cnn_activations;
@@ -16,35 +20,33 @@ mod rand;
 mod type_utilities;
 
 fn main() {
-    // let mut cnn = ConvolutionNetwork::new(
-    //     3,
-    //     3,
-    //     (4, 4),
-    //     vec![LayerInformation {
-    //         layer_type: LayerType::Convolution,
-    //         information: LayerInformationContent::Convolution(ConvolutionInformation {
-    //             filter_size: (2, 2),
-    //             filter_value: 3,
-    //             stride: 1,
-    //             padding: 0,
-    //             activation_type: ActivationType::ReLU,
-    //         }),
-    //     }],
-    // );
+    let mut cnn = ConvolutionNetwork::new(
+        3,
+        3,
+        (4, 4),
+        vec![LayerInformation {
+            layer_type: LayerType::Pooling,
+            information: LayerInformationContent::Pooling(PoolingInformation {
+                window_size: (2, 2),
+                pooling_type: PoolingType::MaxPooling,
+                stride: 2,
+            }),
+        }],
+    );
 
     // let range_vec = (1..(3*3*4*4+1)).map(|x| x as f64 / 127.5 - 1.0).collect();
     // let mut inputs = Array4::from_shape_vec((3, 3, 4, 4), range_vec).unwrap();
 
     // cnn.forward(&inputs);
 
-    let mut fcnn = FullyConnectedNetwork::new(
-        3,
-        vec![6, 4],
-        OutputInformation {
-            node_value: 4,
-            output_type: OutputType::MultiClassClassification,
-        },
-    );
+    // let mut fcnn = FullyConnectedNetwork::new(
+    //     3,
+    //     vec![6, 4],
+    //     OutputInformation {
+    //         node_value: 4,
+    //         output_type: OutputType::MultiClassClassification,
+    //     },
+    // );
 
     // let inputs = Array2::<f64>::from(vec![
     //     [
@@ -80,10 +82,12 @@ fn main() {
 
     // fcnn.forward(&inputs, &expects);
 
-    let range_vec = (1..(3*3*4*4+1)).map(|x| x as f64).collect();
-    let mut inputs = Array4::from_shape_vec((3, 3, 4, 4), range_vec).unwrap();
+    let mut r = Rand::new();
+
+    // let range_vec = (1..(3 * 3 * 4 * 4 + 1)).map(|x| x as f64).collect();
+    let mut inputs = Array4::zeros((3, 3, 4, 4)).mapv_into(|_x| r.rand_f64() * 10.0);
 
     dbg!(&inputs);
     println!();
-    
+    dbg!(cnn.forward(&inputs));
 }
