@@ -1,3 +1,5 @@
+use std::iter::zip;
+
 use ndarray::{Array, Array1, Array2, Axis, Zip, parallel::prelude::IntoParallelRefIterator};
 
 use crate::{
@@ -140,6 +142,43 @@ impl FullyConnectedNetwork {
             // dbg!(&expects);
             // println!();
             // dbg!(self.error);
+        }
+    }
+
+    pub fn backward(&mut self, expects: &Array2<f64>, eta: f64) {
+        let layer_value = self.values_after_activation.len();
+        let node_output_index = layer_value - 1;
+        let other_output_index = node_output_index - 1;
+        let sample_size = expects.nrows();
+
+        // 出力層のデルタ
+        let output_delta = &self.values_after_activation[node_output_index] - expects;
+        self.deltas.push(output_delta);
+
+        // 隠れ層のデルタ
+        for i in (0..other_output_index).rev() {
+            let delta_index = other_output_index - i - 1;
+            let delta = &self.deltas[delta_index];
+            let w = self.weights[i + 1].t();
+            let da_u = &self.values_after_activation[i + 1].map(|y| if *y > 0.0 {1.0} else {0.0});
+
+            let propagate_delta = &delta.dot(&w) * da_u;
+
+            self.deltas.push(propagate_delta);
+        }
+
+        // 求めたデルタを用いて勾配を計算する
+        for i in (0..=other_output_index).rev() {
+            let delta_index = other_output_index - i;
+            // let weights_ref = &mut self.weights[i];
+            // // *weights_ref -= eta * &self.values_after_activation[i].t().dot(&self.deltas[i]);
+            // let gradient_update: Array2<f64> = eta * &self.values_after_activation[i].t().dot(&self.deltas[i]);
+            // *weights_ref -= gradient_update;
+
+            let weight_graduation = self.values_after_activation[i].t().dot(&self.deltas[i]);
+
+            Zip::from(&mut self.weights[i]).and(&(eta * &self.values_after_activation[i].t().dot(&self.deltas[i]))).par_for_each(|weight, update| *weight -= update);
+            Zip::from(&mut self.biases[i]).and(&self.deltas[i].sum_axis(Axis(0))).for_each(|bias, update| *bias -= update);
         }
     }
 }

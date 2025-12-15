@@ -7,9 +7,9 @@ pub fn im2col(
     stride: usize,
     padding: usize,
 ) -> (Array2<f64>, Array2<f64>) {
-    if inputs.ndim() != 4 || filters.ndim() != 4 {
-        panic!("次元数が4でない");
-    }
+    // if inputs.ndim() != 4 || filters.ndim() != 4 {
+    //     panic!("次元数が4でない");
+    // }
 
     let padded_inputs = pad(
         inputs,
@@ -90,9 +90,9 @@ pub fn im2col_for_pooling(
     stride: usize,
     window_size: (usize, usize),
 ) -> Array2<f64> {
-    if inputs.ndim() != 4 {
-        panic!("次元数が4でない");
-    }
+    // if inputs.ndim() != 4 {
+    //     panic!("次元数が4でない");
+    // }
 
     // 出力データ (行列) のサイズを計算
     // そのために、まずは入力データのそれぞれの次元のサイズを取得
