@@ -7,9 +7,7 @@ use ndarray::{
 use crate::{
     cnn_information::{
         ConvolutionInformation, LayerInformation, LayerType, PoolingInformation, PoolingType,
-    },
-    cnn_transformations::im2col::{im2col, im2col_for_pooling},
-    rand::Rand,
+    }, cnn_transformations::im2col::{im2col, im2col_for_pooling}, convolution_network, rand::Rand
 };
 
 use ndarray::parallel::prelude::*;
@@ -20,7 +18,7 @@ pub struct ConvolutionNetwork {
     pub filters: Vec<Array4<f64>>,
     pub biases: Vec<Array1<f64>>,
     pub windows: Vec<Array2<f64>>,
-    pub pooling_mask: Vec<Array1<(usize, usize)>>,
+    pub pooling_mask: Vec<Array1<usize>>,
     pub values: Vec<Array4<f64>>,
     pub im2col_values: Vec<Array2<f64>>,
     pub values_after_activation: Vec<Array4<f64>>,
@@ -36,7 +34,7 @@ impl ConvolutionNetwork {
         let mut filters = Vec::<Array4<f64>>::new();
         let mut biases = Vec::<Array1<f64>>::new();
         let windows = Vec::<Array2<f64>>::new();
-        let pooling_mask = Vec::<Array1<(usize, usize)>>::new();
+        let pooling_mask = Vec::<Array1<usize>>::new();
         let values = Vec::<Array4<f64>>::new();
         let im2col_values = Vec::<Array2<f64>>::new();
         let values_after_activation = Vec::<Array4<f64>>::new();
@@ -202,15 +200,38 @@ impl ConvolutionNetwork {
                             *res = max_value;
                         });
 
-                        let reshape_pooling = after_pooling.to_shape((input_shape[0], input_shape[1], input_shape[2] / pooling_info.window_size.0, input_shape[3] / pooling_info.window_size.1)).unwrap();
+                        self.pooling_mask.push(mask.to_owned());
 
-                        self.values.push(reshape_pooling.to_owned());
-                        self.values_after_activation.push(reshape_pooling.to_owned());
+                    let reshape_pooling = after_pooling
+                        .to_shape((
+                            input_shape[0],
+                            input_shape[1],
+                            input_shape[2] / pooling_info.window_size.0,
+                            input_shape[3] / pooling_info.window_size.1,
+                        ))
+                        .unwrap();
+
+                    self.values.push(reshape_pooling.to_owned());
+                    self.values_after_activation
+                        .push(reshape_pooling.to_owned());
                 }
             }
         }
 
         self.values_after_activation.last().unwrap().clone()
+    }
+
+    pub fn backward(&mut self, propagated: &Array4<f64>) {
+        for i in (0..self.layers_information.len()).rev() {
+            if self.layers_information[i].layer_type == LayerType::Convolution {
+                let convolution_info = self.layers_information[i].information.as_convolution();
+
+                // 前層からの勾配を平坦化してから、現在の層のテンソルを Im2Col 展開して行列積を取る？
+                // Im2Col とかがあること以外は全結合部分と同じのはず
+
+                // フィルタに関しては計算が終わったら Col2Im 変換して更新する必要がある
+            }
+        }
     }
 
     fn create_convolution_layer(
