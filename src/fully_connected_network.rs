@@ -175,7 +175,10 @@ impl FullyConnectedNetwork {
             // let gradient_update: Array2<f64> = eta * &self.values_after_activation[i].t().dot(&self.deltas[i]);
             // *weights_ref -= gradient_update;
 
+            let weight_graduation = self.values_after_activation[i].t().dot(&self.deltas[i]);
+
             Zip::from(&mut self.weights[i]).and(&(eta * &self.values_after_activation[i].t().dot(&self.deltas[i]))).par_for_each(|weight, update| *weight -= update);
+            Zip::from(&mut self.biases[i]).and(&self.deltas[i].sum_axis(Axis(0))).for_each(|bias, update| *bias -= update);
         }
     }
 }
