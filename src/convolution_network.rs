@@ -226,10 +226,13 @@ impl ConvolutionNetwork {
 
     pub fn backward(&mut self, propagated: &Array4<f64>) {
         let mut before_delta = propagated.to_owned();
+        let mut convolution_count = self.filters.len();
+        let mut pooling_count = self.pooling_mask.len();
 
         for i in (0..self.layers_information.len()).rev() {
             if self.layers_information[i].layer_type == LayerType::Convolution {
-                let convolution_info = self.layers_information[i].information.as_convolution();
+                convolution_count -= 1;
+                let convolution_info = self.layers_information[i].information.as_convolution().unwrap();
 
                 let shape = before_delta.shape();
                 let sample_size = shape[0];
@@ -256,6 +259,9 @@ impl ConvolutionNetwork {
                 let delta = flatten_gradient * da_u_flatten;
 
                 // delta と im2col 変換して転置したノードの値を行列積する これがフィルタの勾配
+                let (spread_value, _) = im2col(&self.values_after_activation[i], &self.filters[convolution_count], convolution_info.stride, convolution_info.padding);
+                
+                let gradient_for_filter = &spread_value.t().dot(&delta);
 
                 // フィルタに関しては計算が終わったら Col2Im 変換して更新する必要がある
             }
