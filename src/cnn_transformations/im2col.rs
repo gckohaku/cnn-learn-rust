@@ -1,4 +1,4 @@
-use ndarray::{Array2, Array4, Array6, Slice, iter::Windows, s};
+use ndarray::{Array2, Array4, Array6, Slice, s};
 use ndarray_ndimage::{PadMode, pad};
 
 pub fn im2col(
@@ -7,10 +7,6 @@ pub fn im2col(
     stride: usize,
     padding: usize,
 ) -> (Array2<f64>, Array2<f64>) {
-    // if inputs.ndim() != 4 || filters.ndim() != 4 {
-    //     panic!("次元数が4でない");
-    // }
-
     let padded_inputs = pad(
         inputs,
         &[[0, 0], [0, 0], [padding, padding], [padding, padding]],
