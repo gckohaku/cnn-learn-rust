@@ -320,16 +320,28 @@ impl ConvolutionNetwork {
 
                 // 1次元ベクトルに平坦化
                 let pooling_ncols = mask.len();
-                
+
                 let vectored_pooled = before_delta.to_shape(pooling_ncols).unwrap();
 
                 // 次の層へ渡すテンソルの2階バージョンを生成
                 let window_size = pooling_info.window_size;
                 let pooling_nrows = window_size.0 * window_size.1;
-                let spread_delta = Array2::<f64>::zeros((pooling_ncols, pooling_nrows));
+                let mut spread_delta = Array2::<f64>::zeros((pooling_ncols, pooling_nrows));
 
                 // mask が指すインデックスにそれぞれの勾配を渡す
-                spread_delta.par_iter_mut().enumerate().for_each(|(x, i)| x[i] = vectored_pooled[i]);
+                Zip::from(spread_delta.axis_iter_mut(Axis(1)))
+                    .and(&vectored_pooled)
+                    .and(mask)
+                    .par_for_each(|mut v, d, m| v[*m] = *d);
+
+                // デルタを reshape
+                let value_shape = self.values_after_activation[i].shape();
+                if value_shape.len() != 4 {
+                    panic!("value shape length is not 4");
+                }
+                let delta = spread_delta.to_shape((value_shape[0], value_shape[1], value_shape[2], value_shape[3])).unwrap();
+
+                before_delta = delta.to_owned();
             }
         }
     }
