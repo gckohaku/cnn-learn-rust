@@ -234,6 +234,7 @@ impl ConvolutionNetwork {
         let mut pooling_count = self.pooling_mask.len();
 
         for i in (0..self.layers_information.len()).rev() {
+            // 畳み込み層の処理
             if self.layers_information[i].layer_type == LayerType::Convolution {
                 convolution_count -= 1;
                 let convolution_info = self.layers_information[i]
@@ -295,14 +296,40 @@ impl ConvolutionNetwork {
                     convolution_info.padding,
                 );
 
-                Zip::from(&mut self.filters[convolution_count]).and(&image_gradient).par_for_each(|filter, update| *filter -= eta * update);
-                Zip::from(&mut self.biases[convolution_count]).and(&delta.sum_axis(Axis(1))).for_each(|bias, update| *bias = eta * update);
+                Zip::from(&mut self.filters[convolution_count])
+                    .and(&image_gradient)
+                    .par_for_each(|filter, update| *filter -= eta * update);
+                Zip::from(&mut self.biases[convolution_count])
+                    .and(&delta.sum_axis(Axis(1)))
+                    .for_each(|bias, update| *bias = eta * update);
 
                 // デルタを次の層に渡すために reshape する (C, B, F_h, F_w)
-                let mut reshape_delta = delta.to_shape((channel_value, sample_size, filter_shape[0], filter_shape[1])).unwrap();
+                let mut reshape_delta = delta
+                    .to_shape((channel_value, sample_size, filter_shape[0], filter_shape[1]))
+                    .unwrap();
                 // 軸を入れ替える (C, B, F_h, F_w) -> (B, C, F_h, F_w)
                 reshape_delta.swap_axes(0, 1);
                 before_delta = reshape_delta.to_owned();
+            }
+            // プーリング層の処理
+            else if self.layers_information[i].layer_type == LayerType::Pooling {
+                pooling_count -= 1;
+                let pooling_info = self.layers_information[i].information.as_pooling().unwrap();
+
+                let mask = &self.pooling_mask[pooling_count];
+
+                // 1次元ベクトルに平坦化
+                let pooling_ncols = mask.len();
+                
+                let vectored_pooled = before_delta.to_shape(pooling_ncols).unwrap();
+
+                // 次の層へ渡すテンソルの2階バージョンを生成
+                let window_size = pooling_info.window_size;
+                let pooling_nrows = window_size.0 * window_size.1;
+                let spread_delta = Array2::<f64>::zeros((pooling_ncols, pooling_nrows));
+
+                // mask が指すインデックスにそれぞれの勾配を渡す
+                spread_delta.par_iter_mut().enumerate().for_each(|(x, i)| x[i] = vectored_pooled[i]);
             }
         }
     }
