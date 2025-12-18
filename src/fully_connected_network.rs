@@ -18,7 +18,7 @@ pub struct FullyConnectedNetwork {
     differential_activations: Vec<fn(&f64) -> f64>,
     values: Vec<Array2<f64>>,
     values_after_activation: Vec<Array2<f64>>,
-    pub error: f64,
+    error: f64,
     deltas: Vec<Array2<f64>>,
 }
 
@@ -145,7 +145,7 @@ impl FullyConnectedNetwork {
         }
     }
 
-    pub fn backward(&mut self, expects: &Array2<f64>, eta: f64) {
+    pub fn backward(&mut self, expects: &Array2<f64>, eta: f64) -> Array2<f64> {
         let layer_value = self.values_after_activation.len();
         let node_output_index = layer_value - 1;
         let other_output_index = node_output_index - 1;
@@ -180,5 +180,11 @@ impl FullyConnectedNetwork {
             Zip::from(&mut self.weights[i]).and(&(eta * &self.values_after_activation[i].t().dot(&self.deltas[i]))).par_for_each(|weight, update| *weight -= update);
             Zip::from(&mut self.biases[i]).and(&self.deltas[i].sum_axis(Axis(0))).for_each(|bias, update| *bias -= update);
         }
+
+        self.deltas.last().unwrap().to_owned()
+    }
+
+    pub fn get_error(&self) {
+        self.error;
     }
 }
