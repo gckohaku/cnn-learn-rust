@@ -1,64 +1,70 @@
-const CHANNEL_VALUE = 3, WIDTH = 5, HEIGHT = 5;
+const CHANNEL_VALUE = 3,
+	WIDTH = 5,
+	HEIGHT = 5;
 
+	/**
+	 * 
+	 * @returns {[number[][][], string]}
+	 */
 function makeData() {
 	const data = [];
+	let dataString = "(";
 	for (let channel = 0; channel < CHANNEL_VALUE; channel++) {
 		const cData = [];
+		dataString += "(";
 		for (let i = 0; i < HEIGHT; i++) {
 			const row = [];
+			dataString += "(";
 			for (let j = 0; j < WIDTH; j++) {
 				row.push(Math.random());
+				dataString += `${Math.random()}, `;
 			}
 			cData.push(row);
+			dataString += "), ";
 		}
 		data.push(cData);
+		dataString += "), ";
 	}
 
-	return data;
+	dataString += ")";
+	return [data, dataString];
 }
 
 /**
- * 
- * @param {number[][][]} data 
+ *
+ * @param {[number[][][], string]} dataArray
  */
-function appendLabel(data) {
-	console.log("append");
-	const R_INDEX = 0, G_INDEX = 1, B_INDEX = 2;
+function appendLabel(dataArray) {
+	const data = dataArray[0];
+	let dataString = dataArray[1];
+
+	const R_INDEX = 0,
+		G_INDEX = 1,
+		B_INDEX = 2;
 	const count = [0, 0, 0];
-	const pixelsSum = [
-		data[R_INDEX].flat().reduce((sum, current) => sum + current, 0),
-		data[G_INDEX].flat().reduce((sum, current) => sum + current, 0),
-		data[B_INDEX].flat().reduce((sum, current) => sum + current, 0)
-	];
+	const pixelsSum = [data[R_INDEX].flat().reduce((sum, current) => sum + current, 0), data[G_INDEX].flat().reduce((sum, current) => sum + current, 0), data[B_INDEX].flat().reduce((sum, current) => sum + current, 0)];
 
 	for (let i = 0; i < HEIGHT; i++) {
 		for (let j = 0; j < WIDTH; j++) {
-			const currentPixel = [data[R_INDEX][i][j], data[G_INDEX][i][j], data[B_INDEX][i][j]]
-			const maxIndex = currentPixel.indexOf(Math.max(currentPixel));
+			const currentPixel = [data[R_INDEX][i][j], data[G_INDEX][i][j], data[B_INDEX][i][j]];
+			const maxIndex = currentPixel.indexOf(Math.max(...currentPixel));
 
 			count[maxIndex] += 1;
 		}
 	}
 
-	let maxCount = Math.max(count);
+	let maxCount = Math.max(...count);
 	let mostStrongIndex = -1;
 
-	console.log(count.filter(v => v === maxCount).length);
-	console.log(maxCount);
-	console.log(count);
-
-	if (count.filter(v => v === maxCount).length > 1) {
+	if (count.filter((v) => v === maxCount).length > 1) {
 		let currentMaxValue = -1;
 		for (let channel = 0; channel < CHANNEL_VALUE; channel++) {
-			console.log("test");
 			if (currentMaxValue < pixelsSum[channel]) {
 				mostStrongIndex = channel;
 				currentMaxValue = pixelsSum;
 			}
 		}
-	}
-	else {
-		console.log("less");
+	} else {
 		mostStrongIndex = count.indexOf(maxCount);
 	}
 
@@ -66,16 +72,30 @@ function appendLabel(data) {
 		throw new Error("'mostStrongIndex' is not to set value");
 	}
 
-	let data_label = [0.0, 0.0, 0.0];
-	data_label[mostStrongIndex] = 1.0;
+	let dataLabel = [0.0, 0.0, 0.0];
+	dataLabel[mostStrongIndex] = 1.0;
 
-	return {
-		image: data,
-		label: data_label,
+	let labelString = "(";
+	for (let i = 0; i < CHANNEL_VALUE; i++) {
+		labelString += `${dataLabel[i].toFixed(1)}, `
 	}
+	labelString += "), ";
+
+	return `(image: ${dataString}, label: ${labelString} ),`;
 }
 
-let data = makeData();
-let d = appendLabel(data);
+/**
+ *
+ * @param {number} times
+ */
+function makeDataSet(times) {
+	dataset = [];
+	let dataString = "(data: (";
+	for (let i = 0; i < times; i++) {
+		dataString += `${appendLabel(makeData())}`;
+		dataString += "\n";
+	}
 
-d
+	dataString += "), )";
+	return dataString.replace(/\\n/g, "\n");
+}
