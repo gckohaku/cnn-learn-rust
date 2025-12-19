@@ -184,7 +184,7 @@ impl FullyConnectedNetwork {
         self.deltas.last().unwrap().to_owned()
     }
 
-    pub fn get_error(&self) {
-        self.error;
+    pub fn get_error(&self) -> f64 {
+        self.error
     }
 }

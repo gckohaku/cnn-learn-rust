@@ -67,7 +67,7 @@ impl NeuralNetworkCNN {
         self.cnn.backward(&shaped_gradient, eta);
     }
 
-    pub fn get_error(&self) {
+    pub fn get_error(&self) -> f64 {
         self.fcnn.get_error()
     }
 
