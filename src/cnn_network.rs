@@ -62,7 +62,9 @@ impl NeuralNetworkCNN {
     }
 
     pub fn backward(&mut self, expects: &Array2<f64>, eta: f64) {
-        let gradient = self.fcnn.backward(expects, eta);
+        self.fcnn.backward(expects, eta);
+        let gradient = self.fcnn.get_input_gradient();
+
         let shaped_gradient = gradient.to_shape(self.convolution_last_shape).unwrap().to_owned();
         self.cnn.backward(&shaped_gradient, eta);
     }

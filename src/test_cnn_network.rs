@@ -32,7 +32,7 @@ pub fn check_cnn() {
                 layer_type: LayerType::Pooling,
                 information: LayerInformationContent::Pooling(PoolingInformation {
                     window_size: (2, 2),
-                    stride: 1,
+                    stride: 2,
                     pooling_type: PoolingType::MaxPooling,
                 }),
             },
