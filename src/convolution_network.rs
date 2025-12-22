@@ -8,13 +8,7 @@ use ndarray::{
 use crate::{
     cnn_information::{
         ConvolutionInformation, LayerInformation, LayerType, PoolingInformation, PoolingType,
-    },
-    cnn_transformations::{
-        col2im::col2im,
-        im2col::{im2col, im2col_for_pooling},
-    },
-    convolution_network,
-    rand::Rand,
+    }, cnn_transformations, convolution_network, rand::Rand
 };
 
 use ndarray::parallel::prelude::*;
@@ -109,7 +103,7 @@ impl ConvolutionNetwork {
 
                 let input_shape = self.values_after_activation[i].shape();
 
-                let (spread_image, spread_filter) = im2col(
+                let (spread_image, spread_filter) = cnn_transformations::im2col(
                     &self.values_after_activation[i],
                     &self.filters[convolution_count],
                     convolution_info.stride,
@@ -174,7 +168,7 @@ impl ConvolutionNetwork {
                 let input_shape = self.values_after_activation[i].shape();
 
                 if pooling_info.pooling_type == PoolingType::MaxPooling {
-                    let col_matrix = im2col_for_pooling(
+                    let col_matrix = cnn_transformations::im2col_for_pooling(
                         &self.values_after_activation[i],
                         pooling_info.stride,
                         pooling_info.window_size,
@@ -266,7 +260,7 @@ impl ConvolutionNetwork {
                 let delta = flatten_gradient * da_u_flatten;
 
                 // delta と im2col 変換して転置したノードの値を行列積する これがフィルタの勾配
-                let (spread_value, _) = im2col(
+                let (spread_value, _) = cnn_transformations::im2col(
                     &self.values_after_activation[i],
                     &self.filters[convolution_count],
                     convolution_info.stride,
@@ -304,7 +298,7 @@ impl ConvolutionNetwork {
                 let next_flatten_gradient = flatten_filter.dot(&delta);
 
                 // 勾配を前の層に渡すために、col2im 変換する
-                let image_gradient = col2im(
+                let image_gradient = cnn_transformations::col2im(
                     &next_flatten_gradient,
                     [filter_shape[2], filter_shape[3]],
                     self.values_after_activation[i].shape().try_into().unwrap(),

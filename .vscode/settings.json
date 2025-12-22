@@ -22,6 +22,7 @@
         "blas",
         "fcnn",
         "inplace",
+        "mnist",
         "ncols",
         "ndarray",
         "ndim",
