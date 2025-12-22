@@ -14,8 +14,6 @@ pub struct FullyConnectedNetwork {
     output_information: OutputInformation,
     weights: Vec<Array2<f64>>,
     biases: Vec<Array1<f64>>,
-    activations: Vec<fn(&f64) -> f64>,
-    differential_activations: Vec<fn(&f64) -> f64>,
     values: Vec<Array2<f64>>,
     values_after_activation: Vec<Array2<f64>>,
     error: f64,
@@ -30,8 +28,6 @@ impl FullyConnectedNetwork {
     ) -> Self {
         let mut weights = Vec::<Array2<f64>>::new();
         let mut biases = Vec::<Array1<f64>>::new();
-        let activations = Vec::<fn(&f64) -> f64>::new();
-        let differential_activations = Vec::<fn(&f64) -> f64>::new();
         let values = Vec::<Array2<f64>>::new();
         let values_after_activation = Vec::<Array2<f64>>::new();
         let error = 0.0;
@@ -63,8 +59,6 @@ impl FullyConnectedNetwork {
             output_information,
             weights,
             biases,
-            activations,
-            differential_activations,
             values,
             values_after_activation,
             error,
@@ -121,7 +115,7 @@ impl FullyConnectedNetwork {
             // 中間層では単純に ReLU 関数を利用する (max を使って実装)
             let activated_value = Array::from_shape_vec(
                 (batch_size, node_value),
-                self.values[i].par_iter().map(|x| x.max(0.0)).collect(),
+                self.values[i + 1].par_iter().map(|x| x.max(0.0)).collect(),
             )
             .unwrap();
 
@@ -136,16 +130,10 @@ impl FullyConnectedNetwork {
             self.error = -Zip::from(expects)
                 .and(&ln_output)
                 .fold(self.error, |t, e, o| t + e * o);
-
-            // dbg!(&self.values_after_activation[output_index + 1]);
-            // println!();
-            // dbg!(&expects);
-            // println!();
-            // dbg!(self.error);
         }
     }
 
-    pub fn backward(&mut self, expects: &Array2<f64>, eta: f64) -> Array2<f64> {
+    pub fn backward(&mut self, expects: &Array2<f64>, eta: f64) {
         let layer_value = self.values_after_activation.len();
         let node_output_index = layer_value - 1;
         let other_output_index = node_output_index - 1;
@@ -170,21 +158,31 @@ impl FullyConnectedNetwork {
         // 求めたデルタを用いて勾配を計算する
         for i in (0..=other_output_index).rev() {
             let delta_index = other_output_index - i;
-            // let weights_ref = &mut self.weights[i];
-            // // *weights_ref -= eta * &self.values_after_activation[i].t().dot(&self.deltas[i]);
-            // let gradient_update: Array2<f64> = eta * &self.values_after_activation[i].t().dot(&self.deltas[i]);
-            // *weights_ref -= gradient_update;
 
-            let weight_graduation = self.values_after_activation[i].t().dot(&self.deltas[i]);
+            let weight_gradient = self.values_after_activation[i].t().dot(&self.deltas[i]);
 
-            Zip::from(&mut self.weights[i]).and(&(eta * &self.values_after_activation[i].t().dot(&self.deltas[i]))).par_for_each(|weight, update| *weight -= update);
-            Zip::from(&mut self.biases[i]).and(&self.deltas[i].sum_axis(Axis(0))).for_each(|bias, update| *bias -= update);
+            Zip::from(&mut self.weights[i]).and(&(eta * &self.values_after_activation[i].t().dot(&self.deltas[delta_index]))).par_for_each(|weight, update| *weight -= update);
+            Zip::from(&mut self.biases[i]).and(&self.deltas[delta_index].sum_axis(Axis(0))).for_each(|bias, update| *bias -= update);
         }
-
-        self.deltas.last().unwrap().to_owned()
     }
 
-    pub fn get_error(&self) {
-        self.error;
+    pub fn refresh(&mut self) {
+        self.values.clear();
+        self.values_after_activation.clear();
+        self.deltas.clear();
+        self.error = 0.0;
+    }
+
+    pub fn get_error(&self) -> f64 {
+        self.error
+    }
+
+    pub fn get_input_gradient(&self) -> Array2<f64> {
+        let delta = self.deltas.last().unwrap().to_owned();
+        let w = self.weights[0].t();
+        let da_u = &self.values_after_activation[0].map(|y| if *y > 0.0 {1.0} else {0.0});
+
+        let propagate_delta = &delta.dot(&w) * da_u;
+        propagate_delta
     }
 }

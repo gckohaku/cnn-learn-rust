@@ -9,7 +9,7 @@ pub fn col2im(
 ) -> Array4<f64> {
     let channel_value = target_shape[1];
     let sample_value = target_shape[0];
-    let input_size = (target_shape[0], target_shape[1]);
+    let input_size = (target_shape[2], target_shape[3]);
 
     let output_size = (
         (input_size.0 - filter_size[0] + 2 * padding) / stride + 1,

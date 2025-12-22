@@ -20,7 +20,8 @@ mod rand;
 mod type_utilities;
 mod simple_dataset;
 mod test_cnn_network;
+mod utilities;
 
 fn main() {
-    test_cnn_network::test();
+    test_cnn_network::check_cnn();
 }

@@ -228,8 +228,8 @@ impl ConvolutionNetwork {
         self.values_after_activation.last().unwrap().clone()
     }
 
-    pub fn backward(&mut self, propagated: &Array4<f64>, eta: f64) {
-        let mut before_delta = propagated.to_owned();
+    pub fn backward(&mut self, propagated_delta: &Array4<f64>, eta: f64) {
+        let mut before_gradient = propagated_delta.to_owned();
         let mut convolution_count = self.filters.len();
         let mut pooling_count = self.pooling_mask.len();
 
@@ -242,21 +242,15 @@ impl ConvolutionNetwork {
                     .as_convolution()
                     .unwrap();
 
-                let shape = before_delta.shape();
+                let shape = before_gradient.shape();
                 let sample_size = shape[0];
                 let channel_value = shape[1];
                 let image_size = (shape[2], shape[3]);
 
-                /*
-                    メモ
-                    前層からの勾配を平坦化してから、現在の層のテンソルを Im2Col 展開して行列積を取る？
-                    Im2Col とかがあること以外は全結合部分と同じのはず
-                    流れは順伝播の逆でよかったと思う
-                */
                 // 前の層のデルタの4階テンソルは (B, C, F_h, F_w) なので、B と C を入れ替える
-                before_delta.swap_axes(0, 1);
+                before_gradient.swap_axes(0, 1);
                 // 前の層のデルタを (C, B * W_h * W_w) に平坦化
-                let flatten_gradient = before_delta
+                let flatten_gradient = before_gradient
                     .to_shape((channel_value, sample_size * image_size.0 * image_size.1))
                     .unwrap();
 
@@ -278,38 +272,53 @@ impl ConvolutionNetwork {
                     convolution_info.stride,
                     convolution_info.padding,
                 );
-                let gradient_for_filter = &spread_value.t().dot(&delta);
+                let gradient_for_filter = &delta.dot(&spread_value.t());
 
+                // フィルタに関しては計算が終わったら reshape して更新する必要がある
                 let new_owned_filter = self.filters[convolution_count].to_owned();
                 let filter_shape = new_owned_filter.shape();
-                let value_shape = self.values_after_activation[i].shape();
-                if value_shape.len() != 4 {
-                    panic!("value shape length is not 4");
-                }
+                let image_gradient_filter = gradient_for_filter
+                    .to_shape([
+                        filter_shape[0],
+                        filter_shape[1],
+                        filter_shape[2],
+                        filter_shape[3],
+                    ])
+                    .unwrap();
 
-                // フィルタに関しては計算が終わったら Col2Im 変換して更新する必要がある
+                Zip::from(&mut self.filters[convolution_count])
+                    .and(&image_gradient_filter)
+                    .par_for_each(|filter, update| *filter -= eta * update);
+                Zip::from(&mut self.biases[convolution_count])
+                    .and(&delta.sum_axis(Axis(1)))
+                    .for_each(|bias, update| *bias = eta * update);
+
+                // let value_shape = self.values_after_activation[i].shape();
+                // if value_shape.len() != 4 {
+                //     panic!("value shape length is not 4");
+                // }
+
+                // 前の層に伝播するための処理を行う
+                let flatten_filter = new_owned_filter.to_shape([filter_shape[1] * filter_shape[2] * filter_shape[3], filter_shape[0]]).unwrap();
+
+                let next_flatten_gradient = flatten_filter.dot(&delta);
+
+                // 勾配を前の層に渡すために、col2im 変換する
                 let image_gradient = col2im(
-                    &gradient_for_filter,
+                    &next_flatten_gradient,
                     [filter_shape[2], filter_shape[3]],
                     self.values_after_activation[i].shape().try_into().unwrap(),
                     convolution_info.stride,
                     convolution_info.padding,
                 );
 
-                Zip::from(&mut self.filters[convolution_count])
-                    .and(&image_gradient)
-                    .par_for_each(|filter, update| *filter -= eta * update);
-                Zip::from(&mut self.biases[convolution_count])
-                    .and(&delta.sum_axis(Axis(1)))
-                    .for_each(|bias, update| *bias = eta * update);
-
-                // デルタを次の層に渡すために reshape する (C, B, F_h, F_w)
-                let mut reshape_delta = delta
-                    .to_shape((channel_value, sample_size, filter_shape[0], filter_shape[1]))
-                    .unwrap();
-                // 軸を入れ替える (C, B, F_h, F_w) -> (B, C, F_h, F_w)
-                reshape_delta.swap_axes(0, 1);
-                before_delta = reshape_delta.to_owned();
+                // 勾配を前の層に渡すために reshape する (C, B, F_h, F_w)
+                // let mut reshape_delta = delta
+                //     .to_shape((channel_value, sample_size, filter_shape[0], filter_shape[1]))
+                //     .unwrap();
+                // // 軸を入れ替える (C, B, F_h, F_w) -> (B, C, F_h, F_w)
+                // reshape_delta.swap_axes(0, 1);
+                before_gradient = image_gradient.to_owned();
             }
             // プーリング層の処理
             else if self.layers_information[i].layer_type == LayerType::Pooling {
@@ -321,7 +330,7 @@ impl ConvolutionNetwork {
                 // 1次元ベクトルに平坦化
                 let pooling_ncols = mask.len();
 
-                let vectored_pooled = before_delta.to_shape(pooling_ncols).unwrap();
+                let vectored_pooled = before_gradient.to_shape(pooling_ncols).unwrap();
 
                 // 次の層へ渡すテンソルの2階バージョンを生成
                 let window_size = pooling_info.window_size;
@@ -329,7 +338,7 @@ impl ConvolutionNetwork {
                 let mut spread_delta = Array2::<f64>::zeros((pooling_ncols, pooling_nrows));
 
                 // mask が指すインデックスにそれぞれの勾配を渡す
-                Zip::from(spread_delta.axis_iter_mut(Axis(1)))
+                Zip::from(spread_delta.axis_iter_mut(Axis(0)))
                     .and(&vectored_pooled)
                     .and(mask)
                     .par_for_each(|mut v, d, m| v[*m] = *d);
@@ -339,11 +348,24 @@ impl ConvolutionNetwork {
                 if value_shape.len() != 4 {
                     panic!("value shape length is not 4");
                 }
-                let delta = spread_delta.to_shape((value_shape[0], value_shape[1], value_shape[2], value_shape[3])).unwrap();
+                let delta = spread_delta
+                    .to_shape((
+                        value_shape[0],
+                        value_shape[1],
+                        value_shape[2],
+                        value_shape[3],
+                    ))
+                    .unwrap();
 
-                before_delta = delta.to_owned();
+                before_gradient = delta.to_owned();
             }
         }
+    }
+
+    pub fn refresh(&mut self) {
+        self.values.clear();
+        self.values_after_activation.clear();
+        self.pooling_mask.clear();
     }
 
     fn create_convolution_layer(

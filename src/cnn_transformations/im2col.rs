@@ -29,10 +29,10 @@ pub fn im2col(
     );
 
     // 行列のサイズを計算
-    let output_matrix_size = (
-        output_channel_value,
-        batch_value * output_size.0 * output_size.1,
-    );
+    // let output_matrix_size = (
+    //     output_channel_value,
+    //     batch_value * output_size.0 * output_size.1,
+    // );
 
     let mut processing_tensor: Array6<f64> = Array6::zeros((
         batch_value,
@@ -97,7 +97,7 @@ pub fn im2col_for_pooling(
     let batch_value = inputs_shape[0];
     let input_channel_value = inputs_shape[1];
     let input_size = (inputs_shape[2], inputs_shape[3]);
-    let output_channel_value = input_channel_value;
+    // let output_channel_value = input_channel_value;
     let output_size = (
         (input_size.0 - window_size.0) / stride + 1,
         (input_size.1 - window_size.1) / stride + 1,

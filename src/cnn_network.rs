@@ -44,6 +44,9 @@ impl NeuralNetworkCNN {
     }
 
     pub fn forward(&mut self, inputs: &Array4<f64>, expects: &Array2<f64>) {
+        self.cnn.refresh();
+        self.fcnn.refresh();
+
         let inputs_shape = inputs.shape();
         let batch_size = inputs_shape[0];
 
@@ -62,12 +65,14 @@ impl NeuralNetworkCNN {
     }
 
     pub fn backward(&mut self, expects: &Array2<f64>, eta: f64) {
-        let gradient = self.fcnn.backward(expects, eta);
+        self.fcnn.backward(expects, eta);
+        let gradient = self.fcnn.get_input_gradient();
+
         let shaped_gradient = gradient.to_shape(self.convolution_last_shape).unwrap().to_owned();
         self.cnn.backward(&shaped_gradient, eta);
     }
 
-    pub fn get_error(&self) {
+    pub fn get_error(&self) -> f64 {
         self.fcnn.get_error()
     }
 
