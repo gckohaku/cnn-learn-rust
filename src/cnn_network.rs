@@ -44,6 +44,9 @@ impl NeuralNetworkCNN {
     }
 
     pub fn forward(&mut self, inputs: &Array4<f64>, expects: &Array2<f64>) {
+        self.cnn.refresh();
+        self.fcnn.refresh();
+
         let inputs_shape = inputs.shape();
         let batch_size = inputs_shape[0];
 

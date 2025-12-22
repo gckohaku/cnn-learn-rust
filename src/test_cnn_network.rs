@@ -46,7 +46,7 @@ pub fn check_cnn() {
     let mut r = Rand::new();
     let dataset = SimpleDataset::new();
 
-    let epoch_value = 10;
+    let epoch_value = 1000;
     let mini_batch_sample_value = 5;
 
     for epoch in 1..=epoch_value {
@@ -80,9 +80,8 @@ pub fn check_cnn() {
 
             nn.forward(&batch_data, &expect_data);
             epoch_error += nn.get_error();
-            nn.backward(&expect_data, 0.001);
-
-            println!("epoch {:3} error: {:13.10}", epoch, epoch_error / 30.0)
+            nn.backward(&expect_data, 0.00001);
         }
+        println!("epoch {:3} error: {:13.10}", epoch, epoch_error / 30.0)
     }
 }

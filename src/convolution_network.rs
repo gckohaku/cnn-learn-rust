@@ -228,8 +228,8 @@ impl ConvolutionNetwork {
         self.values_after_activation.last().unwrap().clone()
     }
 
-    pub fn backward(&mut self, propagated: &Array4<f64>, eta: f64) {
-        let mut before_delta = propagated.to_owned();
+    pub fn backward(&mut self, propagated_delta: &Array4<f64>, eta: f64) {
+        let mut before_gradient = propagated_delta.to_owned();
         let mut convolution_count = self.filters.len();
         let mut pooling_count = self.pooling_mask.len();
 
@@ -242,15 +242,15 @@ impl ConvolutionNetwork {
                     .as_convolution()
                     .unwrap();
 
-                let shape = before_delta.shape();
+                let shape = before_gradient.shape();
                 let sample_size = shape[0];
                 let channel_value = shape[1];
                 let image_size = (shape[2], shape[3]);
 
                 // 前の層のデルタの4階テンソルは (B, C, F_h, F_w) なので、B と C を入れ替える
-                before_delta.swap_axes(0, 1);
+                before_gradient.swap_axes(0, 1);
                 // 前の層のデルタを (C, B * W_h * W_w) に平坦化
-                let flatten_gradient = before_delta
+                let flatten_gradient = before_gradient
                     .to_shape((channel_value, sample_size * image_size.0 * image_size.1))
                     .unwrap();
 
@@ -274,7 +274,7 @@ impl ConvolutionNetwork {
                 );
                 let gradient_for_filter = &delta.dot(&spread_value.t());
 
-                // フィルタに関しては計算が終わったら Col2Im 変換して更新する必要がある
+                // フィルタに関しては計算が終わったら reshape して更新する必要がある
                 let new_owned_filter = self.filters[convolution_count].to_owned();
                 let filter_shape = new_owned_filter.shape();
                 let image_gradient_filter = gradient_for_filter
@@ -299,13 +299,11 @@ impl ConvolutionNetwork {
                 // }
 
                 // 前の層に伝播するための処理を行う
-                let flatten_filter = new_owned_filter.to_shape([filter_shape[0] * filter_shape[2] * filter_shape[3], filter_shape[1]]).unwrap();
+                let flatten_filter = new_owned_filter.to_shape([filter_shape[1] * filter_shape[2] * filter_shape[3], filter_shape[0]]).unwrap();
 
-                dbg!(&flatten_filter.shape());
-                dbg!(&delta.shape());
                 let next_flatten_gradient = flatten_filter.dot(&delta);
 
-                // フィルタに関しては計算が終わったら Col2Im 変換して更新する必要がある
+                // 勾配を前の層に渡すために、col2im 変換する
                 let image_gradient = col2im(
                     &next_flatten_gradient,
                     [filter_shape[2], filter_shape[3]],
@@ -314,13 +312,13 @@ impl ConvolutionNetwork {
                     convolution_info.padding,
                 );
 
-                // デルタを次の層に渡すために reshape する (C, B, F_h, F_w)
-                let mut reshape_delta = delta
-                    .to_shape((channel_value, sample_size, filter_shape[0], filter_shape[1]))
-                    .unwrap();
-                // 軸を入れ替える (C, B, F_h, F_w) -> (B, C, F_h, F_w)
-                reshape_delta.swap_axes(0, 1);
-                before_delta = reshape_delta.to_owned();
+                // 勾配を前の層に渡すために reshape する (C, B, F_h, F_w)
+                // let mut reshape_delta = delta
+                //     .to_shape((channel_value, sample_size, filter_shape[0], filter_shape[1]))
+                //     .unwrap();
+                // // 軸を入れ替える (C, B, F_h, F_w) -> (B, C, F_h, F_w)
+                // reshape_delta.swap_axes(0, 1);
+                before_gradient = image_gradient.to_owned();
             }
             // プーリング層の処理
             else if self.layers_information[i].layer_type == LayerType::Pooling {
@@ -332,7 +330,7 @@ impl ConvolutionNetwork {
                 // 1次元ベクトルに平坦化
                 let pooling_ncols = mask.len();
 
-                let vectored_pooled = before_delta.to_shape(pooling_ncols).unwrap();
+                let vectored_pooled = before_gradient.to_shape(pooling_ncols).unwrap();
 
                 // 次の層へ渡すテンソルの2階バージョンを生成
                 let window_size = pooling_info.window_size;
@@ -359,9 +357,15 @@ impl ConvolutionNetwork {
                     ))
                     .unwrap();
 
-                before_delta = delta.to_owned();
+                before_gradient = delta.to_owned();
             }
         }
+    }
+
+    pub fn refresh(&mut self) {
+        self.values.clear();
+        self.values_after_activation.clear();
+        self.pooling_mask.clear();
     }
 
     fn create_convolution_layer(

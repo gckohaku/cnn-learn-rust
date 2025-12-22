@@ -14,8 +14,6 @@ pub struct FullyConnectedNetwork {
     output_information: OutputInformation,
     weights: Vec<Array2<f64>>,
     biases: Vec<Array1<f64>>,
-    activations: Vec<fn(&f64) -> f64>,
-    differential_activations: Vec<fn(&f64) -> f64>,
     values: Vec<Array2<f64>>,
     values_after_activation: Vec<Array2<f64>>,
     error: f64,
@@ -30,8 +28,6 @@ impl FullyConnectedNetwork {
     ) -> Self {
         let mut weights = Vec::<Array2<f64>>::new();
         let mut biases = Vec::<Array1<f64>>::new();
-        let activations = Vec::<fn(&f64) -> f64>::new();
-        let differential_activations = Vec::<fn(&f64) -> f64>::new();
         let values = Vec::<Array2<f64>>::new();
         let values_after_activation = Vec::<Array2<f64>>::new();
         let error = 0.0;
@@ -63,8 +59,6 @@ impl FullyConnectedNetwork {
             output_information,
             weights,
             biases,
-            activations,
-            differential_activations,
             values,
             values_after_activation,
             error,
@@ -163,7 +157,6 @@ impl FullyConnectedNetwork {
 
         // 求めたデルタを用いて勾配を計算する
         for i in (0..=other_output_index).rev() {
-            dbg!(i);
             let delta_index = other_output_index - i;
 
             let weight_gradient = self.values_after_activation[i].t().dot(&self.deltas[i]);
@@ -171,6 +164,13 @@ impl FullyConnectedNetwork {
             Zip::from(&mut self.weights[i]).and(&(eta * &self.values_after_activation[i].t().dot(&self.deltas[delta_index]))).par_for_each(|weight, update| *weight -= update);
             Zip::from(&mut self.biases[i]).and(&self.deltas[delta_index].sum_axis(Axis(0))).for_each(|bias, update| *bias -= update);
         }
+    }
+
+    pub fn refresh(&mut self) {
+        self.values.clear();
+        self.values_after_activation.clear();
+        self.deltas.clear();
+        self.error = 0.0;
     }
 
     pub fn get_error(&self) -> f64 {
