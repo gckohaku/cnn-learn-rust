@@ -18,9 +18,9 @@ const IMAGE_CHANNEL_VALUE: usize = 1;
 
 pub fn mnist_process() {
     let epoch_value = 10;
-    let mini_batch_sample_size = 5000;
+    let mini_batch_sample_size = 1000;
 
-    let training_value = 60000;
+    let training_value = 10000;
     let validation_value = 5000;
     let test_value = 5000;
 
@@ -54,7 +54,7 @@ pub fn mnist_process() {
 
             nn.forward(&inputs, &expects);
             epoch_error += nn.get_error();
-            nn.backward(&expects, 0.001);
+            nn.backward(&expects, 0.01);
 
             print!("\rmini batch count: {}", mini_batch_count);
             std::io::stdout().flush().unwrap();

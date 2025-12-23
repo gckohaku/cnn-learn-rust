@@ -38,8 +38,6 @@ impl NeuralNetworkCNN {
             fcnn,
             cnn,
             convolution_last_shape: [0, 0, 0, 0],
-            // layers_information: cnn_layers_information,
-            // output_information,
         }
     }
 
