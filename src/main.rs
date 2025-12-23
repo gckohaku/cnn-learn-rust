@@ -12,5 +12,5 @@ mod type_utilities;
 mod utilities;
 
 fn main() {
-    test_cnn_network::check_cnn();
+    mnist_test::mnist_process();
 }
