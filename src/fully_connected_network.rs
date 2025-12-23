@@ -73,12 +73,21 @@ impl FullyConnectedNetwork {
         self.values.push(inputs.clone());
         self.values_after_activation.push(inputs.clone());
 
+        #[cfg(debug_assertions)]
+        {
+            dbg!(&inputs);
+        }
+
         for i in 0..self.weights.len() {
             let node_value = self.weights[i].ncols();
 
             // 線型変換およびバイアスの加算
             let transposed_value = &self.values_after_activation[i].dot(&self.weights[i])
                 + &self.biases[i].to_shape((1, node_value)).unwrap();
+            #[cfg(debug_assertions)]
+            {
+                dbg!(&self.weights[i], &self.biases[i], &transposed_value);
+            }
             self.values.push(transposed_value);
 
             if i == output_index {
@@ -119,6 +128,11 @@ impl FullyConnectedNetwork {
             )
             .unwrap();
 
+            #[cfg(debug_assertions)]
+            {
+                dbg!(&activated_value);
+            }
+
             self.values_after_activation.push(activated_value);
         }
 
@@ -141,6 +155,10 @@ impl FullyConnectedNetwork {
 
         // 出力層のデルタ
         let output_delta = &self.values_after_activation[node_output_index] - expects;
+        #[cfg(debug_assertions)]
+        {
+            dbg!(&output_delta);
+        }
         self.deltas.push(output_delta);
 
         // 隠れ層のデルタ
@@ -148,7 +166,8 @@ impl FullyConnectedNetwork {
             let delta_index = other_output_index - i - 1;
             let delta = &self.deltas[delta_index];
             let w = self.weights[i + 1].t();
-            let da_u = &self.values_after_activation[i + 1].map(|y| if *y > 0.0 {1.0} else {0.0});
+            let da_u =
+                &self.values_after_activation[i + 1].map(|y| if *y > 0.0 { 1.0 } else { 0.0 });
 
             let propagate_delta = &delta.dot(&w) * da_u;
 
@@ -161,8 +180,17 @@ impl FullyConnectedNetwork {
 
             let weight_gradient = self.values_after_activation[i].t().dot(&self.deltas[i]);
 
-            Zip::from(&mut self.weights[i]).and(&(eta * &self.values_after_activation[i].t().dot(&self.deltas[delta_index]))).par_for_each(|weight, update| *weight -= update);
-            Zip::from(&mut self.biases[i]).and(&self.deltas[delta_index].sum_axis(Axis(0))).for_each(|bias, update| *bias -= update);
+            Zip::from(&mut self.weights[i])
+                .and(
+                    &(eta
+                        * &self.values_after_activation[i]
+                            .t()
+                            .dot(&self.deltas[delta_index])),
+                )
+                .par_for_each(|weight, update| *weight -= update);
+            Zip::from(&mut self.biases[i])
+                .and(&self.deltas[delta_index].sum_axis(Axis(0)))
+                .for_each(|bias, update| *bias -= update);
         }
     }
 
@@ -180,7 +208,7 @@ impl FullyConnectedNetwork {
     pub fn get_input_gradient(&self) -> Array2<f64> {
         let delta = self.deltas.last().unwrap().to_owned();
         let w = self.weights[0].t();
-        let da_u = &self.values_after_activation[0].map(|y| if *y > 0.0 {1.0} else {0.0});
+        let da_u = &self.values_after_activation[0].map(|y| if *y > 0.0 { 1.0 } else { 0.0 });
 
         let propagate_delta = &delta.dot(&w) * da_u;
         propagate_delta

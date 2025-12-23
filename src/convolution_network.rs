@@ -120,7 +120,7 @@ impl ConvolutionNetwork {
                         / convolution_info.stride)
                         + 1,
                 );
-
+                
                 let bias_length = self.biases[convolution_count].len();
                 let spread_result = spread_filter.dot(&spread_image)
                     + self.biases[convolution_count]
@@ -156,6 +156,10 @@ impl ConvolutionNetwork {
 
                 reshape_result.swap_axes(0, 1);
                 activated_reshape_result.swap_axes(0, 1);
+
+                #[cfg(debug_assertions)]{
+                    dbg!(&self.filters[convolution_count], &self.biases[convolution_count], &reshape_result, &activated_reshape_result);
+                }
 
                 // self.im2col_values.push(activated_spread_result.to_owned());
                 self.values.push(reshape_result.to_owned());
@@ -211,6 +215,11 @@ impl ConvolutionNetwork {
                             input_shape[3] / pooling_info.window_size.1,
                         ))
                         .unwrap();
+
+                        #[cfg(debug_assertions)] 
+                        {
+                            dbg!(&reshape_pooling);
+                        }
 
                     self.values.push(reshape_pooling.to_owned());
                     self.values_after_activation

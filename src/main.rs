@@ -10,7 +10,9 @@ mod simple_dataset;
 mod test_cnn_network;
 mod type_utilities;
 mod utilities;
+mod inspection_cnn;
 
 fn main() {
-    mnist_test::mnist_process();
+    // mnist_test::mnist_process();
+    inspection_cnn::inspection();
 }
