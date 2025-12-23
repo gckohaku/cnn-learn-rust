@@ -157,7 +157,7 @@ impl ConvolutionNetwork {
                 reshape_result.swap_axes(0, 1);
                 activated_reshape_result.swap_axes(0, 1);
 
-                self.im2col_values.push(activated_spread_result.to_owned());
+                // self.im2col_values.push(activated_spread_result.to_owned());
                 self.values.push(reshape_result.to_owned());
                 self.values_after_activation
                     .push(activated_reshape_result.to_owned());
