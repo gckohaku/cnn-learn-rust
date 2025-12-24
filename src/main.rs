@@ -13,6 +13,6 @@ mod utilities;
 mod inspection_cnn;
 
 fn main() {
-    // mnist_test::mnist_process();
-    inspection_cnn::inspection();
+    mnist_test::mnist_process();
+    // inspection_cnn::inspection();
 }

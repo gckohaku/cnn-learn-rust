@@ -319,26 +319,6 @@ impl ConvolutionNetwork {
                     dbg!(&image_gradient_filter);
                 }
 
-                Zip::from(&mut self.filters[convolution_count])
-                    .and(&image_gradient_filter)
-                    .par_for_each(|filter, update| *filter -= eta * update);
-                Zip::from(&mut self.biases[convolution_count])
-                    .and(&delta.sum_axis(Axis(1)))
-                    .for_each(|bias, update| *bias = eta * update);
-
-                #[cfg(debug_assertions)]
-                {
-                    dbg!(
-                        &self.filters[convolution_count],
-                        &self.biases[convolution_count]
-                    );
-                }
-
-                // let value_shape = self.values_after_activation[i].shape();
-                // if value_shape.len() != 4 {
-                //     panic!("value shape length is not 4");
-                // }
-
                 // 前の層に伝播するための処理を行う
                 let flatten_filter = new_owned_filter
                     .to_shape([
@@ -358,12 +338,20 @@ impl ConvolutionNetwork {
                     convolution_info.padding,
                 );
 
-                // 勾配を前の層に渡すために reshape する (C, B, F_h, F_w)
-                // let mut reshape_delta = delta
-                //     .to_shape((channel_value, sample_size, filter_shape[0], filter_shape[1]))
-                //     .unwrap();
-                // // 軸を入れ替える (C, B, F_h, F_w) -> (B, C, F_h, F_w)
-                // reshape_delta.swap_axes(0, 1);
+                Zip::from(&mut self.filters[convolution_count])
+                    .and(&image_gradient_filter)
+                    .par_for_each(|filter, update| *filter -= eta * update);
+                Zip::from(&mut self.biases[convolution_count])
+                    .and(&delta.sum_axis(Axis(1)))
+                    .for_each(|bias, update| *bias = eta * update);
+
+                #[cfg(debug_assertions)]
+                {
+                    dbg!(
+                        &self.filters[convolution_count],
+                        &self.biases[convolution_count]
+                    );
+                }
 
                 #[cfg(debug_assertions)]
                 {
@@ -412,7 +400,8 @@ impl ConvolutionNetwork {
                     ))
                     .unwrap();
 
-                #[cfg(debug_assertions)] {
+                #[cfg(debug_assertions)]
+                {
                     dbg!(&delta);
                 }
 
