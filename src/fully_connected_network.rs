@@ -116,7 +116,7 @@ impl FullyConnectedNetwork {
                         .for_each(|result, value, sum| *result = value / sum);
 
                     #[cfg(debug_assertions)] {
-                        dbg!(&after_softmax);
+                        dbg!(&processed_transposed_value, &after_softmax);
                     }
 
                     self.values_after_activation.push(after_softmax);
