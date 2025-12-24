@@ -115,6 +115,10 @@ impl FullyConnectedNetwork {
                         .and_broadcast(&sum_exps.to_shape((batch_size, 1)).unwrap())
                         .for_each(|result, value, sum| *result = value / sum);
 
+                    #[cfg(debug_assertions)] {
+                        dbg!(&after_softmax);
+                    }
+
                     self.values_after_activation.push(after_softmax);
                 }
 
@@ -189,7 +193,7 @@ impl FullyConnectedNetwork {
                 .par_for_each(|weight, update| *weight -= update);
             Zip::from(&mut self.biases[i])
                 .and(&self.deltas[delta_index].sum_axis(Axis(0)))
-                .for_each(|bias, update| *bias -= update);
+                .for_each(|bias, update| *bias -= eta * update);
 
             #[cfg(debug_assertions)]
             {
