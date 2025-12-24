@@ -170,7 +170,6 @@ impl FullyConnectedNetwork {
                 &self.values_after_activation[i + 1].map(|y| if *y > 0.0 { 1.0 } else { 0.0 });
 
             let propagate_delta = &delta.dot(&w) * da_u;
-
             self.deltas.push(propagate_delta);
         }
 
@@ -191,6 +190,11 @@ impl FullyConnectedNetwork {
             Zip::from(&mut self.biases[i])
                 .and(&self.deltas[delta_index].sum_axis(Axis(0)))
                 .for_each(|bias, update| *bias -= update);
+
+            #[cfg(debug_assertions)]
+            {
+                dbg!(&self.deltas[delta_index], &self.weights[i], &self.biases[i]);
+            }
         }
     }
 

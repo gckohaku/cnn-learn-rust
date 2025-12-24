@@ -8,7 +8,9 @@ use ndarray::{
 use crate::{
     cnn_information::{
         ConvolutionInformation, LayerInformation, LayerType, PoolingInformation, PoolingType,
-    }, cnn_transformations, convolution_network, rand::Rand
+    },
+    cnn_transformations, convolution_network,
+    rand::Rand,
 };
 
 use ndarray::parallel::prelude::*;
@@ -120,7 +122,7 @@ impl ConvolutionNetwork {
                         / convolution_info.stride)
                         + 1,
                 );
-                
+
                 let bias_length = self.biases[convolution_count].len();
                 let spread_result = spread_filter.dot(&spread_image)
                     + self.biases[convolution_count]
@@ -157,8 +159,14 @@ impl ConvolutionNetwork {
                 reshape_result.swap_axes(0, 1);
                 activated_reshape_result.swap_axes(0, 1);
 
-                #[cfg(debug_assertions)]{
-                    dbg!(&self.filters[convolution_count], &self.biases[convolution_count], &reshape_result, &activated_reshape_result);
+                #[cfg(debug_assertions)]
+                {
+                    dbg!(
+                        &self.filters[convolution_count],
+                        &self.biases[convolution_count],
+                        &reshape_result,
+                        &activated_reshape_result
+                    );
                 }
 
                 // self.im2col_values.push(activated_spread_result.to_owned());
@@ -216,10 +224,10 @@ impl ConvolutionNetwork {
                         ))
                         .unwrap();
 
-                        #[cfg(debug_assertions)] 
-                        {
-                            dbg!(&reshape_pooling);
-                        }
+                    #[cfg(debug_assertions)]
+                    {
+                        dbg!(&reshape_pooling);
+                    }
 
                     self.values.push(reshape_pooling.to_owned());
                     self.values_after_activation
@@ -235,6 +243,11 @@ impl ConvolutionNetwork {
         let mut before_gradient = propagated_delta.to_owned();
         let mut convolution_count = self.filters.len();
         let mut pooling_count = self.pooling_mask.len();
+
+        #[cfg(debug_assertions)]
+        {
+            dbg!(&propagated_delta);
+        }
 
         for i in (0..self.layers_information.len()).rev() {
             // 畳み込み層の処理
@@ -261,12 +274,24 @@ impl ConvolutionNetwork {
                 // 求めた後に平坦化も行う
                 let da_u =
                     &self.values_after_activation[i + 1].map(|y| if *y > 0.0 { 1.0 } else { 0.0 });
+
+                #[cfg(debug_assertions)]
+                {
+                    println!("convolution");
+                    dbg!(&da_u);
+                }
+
                 let da_u_flatten = da_u
                     .to_shape((channel_value, sample_size * image_size.0 * image_size.1))
                     .unwrap();
 
                 // 前の層のデルタと導関数を適用したものでアダマール積を取る　これが現在の層のデルタになる
                 let delta = flatten_gradient * da_u_flatten;
+
+                #[cfg(debug_assertions)]
+                {
+                    dbg!(&delta);
+                }
 
                 // delta と im2col 変換して転置したノードの値を行列積する これがフィルタの勾配
                 let (spread_value, _) = cnn_transformations::im2col(
@@ -289,6 +314,11 @@ impl ConvolutionNetwork {
                     ])
                     .unwrap();
 
+                #[cfg(debug_assertions)]
+                {
+                    dbg!(&image_gradient_filter);
+                }
+
                 Zip::from(&mut self.filters[convolution_count])
                     .and(&image_gradient_filter)
                     .par_for_each(|filter, update| *filter -= eta * update);
@@ -296,13 +326,26 @@ impl ConvolutionNetwork {
                     .and(&delta.sum_axis(Axis(1)))
                     .for_each(|bias, update| *bias = eta * update);
 
+                #[cfg(debug_assertions)]
+                {
+                    dbg!(
+                        &self.filters[convolution_count],
+                        &self.biases[convolution_count]
+                    );
+                }
+
                 // let value_shape = self.values_after_activation[i].shape();
                 // if value_shape.len() != 4 {
                 //     panic!("value shape length is not 4");
                 // }
 
                 // 前の層に伝播するための処理を行う
-                let flatten_filter = new_owned_filter.to_shape([filter_shape[1] * filter_shape[2] * filter_shape[3], filter_shape[0]]).unwrap();
+                let flatten_filter = new_owned_filter
+                    .to_shape([
+                        filter_shape[1] * filter_shape[2] * filter_shape[3],
+                        filter_shape[0],
+                    ])
+                    .unwrap();
 
                 let next_flatten_gradient = flatten_filter.dot(&delta);
 
@@ -321,6 +364,11 @@ impl ConvolutionNetwork {
                 //     .unwrap();
                 // // 軸を入れ替える (C, B, F_h, F_w) -> (B, C, F_h, F_w)
                 // reshape_delta.swap_axes(0, 1);
+
+                #[cfg(debug_assertions)]
+                {
+                    dbg!(&image_gradient);
+                }
                 before_gradient = image_gradient.to_owned();
             }
             // プーリング層の処理
@@ -329,6 +377,12 @@ impl ConvolutionNetwork {
                 let pooling_info = self.layers_information[i].information.as_pooling().unwrap();
 
                 let mask = &self.pooling_mask[pooling_count];
+
+                #[cfg(debug_assertions)]
+                {
+                    println!("pooling");
+                    dbg!(&mask);
+                }
 
                 // 1次元ベクトルに平坦化
                 let pooling_ncols = mask.len();
@@ -348,9 +402,7 @@ impl ConvolutionNetwork {
 
                 // デルタを reshape
                 let value_shape = self.values_after_activation[i].shape();
-                if value_shape.len() != 4 {
-                    panic!("value shape length is not 4");
-                }
+
                 let delta = spread_delta
                     .to_shape((
                         value_shape[0],
@@ -359,6 +411,10 @@ impl ConvolutionNetwork {
                         value_shape[3],
                     ))
                     .unwrap();
+
+                #[cfg(debug_assertions)] {
+                    dbg!(&delta);
+                }
 
                 before_gradient = delta.to_owned();
             }

@@ -52,7 +52,12 @@ impl NeuralNetworkCNN {
 
         let convolution_result = self.cnn.forward(&inputs);
         let result_shape = convolution_result.shape();
-        self.convolution_last_shape = [batch_size, result_shape[1], result_shape[2], result_shape[3]];
+        self.convolution_last_shape = [
+            batch_size,
+            result_shape[1],
+            result_shape[2],
+            result_shape[3],
+        ];
         let spread_result = convolution_result
             .to_shape((
                 batch_size,
@@ -68,7 +73,15 @@ impl NeuralNetworkCNN {
         self.fcnn.backward(expects, eta);
         let gradient = self.fcnn.get_input_gradient();
 
-        let shaped_gradient = gradient.to_shape(self.convolution_last_shape).unwrap().to_owned();
+        let shaped_gradient = gradient
+            .to_shape(self.convolution_last_shape)
+            .unwrap()
+            .to_owned();
+
+        #[cfg(debug_assertions)]
+        {
+            dbg!(&shaped_gradient);
+        }
         self.cnn.backward(&shaped_gradient, eta);
     }
 
