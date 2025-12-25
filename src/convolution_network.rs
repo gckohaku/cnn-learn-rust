@@ -1,5 +1,4 @@
 use core::f64;
-use std::mem::swap;
 
 use ndarray::{
     Array, Array1, Array2, Array4, Axis, Zip, parallel::prelude::IntoParallelRefIterator,
@@ -9,7 +8,7 @@ use crate::{
     cnn_information::{
         ConvolutionInformation, LayerInformation, LayerType, PoolingInformation, PoolingType,
     },
-    cnn_transformations, convolution_network,
+    cnn_transformations,
     rand::Rand,
 };
 

@@ -177,6 +177,11 @@ impl FullyConnectedNetwork {
             self.deltas.push(propagate_delta);
         }
 
+        // 出力誤差から全結合層の入力への勾配を求める
+        let last_delta = self.deltas.last().unwrap();
+        let first_weight = self.weights.first().unwrap();
+        self.deltas.push(last_delta.dot(&first_weight.t()));
+
         // 求めたデルタを用いて勾配を計算する
         for i in (0..=other_output_index).rev() {
             let delta_index = other_output_index - i;
@@ -215,10 +220,7 @@ impl FullyConnectedNetwork {
 
     pub fn get_input_gradient(&self) -> Array2<f64> {
         let delta = self.deltas.last().unwrap().to_owned();
-        let w = self.weights[0].t();
-        let da_u = &self.values_after_activation[0].map(|y| if *y > 0.0 { 1.0 } else { 0.0 });
 
-        let propagate_delta = &delta.dot(&w) * da_u;
-        propagate_delta
+        delta
     }
 }
