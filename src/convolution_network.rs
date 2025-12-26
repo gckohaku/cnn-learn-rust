@@ -274,7 +274,7 @@ impl ConvolutionNetwork {
                 // 求めた後に平坦化も行う
                 // (B, C_o, O_h, O_w)
                 let mut da_u =
-                    self.values_after_activation[i + 1].map(|y| if *y > 0.0 { 1.0 } else { 0.0 });
+                    self.values[i + 1].map(|y| if *y > 0.0 { 1.0 } else { 0.0 });
 
                 #[cfg(debug_assertions)]
                 {
@@ -332,6 +332,7 @@ impl ConvolutionNetwork {
 
 
                 // 前の層に伝播するための処理を行う
+                // (C_o, C_i * F_h * F_w)
                 let flatten_filter = new_owned_filter
                     .to_shape([
                         filter_shape[0],
@@ -340,6 +341,8 @@ impl ConvolutionNetwork {
                     ])
                     .unwrap();
 
+                    // (C_i * F_h * F_w, C_o) × (C_o, B * O_h * O_w)
+                    // -> (C_i * F_h * F_w, B * O_h * O_w)
                 let next_flatten_gradient = flatten_filter.t().dot(&delta);
 
                 // 勾配を前の層に渡すために、col2im 変換する
@@ -368,6 +371,7 @@ impl ConvolutionNetwork {
 
                 #[cfg(debug_assertions)]
                 {
+                    dbg!(&next_flatten_gradient);
                     dbg!(&image_gradient);
                 }
                 before_gradient = image_gradient.to_owned();

@@ -89,6 +89,10 @@ impl NeuralNetworkCNN {
         self.fcnn.get_error()
     }
 
+    pub fn get_output(&self) -> Array2<f64> {
+        self.fcnn.get_output()
+    }
+
     // pub fn view_layers_information_state(&self) {
     //     dbg!(&self.layers_information);
     // }

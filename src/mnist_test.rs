@@ -65,6 +65,8 @@ pub fn mnist_process() {
             epoch,
             epoch_error / training_value as f64
         );
+        dbg!(nn.get_output());
+
     }
 
     // 処理時間表示
@@ -146,13 +148,13 @@ fn make_mini_batch_dataset(
 
     for index in indices {
         let trn_data: &Vec<f64> = &dataset.trn_img
-            [(*index) * IMAGE_DOT_VALUE..((*index) + 1) * IMAGE_DOT_VALUE]
+            [((*index) * IMAGE_DOT_VALUE)..(((*index) + 1) * IMAGE_DOT_VALUE)]
             .iter()
             .map(|&x| x as f64)
             .collect();
         inputs_array.extend_from_slice(trn_data);
 
-        let trn_label: &Vec<f64> = &dataset.trn_lbl[(*index) * 10..((*index) + 1) * 10]
+        let trn_label: &Vec<f64> = &dataset.trn_lbl[((*index) * 10)..(((*index) + 1) * 10)]
             .iter()
             .map(|&x| x as f64)
             .collect();

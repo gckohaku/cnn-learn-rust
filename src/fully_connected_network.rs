@@ -119,6 +119,8 @@ impl FullyConnectedNetwork {
                         dbg!(&processed_transposed_value, &after_softmax);
                     }
 
+                    dbg!(&after_softmax);
+
                     self.values_after_activation.push(after_softmax);
                 }
 
@@ -222,5 +224,9 @@ impl FullyConnectedNetwork {
         let delta = self.deltas.last().unwrap().to_owned();
 
         delta
+    }
+
+    pub fn get_output(&self) -> Array2<f64> {
+        self.values_after_activation.last().unwrap().to_owned()
     }
 }

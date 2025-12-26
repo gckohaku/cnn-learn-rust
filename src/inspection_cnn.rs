@@ -12,8 +12,14 @@ pub fn inspection() {
         [0.5, 0.75, 0.0, 1.0],
         [1.0, 0.0, 0.0, 1.0],
         [0.0, 0.25, 0.5, 0.75]
+    ]],
+    [[
+        [1.0, 0.0, 0.5, 0.75],
+        [0.75, 0.5, 1.0, 0.5],
+        [0.25, 0.5, 1.0, 0.25],
+        [0.75, 0.25, 0.25, 1.0]
     ]]];
-    let expect = ndarray::array![[0.0, 1.0, 0.0]];
+    let expect = ndarray::array![[0.0, 1.0, 0.0] ,[1.0, 0.0, 0.0]];
 
     let mut nn = make_neural_network();
 
@@ -24,11 +30,13 @@ pub fn inspection() {
     dbg!(nn.get_error());
     println!("backward");
     nn.backward(&expect, 0.01);
+
+    dbg!(nn.get_output());
 }
 
 fn make_neural_network() -> NeuralNetworkCNN {
     NeuralNetworkCNN::new(
-        1,
+        2,
         1,
         (4, 4),
         vec![3, 3],
