@@ -16,6 +16,7 @@ pub fn col2im(
         (input_size.1 - filter_size[1] + 2 * padding) / stride + 1,
     );
 
+    // (C_i * F_h * F_w, B * O_h * O_w) -> (C_i, F_h, F_w, B, O_h, O_w)
     let mut cols = spread_value
         .to_shape((
             channel_value,
@@ -26,10 +27,16 @@ pub fn col2im(
             output_size.1,
         ))
         .unwrap();
+
+    // (C_i, F_h, F_w, B, O_h, O_w)
+    // -> (B, F_h, F_w, C_i, O_h, O_w)
+    // -> (B, F_h, C_i, F_w, O_h, O_w)
+    // -> (B, C_i, F_h, F_w, O_h, O_w)
     cols.swap_axes(0, 3);
     cols.swap_axes(2, 3);
     cols.swap_axes(1, 2);
 
+    // (B, C_i, I_h * 2P + S - 1, I_w * 2P + S - 1)
     let mut images = Array4::<f64>::zeros((
         sample_value,
         channel_value,
