@@ -11,6 +11,8 @@ impl LinearBuilder {
 	pub fn new() -> Self {
 		let input_node_value = 0;
 		let output_node_value = 0;
+
+		LinearBuilder { input_node_value, output_node_value }
 	}
 
 	pub fn set_input_node_value(mut self, value: usize) -> Self {
