@@ -11,6 +11,7 @@ mod test_cnn_network;
 mod type_utilities;
 mod utilities;
 mod inspection_cnn;
+mod nn_modules;
 
 fn main() {
     mnist_test::mnist_process();
