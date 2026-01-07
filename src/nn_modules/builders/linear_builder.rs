@@ -2,7 +2,7 @@ use ndarray::{Array1, Array2};
 
 use crate::nn_modules::{NNModuleBuilder, linear::Linear};
 
-struct LinearBuilder {
+pub struct LinearBuilder {
 	_input_node_value: usize,
 	_output_node_value: usize,
 }
@@ -24,6 +24,7 @@ impl NNModuleBuilder for LinearBuilder {
 		Linear {
 			weights,
 			biases,
+			input_value: None,
 		}
 	}
 }

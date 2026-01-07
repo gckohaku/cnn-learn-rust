@@ -18,6 +18,7 @@ impl NNModuleBuilder for ReLUBuilder {
 	fn build(self) -> Self::BuiltObject {
 		ReLU {
 			inplace: self._inplace,
+			output_value: None,
 		}
 	}
 }
