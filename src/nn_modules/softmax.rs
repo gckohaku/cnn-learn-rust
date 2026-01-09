@@ -3,7 +3,9 @@ use ndarray::{Array2, Axis, Zip};
 use crate::nn_modules::NNModule;
 
 pub struct Softmax {
+    pub is_grad: bool,
 	// 勾配を求めるとき用に出力値を保持しておく
+    pub(super) grad: Option<Array2<f64>>,
 	pub(super) output_value: Option<Array2<f64>>,
 }
 

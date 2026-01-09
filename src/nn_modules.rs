@@ -1,13 +1,15 @@
+pub mod builders;
 pub mod linear;
 pub mod relu;
-pub mod builders;
 pub mod softmax;
 pub mod cross_entropy_loss;
+pub mod softmax_and_celoss;
 
 pub use linear::Linear;
 pub use relu::ReLU;
 pub use softmax::Softmax;
 pub use cross_entropy_loss::CrossEntropyLoss;
+pub use softmax_and_celoss::SoftmaxAndCELoss;
 
 pub trait NNModule {
 	type InputArray;

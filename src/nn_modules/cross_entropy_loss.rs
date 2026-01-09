@@ -3,6 +3,7 @@ use ndarray::{Array1, Array2, Zip};
 use crate::nn_modules::NNModule;
 
 pub struct CrossEntropyLoss {
+    pub is_grad: bool,
     // 勾配を求めるために期待値を保持しておく
     pub(super) expected_value: Option<Array2<f64>>,
 }

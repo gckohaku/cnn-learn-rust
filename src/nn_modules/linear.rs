@@ -6,8 +6,10 @@ use crate::nn_modules::NNModule;
 pub struct Linear{
 	pub weights: Array2<f64>,
 	pub biases: Array1<f64>,
+	pub is_grad: bool,
 	// 重みを更新するために保持するデータ
 	pub(super) input_value: Option<Array2<f64>>,
+	pub(super) grad: Option<Array2<f64>>,
 }
 
 impl NNModule for Linear {
@@ -15,6 +17,12 @@ impl NNModule for Linear {
 	type OutputArray = Array2<f64>;
 	fn forward(&mut self, input: Array2<f64>) -> Array2<f64> {
 		self.input_value = Some(input.clone());
+		
+
+		if self.is_grad == true {
+			
+		}
+		
 		input.dot(&self.weights) + &self.biases
 	}
 }
