@@ -10,10 +10,10 @@ pub struct Softmax {
 }
 
 impl NNModule for Softmax {
-    type InputArray = Array2<f64>;
+    type InputArray<'a> = &'a Array2<f64>;
     type OutputArray = Array2<f64>;
 
-    fn forward(&mut self, input: Array2<f64>) -> Array2<f64> {
+    fn forward<'a>(&mut self, input: &'a Array2<f64>) -> Array2<f64> {
 		let batch_size = input.nrows();
 
         let max_each_sample = input
@@ -23,7 +23,7 @@ impl NNModule for Softmax {
         let mut processed_transposed_value = Array2::zeros(input.dim());
 
         Zip::from(&mut processed_transposed_value)
-            .and(&input)
+            .and(input)
             .and_broadcast(&max_each_sample.to_shape((batch_size, 1)).unwrap())
             .for_each(|result, value, max| *result = (value - max).exp());
 

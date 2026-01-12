@@ -9,20 +9,21 @@ pub struct CrossEntropyLoss {
 }
 
 impl NNModule for CrossEntropyLoss {
-    type InputArray = (Array2<f64>, Array2<f64>);
+    
     type OutputArray = f64;
+    type InputArray<'a> = (&'a Array2<f64>, &'a Array2<f64>);
 
 	/// クロスエントロピー誤差の順伝播
 	/// 
 	/// * `input.0` - クロスエントロピー誤差を求めるときの入力値
-	/// * `input.1` - クロスエントロピー誤差を求めるときの期待値
-    fn forward(&mut self, input: (Array2<f64>, Array2<f64>)) -> f64 {
-		let nn_result = input.0;
-		let expect = input.1;
+	/// * `input.1` - クロスエントロピー誤差を求めるときのターゲット値
+    fn forward<'a>(&mut self, input: (&'a Array2<f64>, &'a Array2<f64>)) -> f64 {
+		let nn_result = &input.0;
+		let target = &input.1;
 
         let ln_output = nn_result.map(|x| (x + 1e-10).ln());
 
-        let error = -Zip::from(&expect)
+        let error = -Zip::from(*target)
             .and(&ln_output)
             .fold(0.0, |t, e, o| t + e * o);
 

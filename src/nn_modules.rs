@@ -12,9 +12,9 @@ pub use cross_entropy_loss::CrossEntropyLoss;
 pub use softmax_and_celoss::SoftmaxAndCELoss;
 
 pub trait NNModule {
-	type InputArray;
+	type InputArray<'a>;
 	type OutputArray;
-	fn forward(&mut self, input: Self::InputArray) -> Self::OutputArray;
+	fn forward<'a>(&mut self, input: Self::InputArray<'a>) -> Self::OutputArray;
 }
 
 pub trait NNModuleBuilder {
