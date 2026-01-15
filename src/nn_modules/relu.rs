@@ -1,4 +1,4 @@
-use ndarray::{Array2, ArrayD};
+use ndarray::{Array2, ArrayD, ArrayViewD};
 
 use crate::nn_modules::NNModule;
 
@@ -10,13 +10,12 @@ pub struct ReLU {
 }
 
 impl NNModule for ReLU {
-    type InputArray<'a> = &'a ArrayD<f64>;
     type OutputArray = ArrayD<f64>;
 
-    fn forward<'a>(&mut self, input: &'a ArrayD<f64>) -> ArrayD<f64> {
-        let mut clone_array = input.clone();
+    fn forward<'a>(&mut self, input: ArrayViewD<f64>) -> ArrayD<f64> {
+        let mut clone_array = input.to_owned();
         clone_array.par_mapv_inplace(|x| x.max(0.0));
-        self.output_value = Some(input.clone());
+        self.output_value = Some(clone_array.clone());
         if self.is_grad {
             self.grad = Some(self.calc_grad(&clone_array));
         }

@@ -1,4 +1,4 @@
-use ndarray::{Array1, Array2};
+use ndarray::{Array1, Array2, ArrayViewD, Ix2};
 
 use crate::nn_modules::NNModule;
 
@@ -13,14 +13,15 @@ pub struct Linear {
 }
 
 impl NNModule for Linear {
-    type InputArray<'a> = &'a Array2<f64>;
     type OutputArray = Array2<f64>;
-    fn forward<'a>(&mut self, input: &'a Array2<f64>) -> Array2<f64> {
+    fn forward<'a>(&mut self, input: ArrayViewD<f64>) -> Array2<f64> {
+        let input_2d = input.into_dimensionality::<Ix2>().unwrap();
+
         if self.is_grad == true {
-            self.grad = Some(input.clone().t().to_owned());
+            self.grad = Some(input_2d.t().to_owned());
         }
 
-        input.dot(&self.weights) + &self.biases
+        input_2d.dot(&self.weights) + &self.biases
     }
 }
 

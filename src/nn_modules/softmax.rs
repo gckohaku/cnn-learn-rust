@@ -1,4 +1,4 @@
-use ndarray::{Array2, Axis, Zip};
+use ndarray::{Array2, ArrayViewD, Axis, Ix2, Zip};
 
 use crate::nn_modules::NNModule;
 
@@ -10,20 +10,20 @@ pub struct Softmax {
 }
 
 impl NNModule for Softmax {
-    type InputArray<'a> = &'a Array2<f64>;
     type OutputArray = Array2<f64>;
 
-    fn forward<'a>(&mut self, input: &'a Array2<f64>) -> Array2<f64> {
-		let batch_size = input.nrows();
+    fn forward<'a>(&mut self, input: ArrayViewD<f64>) -> Array2<f64> {
+        let input_2d = input.into_dimensionality::<Ix2>().unwrap();
+		let batch_size = input_2d.nrows();
 
-        let max_each_sample = input
+        let max_each_sample = input_2d
             .map_axis(Axis(1), |row| row.fold(f64::NEG_INFINITY, |m, v| v.max(m)));
 
         // サンプルごとの最大値で引いた後に、それぞれに指数関数を適用
-        let mut processed_transposed_value = Array2::zeros(input.dim());
+        let mut processed_transposed_value = Array2::zeros(input_2d.dim());
 
         Zip::from(&mut processed_transposed_value)
-            .and(input)
+            .and(input_2d)
             .and_broadcast(&max_each_sample.to_shape((batch_size, 1)).unwrap())
             .for_each(|result, value, max| *result = (value - max).exp());
 
