@@ -1,6 +1,6 @@
-use ndarray::{Array2, ArrayViewD};
+use ndarray::{Array2, ArrayD, ArrayViewD};
 
-use crate::nn_modules::{CrossEntropyLoss, NNModule, Softmax, softmax};
+use crate::nn_modules::{CrossEntropyLoss, NNForwardInput, NNModule, Softmax, softmax};
 
 pub struct SoftmaxAndCELoss {
     pub softmax: Softmax,
@@ -11,10 +11,8 @@ pub struct SoftmaxAndCELoss {
     pub(super) grad: Option<Array2<f64>>,
 }
 
-impl NNModule for SoftmaxAndCELoss {
-    type OutputArray = f64;
-
-    fn forward<'a>(&mut self, input: ArrayViewD<f64>) -> f64 {
+impl<T> NNModule for SoftmaxAndCELoss {
+    fn forward<'a>(&mut self, input: NNForwardInput<'_, T> ) -> ArrayD<f64> {
         let input_values = input;
         let target_values = self.target.unwrap();
 
