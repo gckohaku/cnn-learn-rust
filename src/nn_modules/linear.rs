@@ -1,19 +1,24 @@
-use ndarray::{Array1, Array2, ArrayD, ArrayViewD, Ix2};
+use std::ops::Not;
 
-use crate::nn_modules::{NNForwardInput, NNModule};
+use ndarray::{Array1, Array2, ArrayD, Ix2, LinalgScalar, ScalarOperand};
+
+use crate::nn_modules::{HasOne, HasZero, NNForwardInput, NNModule};
 
 /// アフィン変換を行うニューラルネットワークモジュール
-pub struct Linear {
-    pub weights: Array2<f64>,
-    pub biases: Array1<f64>,
+pub struct Linear<T: Clone + Send + Sync> {
+    pub weights: Array2<T>,
+    pub biases: Array1<T>,
     pub is_grad: bool,
     // 重みを更新するために保持するデータ
-    pub(super) input_value: Option<Array2<f64>>,
-    pub(super) grad: Option<Array2<f64>>,
+    pub(super) input_value: Option<Array2<T>>,
+    pub(super) grad: Option<Array2<T>>,
 }
 
-impl NNModule for Linear {
-    fn forward<'a>(&mut self, forward_input: NNForwardInput) -> ArrayD<f64> {
+impl<T> NNModule<T> for Linear<T>
+where
+    T: ScalarOperand + Send + Sync + LinalgScalar,
+{
+    fn forward<'a>(&mut self, forward_input: NNForwardInput<'_, T>) -> ArrayD<T> {
         let input = forward_input.input;
         let input_2d = input.into_dimensionality::<Ix2>().unwrap();
 
@@ -21,9 +26,7 @@ impl NNModule for Linear {
             self.grad = Some(input_2d.t().to_owned());
         }
 
-        input_2d.dot(&self.weights) + &self.biases;
-        input_2d.into_dyn();
+        let result = input_2d.dot(&self.weights) + &self.biases;
+        result.into_dyn()
     }
 }
-
-

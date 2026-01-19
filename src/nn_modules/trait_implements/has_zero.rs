@@ -5,6 +5,7 @@ pub trait HasZero {
 
 impl HasZero for f64 {
 	type Output = f64;
+	#[inline]
 	fn get_zero() -> f64 {
 		0.0
 	}
@@ -12,6 +13,7 @@ impl HasZero for f64 {
 
 impl HasZero for f32 {
 	type Output = f32;
+	#[inline]
 	fn get_zero() -> f32 {
 		0.0
 	}

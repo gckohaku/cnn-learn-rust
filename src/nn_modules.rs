@@ -17,6 +17,10 @@ pub use softmax_and_celoss::SoftmaxAndCELoss;
 pub use nn_directed_graph::NNDirectedGraph;
 pub use nn_graph_node::NNGraphNode;
 
+pub use trait_implements::HasZero;
+pub use trait_implements::HasOne;
+pub use trait_implements::HasInfinity;
+
 pub struct NNForwardInput<'a, T> {
 	pub input: ArrayViewD<'a, T>,
 	pub target: Option<ArrayViewD<'a, T>>,
