@@ -6,7 +6,6 @@ pub mod cross_entropy_loss;
 pub mod softmax_and_celoss;
 pub mod nn_directed_graph;
 pub mod nn_graph_node;
-pub mod trait_implements;
 
 pub use linear::Linear;
 use ndarray::{ArrayD, ArrayViewD};
@@ -17,17 +16,13 @@ pub use softmax_and_celoss::SoftmaxAndCELoss;
 pub use nn_directed_graph::NNDirectedGraph;
 pub use nn_graph_node::NNGraphNode;
 
-pub use trait_implements::HasZero;
-pub use trait_implements::HasOne;
-pub use trait_implements::HasInfinity;
-
-pub struct NNForwardInput<'a, T> {
+pub struct NNForwardInput<'a, 'b, T> {
 	pub input: ArrayViewD<'a, T>,
-	pub target: Option<ArrayViewD<'a, T>>,
+	pub target: Option<ArrayViewD<'b, T>>,
 }
 
 pub trait NNModule<T> {
-	fn forward(&mut self, input: NNForwardInput<'_, T>) -> ArrayD<f64>;
+	fn forward(&mut self, input: &NNForwardInput<'_, '_, T>) -> ArrayD<T>;
 }
 
 pub trait NNModuleBuilder {

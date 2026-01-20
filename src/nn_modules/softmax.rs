@@ -1,6 +1,9 @@
-use ndarray::{Array2, ArrayD, ArrayViewD, Axis, Ix2, LinalgScalar, ScalarOperand, Zip};
+use std::{fmt::Debug, ops::{Div, Sub}};
 
-use crate::nn_modules::{HasInfinity, NNForwardInput, NNModule};
+use ndarray::{Array2, ArrayD, Axis, Ix2, LinalgScalar, ScalarOperand, Zip};
+use num_traits::Float;
+
+use crate::nn_modules::{NNForwardInput, NNModule};
 
 pub struct Softmax<T: Clone + Send + Sync> {
     pub is_grad: bool,
@@ -11,16 +14,17 @@ pub struct Softmax<T: Clone + Send + Sync> {
 
 impl<T> NNModule<T> for Softmax<T>
 where
-    T: ScalarOperand + Send + Sync + LinalgScalar + Ord + HasInfinity,
+    T: ScalarOperand + Send + Sync + LinalgScalar + Ord + Float + Debug,
+    for<'a> &'a T: Sub<Output = T> + Div<Output = T>
 {
-    fn forward<'a>(&mut self, forward_input: NNForwardInput<T>) -> ArrayD<T> {
-        let input = forward_input.input;
+    fn forward<'a>(&mut self, forward_input: &NNForwardInput<T>) -> ArrayD<T> {
+        let input = &forward_input.input;
 
-        let input_2d = input.into_dimensionality::<Ix2>().unwrap();
+        let input_2d = input.clone().into_dimensionality::<Ix2>().unwrap();
         let batch_size = input_2d.nrows();
 
         let max_each_sample =
-            input_2d.map_axis(Axis(1), |row| row.fold(T::get_neg_infinity(), |m, v| v.max(m)));
+            input_2d.map_axis(Axis(1), |row| row.fold(T::neg_infinity(), |m, v| *v.max(&m)));
 
         // サンプルごとの最大値で引いた後に、それぞれに指数関数を適用
         let mut processed_transposed_value = Array2::zeros(input_2d.dim());
@@ -46,6 +50,6 @@ where
 
         self.output_value = Some(after_softmax.clone());
 
-        after_softmax
+        after_softmax.into_dyn()
     }
 }

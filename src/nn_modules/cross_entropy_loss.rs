@@ -1,32 +1,34 @@
-use ndarray::{Array1, Array2, Zip};
+use std::ops::{Add, Mul};
 
-use crate::nn_modules::NNModule;
+use ndarray::{Array2, ArrayD, Ix2, LinalgScalar, Zip, arr0};
+use num_traits::{ConstZero, Float};
 
-pub struct CrossEntropyLoss {
+use crate::nn_modules::{NNForwardInput, NNModule};
+
+pub struct CrossEntropyLoss<T> {
     pub is_grad: bool,
     // 勾配を求めるために期待値を保持しておく
-    pub(super) expected_value: Option<Array2<f64>>,
+    pub(super) expected_value: Option<Array2<T>>,
 }
 
-impl NNModule for CrossEntropyLoss {
-    
-    type OutputArray = f64;
-    type InputArray<'a> = (&'a Array2<f64>, &'a Array2<f64>);
+impl<T> NNModule<T> for CrossEntropyLoss<T>
+where
+    T: Send + Sync + LinalgScalar + Float + ConstZero,
+    for<'a> &'a T: Add<T, Output = T> + Mul<Output = T>
+{
+    fn forward<'a>(&mut self, input: &NNForwardInput<'_, '_, T>) -> ArrayD<T> {
+        let nn_result = &input.input;
+        let target = input.target.as_ref().unwrap();
 
-	/// クロスエントロピー誤差の順伝播
-	/// 
-	/// * `input.0` - クロスエントロピー誤差を求めるときの入力値
-	/// * `input.1` - クロスエントロピー誤差を求めるときのターゲット値
-    fn forward<'a>(&mut self, input: (&'a Array2<f64>, &'a Array2<f64>)) -> f64 {
-		let nn_result = &input.0;
-		let target = &input.1;
+        let nn_result_2d = nn_result.clone().into_dimensionality::<Ix2>().unwrap();
+        let target_2d = target.clone().into_dimensionality::<Ix2>().unwrap();
 
-        let ln_output = nn_result.map(|x| (x + 1e-10).ln());
+        let ln_output = nn_result_2d.map(|x| (x + T::epsilon()).ln());
 
-        let error = -Zip::from(*target)
+        let error = -Zip::from(target_2d)
             .and(&ln_output)
-            .fold(0.0, |t, e, o| t + e * o);
+            .fold(T::ZERO, |t, e, o| t + e * o);
 
-		error
+        arr0(error).into_dyn()
     }
 }

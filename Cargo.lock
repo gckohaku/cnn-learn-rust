@@ -54,6 +54,7 @@ dependencies = [
  "mnist",
  "ndarray",
  "ndarray-ndimage",
+ "num-traits",
  "ron",
  "serde",
 ]
