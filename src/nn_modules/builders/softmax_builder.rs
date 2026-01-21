@@ -1,17 +1,21 @@
+use std::marker::PhantomData;
+
 use crate::nn_modules::{NNModuleBuilder, Softmax};
 
-pub struct SoftmaxBuilder {
+pub struct SoftmaxBuilder<T> {
     _is_grad: bool,
+    _phantom: PhantomData<T>
 }
 
-impl NNModuleBuilder for SoftmaxBuilder {
-    type BuiltObject = Softmax;
+impl<T> NNModuleBuilder<T> for SoftmaxBuilder<T> {
+    type BuiltObject = Softmax<T>;
 
     fn new() -> Self {
         let is_grad = false;
 
-        SoftmaxBuilder {
+        SoftmaxBuilder::<T> {
             _is_grad: is_grad,
+            _phantom: PhantomData,
         }
     }
 
@@ -24,7 +28,7 @@ impl NNModuleBuilder for SoftmaxBuilder {
     }
 }
 
-impl SoftmaxBuilder {
+impl<T> SoftmaxBuilder<T> {
     pub fn is_grad(mut self, value: bool) -> Self {
         self._is_grad = value;
         self

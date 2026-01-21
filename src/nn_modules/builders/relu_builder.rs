@@ -1,12 +1,15 @@
+use std::marker::PhantomData;
+
 use crate::nn_modules::{NNModuleBuilder, relu::ReLU};
 
-pub struct ReLUBuilder {
+pub struct ReLUBuilder<T> {
     _inplace: bool,
     _is_grad: bool,
+    _phantom: PhantomData<T>
 }
 
-impl NNModuleBuilder for ReLUBuilder {
-    type BuiltObject = ReLU;
+impl<T> NNModuleBuilder<T> for ReLUBuilder<T> where T: Clone {
+    type BuiltObject = ReLU<T>;
 
     fn new() -> Self {
         let inplace = false;
@@ -15,11 +18,12 @@ impl NNModuleBuilder for ReLUBuilder {
         Self {
             _inplace: inplace,
             _is_grad: is_grad,
+            _phantom: PhantomData,
         }
     }
 
     fn build(self) -> Self::BuiltObject {
-        ReLU {
+        ReLU::<T> {
             is_grad: self._is_grad,
             output_value: None,
             grad: None,
@@ -27,7 +31,7 @@ impl NNModuleBuilder for ReLUBuilder {
     }
 }
 
-impl ReLUBuilder {
+impl<T> ReLUBuilder<T> {
     pub fn is_grad(mut self, value: bool) -> Self {
         self._is_grad = value;
         self

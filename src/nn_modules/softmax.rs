@@ -5,7 +5,7 @@ use num_traits::Float;
 
 use crate::nn_modules::{NNForwardInput, NNModule};
 
-pub struct Softmax<T: Clone + Send + Sync> {
+pub struct Softmax<T> {
     pub is_grad: bool,
     // 勾配を求めるとき用に出力値を保持しておく
     pub(super) grad: Option<Array2<T>>,

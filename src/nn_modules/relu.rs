@@ -3,7 +3,7 @@ use num_traits::{ConstOne, ConstZero};
 
 use crate::nn_modules::{NNForwardInput, NNModule};
 
-pub struct ReLU<T: Clone + Send + Sync> {
+pub struct ReLU<T> {
     pub is_grad: bool,
     // 勾配計算のために保持するデータ
     pub(super) output_value: Option<ArrayD<T>>,

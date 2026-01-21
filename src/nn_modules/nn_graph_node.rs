@@ -1,6 +1,7 @@
 use crate::nn_modules::NNModule;
 
-pub struct NNGraphNode<'a, Module: NNModule> {
-	pub module_data: &'a Module,
-	pub child_nodes: Vec<&'a dyn NNModule>,
+// ループごとに新しくインスタンスを生成するか、Vec<Arc<T>> にすることを検討した方がいいかも
+pub struct NNGraphNode<'a, 'b, T> {
+	pub module_data: &'a dyn NNModule<T>,
+	pub child_nodes: Vec<&'b dyn NNModule<T>>,
 }

@@ -1,9 +1,9 @@
-use ndarray::{Array1, Array2, ArrayD, Ix2, LinalgScalar, ScalarOperand};
+use ndarray::{Array1, Array2, ArrayD, Ix2, LinalgScalar};
 
 use crate::nn_modules::{NNForwardInput, NNModule};
 
 /// アフィン変換を行うニューラルネットワークモジュール
-pub struct Linear<T: Clone + Send + Sync> {
+pub struct Linear<T> {
     pub weights: Array2<T>,
     pub biases: Array1<T>,
     pub is_grad: bool,
