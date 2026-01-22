@@ -15,5 +15,12 @@ impl<'a, T> NNModule<T> for NNDirectedGraph<'a, T> {
 impl<'a, T> NNDirectedGraph<'a, T> {
 	pub fn recursion_forward(&mut self, input: &NNForwardInput<'_, '_, T>, node: &NNGraphNode<'a, T>) -> ArrayD<T> {
 		let parent_data = self.graph.module_data.forward(input);
+
+		let next_input = NNForwardInput::<T> {
+			input: parent_data.view(),
+			target: input.target.to_owned(),
+		};
+
+		// 子ノードすべての結果を集約して、その結果を ArrayD にして返す
 	}
 }
