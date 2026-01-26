@@ -1,18 +1,17 @@
-use crate::nn_modules::NNModule;
+use crate::nn_modules::{NNDataStreamNode, NNModule};
 
 pub struct NNDataFlowTree<'a, T> {
-	pub tree: Vec<NNDataFlowNode<'a, T>>,
+	pub tree: Vec<NNDataStreamNode<'a, T>>,
 }
 
-pub struct NNDataFlowNode<'a, T> {
-	pub data: &'a dyn NNModule<T>,
-	pub children: Vec<NNDataFlowNode<'a, T>>,
-}
+// impl<'a, T> NNModule<T> for NNDataFlowTree<'a, T> {
+	
+// }
 
 impl<'a, T> NNDataFlowTree<'a, T> {
 	pub fn new() -> Self {
 		NNDataFlowTree::<T> {
-			tree: Vec::<NNDataFlowNode<'_, T>>::new(),
+			tree: Vec::<NNDataStreamNode<'_, T>>::new(),
 		}
 	}
 }

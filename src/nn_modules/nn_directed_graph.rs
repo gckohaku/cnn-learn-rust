@@ -1,9 +1,9 @@
 use ndarray::ArrayD;
 
-use crate::nn_modules::{NNForwardInput, NNGraphNode, NNModule};
+use crate::nn_modules::{NNForwardInput, NNDataStreamNode, NNModule};
 
 pub struct NNDirectedGraph<'a, T> {
-    pub graph: NNGraphNode<'a, T>,
+    pub graph: NNDataStreamNode<'a, T>,
 }
 
 // impl<'a, T> NNModule<T> for NNDirectedGraph<'a, T> {
