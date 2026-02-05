@@ -4,20 +4,18 @@ pub mod linear;
 pub mod relu;
 pub mod softmax;
 pub mod softmax_and_celoss;
-pub mod nn_directed_graph;
-pub mod nn_data_stream_node;
+pub mod nn_data_flow_node;
 pub mod nn_data_flow_tree;
 
 pub use cross_entropy_loss::CrossEntropyLoss;
 pub use linear::Linear;
 use ndarray::{ArrayD, ArrayViewD};
-pub use nn_directed_graph::NNDirectedGraph;
-pub use nn_data_stream_node::NNDataStreamNode;
 use num_traits::Zero;
 pub use relu::ReLU;
 pub use softmax::Softmax;
 pub use softmax_and_celoss::SoftmaxAndCELoss;
 pub use nn_data_flow_tree::NNDataFlowTree;
+pub use nn_data_flow_node::NNDataFlowNode;
 
 pub struct NNForwardInput<'a, 'b, T> {
     pub input: ArrayViewD<'a, T>,
