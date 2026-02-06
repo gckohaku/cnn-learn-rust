@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use ndarray::{ArrayD, IxDyn};
 use num_traits::Zero;
@@ -23,9 +23,12 @@ impl<T> NNDataFlowTree<T> {
     pub fn add_module(&mut self, index: usize, module: Box<dyn NNModule<T>>) -> NNDataFlowNode<T> {
         self.modules.push(module);
         self.current_count += 1;
+
         NNDataFlowNode::<T> {
             index: index,
-            tree: &self.add_module,
+            add_module_callback: Box::new(move |index, module| {
+                self.add_module(index, module);
+            }),
         }
     }
 }

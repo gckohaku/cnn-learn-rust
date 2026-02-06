@@ -4,5 +4,5 @@ use crate::nn_modules::{NNDataFlowTree, NNModule};
 
 pub struct NNDataFlowNode<T> {
 	pub index: usize,
-	pub add_module_callback: Rc<RefCell<Box<dyn FnMut(usize, dyn NNModule<T>) -> NNDataFlowNode<T>>>>,
+	pub add_module_callback: Box<dyn FnMut(usize, Box<dyn NNModule<T>>) -> NNDataFlowNode<T>>,
 }
