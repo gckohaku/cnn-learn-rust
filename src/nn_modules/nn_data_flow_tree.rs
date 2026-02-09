@@ -5,8 +5,9 @@ use num_traits::Zero;
 
 use crate::nn_modules::{NNDataFlowNode, NNForwardInput, NNModule};
 
-pub struct NNDataFlowTree<T> {
-    pub modules: Vec<Box<dyn NNModule<T>>>,
+pub struct NNDataFlowTree<'a, T> {
+    pub modules: Vec<Box<&'a dyn NNModule<T>>>,
+    adjacency_list: Vec<Vec<usize>>,
     current_count: usize,
 }
 
@@ -19,16 +20,43 @@ pub struct NNDataFlowTree<T> {
 //     }
 // }
 
-impl<T> NNDataFlowTree<T> {
-    pub fn add_module(&mut self, index: usize, module: Box<dyn NNModule<T>>) -> NNDataFlowNode<T> {
-        self.modules.push(module);
+impl<'a, T> NNDataFlowTree<'a, T> {
+    pub fn new() -> Self {
+        let modules = Vec::<Box<&'_ dyn NNModule<T>>>::new();
+        let adjacency_list = Vec::<Vec<usize>>::new();
+        let current_count = 0;
+
+        Self { modules, adjacency_list, current_count }
+    }
+
+    pub fn add_module(&'a mut self, module: &'a dyn NNModule<T>) -> NNDataFlowNode<'_, T> {
+        self.modules.push(Box::new(module));
+        let index = self.current_count;
         self.current_count += 1;
 
-        NNDataFlowNode::<T> {
+        self.adjacency_list.push(Vec::<usize>::new());
+
+        NNDataFlowNode::<'a, T> {
             index: index,
-            add_module_callback: Box::new(move |index, module| {
-                self.add_module(index, module);
-            }),
+            tree_module: self,
+        }
+    }
+
+    pub fn add_module_for_node(
+        &'a mut self,
+        from_index: usize,
+        module: &'a dyn NNModule<T>,
+    ) -> NNDataFlowNode<'a, T> {
+        self.modules.push(Box::new(module));
+        let to_index = self.current_count;
+        self.current_count += 1;
+
+        self.adjacency_list.push(Vec::<usize>::new());
+        self.adjacency_list[from_index].push(to_index);
+
+        NNDataFlowNode::<T> {
+            index: to_index,
+            tree_module: self,
         }
     }
 }

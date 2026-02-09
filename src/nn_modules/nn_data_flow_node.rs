@@ -2,7 +2,15 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::nn_modules::{NNDataFlowTree, NNModule};
 
-pub struct NNDataFlowNode<T> {
+pub struct NNDataFlowNode<'a, T> {
 	pub index: usize,
-	pub add_module_callback: Box<dyn FnMut(usize, Box<dyn NNModule<T>>) -> NNDataFlowNode<T>>,
+	pub tree_module: &'a mut NNDataFlowTree<'a, T>,
+}
+
+
+
+impl<'a, T> NNDataFlowNode<'a, T> {
+	pub fn add_module(&'a mut self, module: &'a dyn NNModule<T>) -> NNDataFlowNode<'_, T> {
+		self.tree_module.add_module_for_node(index, module)
+	}
 }
