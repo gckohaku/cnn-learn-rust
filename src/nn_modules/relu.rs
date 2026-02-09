@@ -1,5 +1,5 @@
 use ndarray::{ArrayD, LinalgScalar};
-use num_traits::{ConstOne, ConstZero};
+use num_traits::{ConstOne, ConstZero, Float};
 
 use crate::nn_modules::{NNForwardInput, NNModule};
 
