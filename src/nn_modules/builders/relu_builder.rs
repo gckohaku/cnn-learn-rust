@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 
 use crate::nn_modules::{NNModuleBuilder, relu::ReLU};
 
+
 pub struct ReLUBuilder<T> {
     _is_grad: bool,
     _phantom: PhantomData<T>

@@ -6,6 +6,7 @@ use crate::nn_modules::{
     cross_entropy_loss, softmax,
 };
 
+
 pub struct SoftmaxAndCELossBuilder<T> {
     _is_grad: bool,
     _phantom: PhantomData<T>,

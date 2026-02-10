@@ -10,4 +10,6 @@ pub fn run_test() {
 
 	let mut linear1_node = tree.add_module(&linear1);
 	let mut relu_node = linear1_node.add_module(&relu);
+
+	dbg!(&tree.modules);
 }

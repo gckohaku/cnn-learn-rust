@@ -1,10 +1,11 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, fmt::Debug, rc::Rc};
 
 use ndarray::{ArrayD, IxDyn};
-use num_traits::Zero;
+use num_traits::{Float, Zero};
 
 use crate::nn_modules::{NNDataFlowNode, NNForwardInput, NNModule};
 
+#[derive(Debug)]
 pub struct NNDataFlowTree<'a, T> {
     pub modules: Vec<Box<&'a dyn NNModule<T>>>,
     adjacency_list: Vec<Vec<usize>>,

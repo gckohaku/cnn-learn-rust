@@ -1,8 +1,11 @@
+use std::fmt::Debug;
+
 use ndarray::{Array1, Array2, ArrayD, Ix2, LinalgScalar};
 
 use crate::nn_modules::{NNForwardInput, NNModule};
 
 /// アフィン変換を行うニューラルネットワークモジュール
+#[derive(Debug)]
 pub struct Linear<T> {
     pub weights: Array2<T>,
     pub biases: Array1<T>,
@@ -14,7 +17,7 @@ pub struct Linear<T> {
 
 impl<T> NNModule<T> for Linear<T>
 where
-    T: Send + Sync + LinalgScalar,
+    T: Send + Sync + LinalgScalar + Debug,
 {
     fn forward<'a>(&mut self, forward_input: &NNForwardInput<'_, '_, T>) -> ArrayD<T> {
         let input = &forward_input.input;

@@ -5,6 +5,7 @@ use num_traits::Zero;
 
 use crate::nn_modules::{NNModuleBuilder, linear::Linear};
 
+
 pub struct LinearBuilder<T> {
     _input_node_value: usize,
     _output_node_value: usize,

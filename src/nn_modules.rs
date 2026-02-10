@@ -7,6 +7,8 @@ pub mod softmax_and_celoss;
 pub mod nn_data_flow_node;
 pub mod nn_data_flow_tree;
 
+use std::fmt::Debug;
+
 pub use cross_entropy_loss::CrossEntropyLoss;
 pub use linear::Linear;
 use ndarray::{ArrayD, ArrayViewD};
@@ -22,7 +24,7 @@ pub struct NNForwardInput<'a, 'b, T> {
     pub target: Option<ArrayViewD<'b, T>>,
 }
 
-pub trait NNModule<T> {
+pub trait NNModule<T>: Debug {
     fn forward(&mut self, input: &NNForwardInput<'_, '_, T>) -> ArrayD<T>;
 }
 

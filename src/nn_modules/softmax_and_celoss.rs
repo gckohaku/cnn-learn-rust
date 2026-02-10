@@ -5,6 +5,7 @@ use num_traits::{ConstZero, Float};
 
 use crate::nn_modules::{CrossEntropyLoss, NNForwardInput, NNModule, Softmax, softmax};
 
+#[derive(Debug)]
 pub struct SoftmaxAndCELoss<T> 
 {
     pub softmax: Softmax<T>,

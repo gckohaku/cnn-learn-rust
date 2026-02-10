@@ -1,10 +1,11 @@
-use std::ops::{Add, Mul};
+use std::{fmt::Debug, ops::{Add, Mul}};
 
 use ndarray::{Array2, ArrayD, Ix2, LinalgScalar, Zip, arr0};
 use num_traits::{ConstZero, Float};
 
 use crate::nn_modules::{NNForwardInput, NNModule};
 
+#[derive(Debug)]
 pub struct CrossEntropyLoss<T> {
     pub is_grad: bool,
     // 勾配を求めるために期待値を保持しておく
@@ -13,7 +14,7 @@ pub struct CrossEntropyLoss<T> {
 
 impl<T> NNModule<T> for CrossEntropyLoss<T>
 where
-    T: Send + Sync + LinalgScalar + Float + ConstZero,
+    T: Send + Sync + LinalgScalar + Float + ConstZero + Debug,
     for<'a> &'a T: Add<T, Output = T> + Mul<Output = T>
 {
     fn forward<'a>(&mut self, input: &NNForwardInput<'_, '_, T>) -> ArrayD<T> {
