@@ -5,12 +5,17 @@ use crate::nn_modules::{NNDataFlowTree, NNModule};
 #[derive(Debug)]
 pub struct NNDataFlowNode<'a, T> {
 	pub index: usize,
-	pub tree_module: &'a mut NNDataFlowTree<'a, T>,
+	pub add_module_callback: fn (usize, &'a dyn NNModule<T>) -> NNDataFlowNode<'_, T>,
 }
 
 
 impl<'a, T> NNDataFlowNode<'a, T> {
 	pub fn add_module(&'a mut self, module: &'a dyn NNModule<T>) -> NNDataFlowNode<'_, T> {
-		self.tree_module.add_module_for_node(self.index, module)
+		(self.add_module_callback)(self.index, module)
 	}
+}
+
+#[derive(Debug)]
+pub struct NNDataFlowNodeIndexInfo {
+	pub index: usize,
 }
