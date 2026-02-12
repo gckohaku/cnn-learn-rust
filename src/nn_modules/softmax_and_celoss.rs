@@ -1,4 +1,7 @@
-use std::{fmt::Debug, ops::{Add, Div, Mul, Sub}};
+use std::{
+    fmt::Debug,
+    ops::{Add, Div, Mul, Sub},
+};
 
 use ndarray::{Array2, ArrayD, ArrayViewD, Ix2, LinalgScalar, ScalarOperand};
 use num_traits::{ConstZero, Float};
@@ -6,8 +9,7 @@ use num_traits::{ConstZero, Float};
 use crate::nn_modules::{CrossEntropyLoss, NNForwardInput, NNModule, Softmax, softmax};
 
 #[derive(Debug)]
-pub struct SoftmaxAndCELoss<T> 
-{
+pub struct SoftmaxAndCELoss<T> {
     pub softmax: Softmax<T>,
     pub cross_entropy_loss: CrossEntropyLoss<T>,
     pub is_grad: bool,
@@ -15,13 +17,15 @@ pub struct SoftmaxAndCELoss<T>
     pub(super) grad: Option<Array2<T>>,
 }
 
-impl<T> NNModule<T> for SoftmaxAndCELoss<T> 
-where T: ScalarOperand + Send + Sync + LinalgScalar + Ord + Float + Debug + ConstZero,
-    for<'a, 'b> &'a T: Sub<Output = T> + Div<Output = T> + Add<T, Output = T> + Mul<Output = T> {
-    fn forward<'a, 'b>(&mut self, input: &NNForwardInput<'a, 'b, T> ) -> ArrayD<T> {
+impl<T> NNModule<T> for SoftmaxAndCELoss<T>
+where
+    T: ScalarOperand + Send + Sync + LinalgScalar + PartialOrd + Float + Debug + ConstZero,
+    for<'a, 'b> &'a T: Sub<Output = T> + Div<Output = T> + Add<T, Output = T> + Mul<Output = T>,
+{
+    fn forward<'a, 'b>(&mut self, input: &NNForwardInput<'a, 'b, T>) -> ArrayD<T> {
         let input_values = input;
 
-		let softmax_result = self.softmax.forward(&input_values);
+        let softmax_result = self.softmax.forward(&input_values);
         let softmax_result_view = softmax_result.view();
 
         let target = &input_values.target;
@@ -33,8 +37,13 @@ where T: ScalarOperand + Send + Sync + LinalgScalar + Ord + Float + Debug + Cons
         let loss = self.cross_entropy_loss.forward(ce_loss_input);
 
         let softmax_result_2d = softmax_result.into_dimensionality::<Ix2>().unwrap();
-        let target_2d = input.target.to_owned().unwrap().into_dimensionality::<Ix2>().unwrap();
-		self.grad = Some(&softmax_result_2d - &target_2d);
-		loss
+        let target_2d = input
+            .target
+            .to_owned()
+            .unwrap()
+            .into_dimensionality::<Ix2>()
+            .unwrap();
+        self.grad = Some(&softmax_result_2d - &target_2d);
+        loss
     }
 }

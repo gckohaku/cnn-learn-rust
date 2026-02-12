@@ -15,7 +15,7 @@ pub struct Softmax<T> {
 
 impl<T> NNModule<T> for Softmax<T>
 where
-    T: ScalarOperand + Send + Sync + LinalgScalar + Ord + Float + Debug,
+    T: ScalarOperand + Send + Sync + LinalgScalar + PartialOrd + Float + Debug,
     for<'a> &'a T: Sub<Output = T> + Div<Output = T>
 {
     fn forward<'a>(&mut self, forward_input: &NNForwardInput<T>) -> ArrayD<T> {
@@ -25,7 +25,7 @@ where
         let batch_size = input_2d.nrows();
 
         let max_each_sample =
-            input_2d.map_axis(Axis(1), |row| row.fold(T::neg_infinity(), |m, v| *v.max(&m)));
+            input_2d.map_axis(Axis(1), |row| row.fold(T::neg_infinity(), |m, v| if v > &m {*v} else {m}));
 
         // サンプルごとの最大値で引いた後に、それぞれに指数関数を適用
         let mut processed_transposed_value = Array2::zeros(input_2d.dim());

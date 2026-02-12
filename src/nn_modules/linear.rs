@@ -5,7 +5,6 @@ use ndarray::{Array1, Array2, ArrayD, Ix2, LinalgScalar};
 use crate::nn_modules::{NNForwardInput, NNModule};
 
 /// アフィン変換を行うニューラルネットワークモジュール
-#[derive(Debug)]
 pub struct Linear<T> {
     pub weights: Array2<T>,
     pub biases: Array1<T>,
@@ -29,5 +28,20 @@ where
 
         let result = input_2d.dot(&self.weights) + &self.biases;
         result.into_dyn()
+    }
+}
+
+impl<T> Debug for Linear<T>
+where
+    T: Debug,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Linear {{")?;
+        writeln!(f, "    weights shape: {:?}", self.weights.shape())?;
+        writeln!(f, "    biases shape: {:?}", self.biases.shape())?;
+        writeln!(f, "    is_grad: {:?}", self.is_grad)?;
+        writeln!(f, "    grad: {:?}", self.grad)?;
+        writeln!(f, "}}")?;
+        Ok(())
     }
 }

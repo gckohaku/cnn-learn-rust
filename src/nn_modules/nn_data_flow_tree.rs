@@ -53,6 +53,6 @@ impl<'a, T> NNDataFlowTree<'a, T> {
         self.adjacency_list.push(Vec::<usize>::new());
         self.adjacency_list[from_index].push(to_index);
 
-        NNDataFlowNodeIndexInfo { index: from_index }
+        NNDataFlowNodeIndexInfo { index: to_index }
     }
 }
