@@ -34,7 +34,7 @@ where
 
     fn build(self) -> Linear<T> {
         let weights = Array2::<T>::zeros((self._input_node_value, self._output_node_value));
-        let biases = Array1::<T>::zeros(self._input_node_value);
+        let biases = Array1::<T>::zeros(self._output_node_value);
 
         Linear::<T> {
             weights,
