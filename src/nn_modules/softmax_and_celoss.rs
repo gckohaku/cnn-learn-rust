@@ -30,6 +30,10 @@ where
 
         let target = &input_values.target;
 
+        if self.is_grad {
+            self.grad = Some(&softmax_result.to_owned().into_dimensionality::<Ix2>().unwrap() - &target.to_owned().unwrap().into_dimensionality::<Ix2>().unwrap());
+        }
+
         let ce_loss_input = &NNForwardInput {
             input: softmax_result_view,
             target: Some(target.clone().unwrap()),
