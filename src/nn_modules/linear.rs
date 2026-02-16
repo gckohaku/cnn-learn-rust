@@ -19,7 +19,7 @@ where
     T: Send + Sync + LinalgScalar + Debug,
 {
     fn forward<'a>(&mut self, forward_input: &NNForwardInput<'_, '_, T>) -> ArrayD<T> {
-        let input = &forward_input.input;
+        let input = &forward_input.inputs[0];
         let input_2d = input.clone().into_dimensionality::<Ix2>().unwrap();
 
         if self.is_grad == true {

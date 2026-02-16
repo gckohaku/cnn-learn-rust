@@ -18,7 +18,7 @@ where
     T: LinalgScalar + Send + Sync + PartialOrd + ConstZero + ConstOne + Debug,
 {
     fn forward<'a>(&mut self, forward_input: &NNForwardInput<'_, '_, T>) -> ArrayD<T> {
-        let input = &forward_input.input;
+        let input = &forward_input.inputs[0];
         let mut clone_array = input.to_owned();
         clone_array.par_mapv_inplace(|x| if x > T::ZERO { x } else { T::ZERO });
         self.output_value = Some(clone_array.clone());

@@ -10,7 +10,7 @@ pub struct NNDataFlowNode<'a, T> {
 
 
 impl<'a, T> NNDataFlowNode<'a, T> {
-	pub fn add_module(&'a mut self, module: &'a dyn NNModule<T>) -> NNDataFlowNode<'_, T> {
+	pub fn add_module(&'a mut self, module: &'a dyn NNModule<T>) -> NNDataFlowNode<'a, T> {
 		(self.add_module_callback)(self.index, module)
 	}
 }

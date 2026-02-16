@@ -19,7 +19,7 @@ where
     for<'a> &'a T: Sub<Output = T> + Div<Output = T>
 {
     fn forward<'a>(&mut self, forward_input: &NNForwardInput<T>) -> ArrayD<T> {
-        let input = &forward_input.input;
+        let input = &forward_input.inputs[0];
 
         let input_2d = input.clone().into_dimensionality::<Ix2>().unwrap();
         let batch_size = input_2d.nrows();

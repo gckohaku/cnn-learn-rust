@@ -18,7 +18,7 @@ where
     for<'a> &'a T: Add<T, Output = T> + Mul<Output = T>
 {
     fn forward<'a>(&mut self, input: &NNForwardInput<'_, '_, T>) -> ArrayD<T> {
-        let nn_result = &input.input;
+        let nn_result = &input.inputs[0];
         let target = input.target.as_ref().unwrap();
 
         let nn_result_2d = nn_result.clone().into_dimensionality::<Ix2>().unwrap();

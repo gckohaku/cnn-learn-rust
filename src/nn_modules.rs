@@ -6,6 +6,7 @@ pub mod softmax;
 pub mod softmax_and_celoss;
 pub mod nn_data_flow_node;
 pub mod nn_data_flow_tree;
+pub mod input_tensor;
 
 use std::fmt::Debug;
 
@@ -21,7 +22,7 @@ pub use nn_data_flow_node::NNDataFlowNode;
 pub use nn_data_flow_node::NNDataFlowNodeIndexInfo;
 
 pub struct NNForwardInput<'a, 'b, T> {
-    pub input: ArrayViewD<'a, T>,
+    pub inputs: Vec<ArrayViewD<'a, T>>,
     pub target: Option<ArrayViewD<'b, T>>,
 }
 

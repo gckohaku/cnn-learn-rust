@@ -35,7 +35,7 @@ where
         }
 
         let ce_loss_input = &NNForwardInput {
-            input: softmax_result_view,
+            inputs: vec![softmax_result_view],
             target: Some(target.clone().unwrap()),
         };
         let loss = self.cross_entropy_loss.forward(ce_loss_input);
