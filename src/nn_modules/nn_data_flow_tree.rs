@@ -1,7 +1,11 @@
 use ndarray::ArrayViewD;
 
-use crate::nn_modules::{NNDataFlowNode, NNDataFlowNodeIndexInfo, NNModule};
+use crate::nn_modules::{NNDataFlowNodeIndexInfo, NNModule, nn_sequential_node_flow::NNSequentialNodeFlow};
 use std::fmt::Debug;
+
+pub trait NNTreeNode {
+    const NECESSARY_VARIABLE_VALUE: usize;
+}
 
 #[derive(Debug, Clone)]
 pub struct NNDataFlowTree<'a, T> {
@@ -13,6 +17,7 @@ pub struct NNDataFlowTree<'a, T> {
     use_calculation_result_times: Vec<usize>,
     variables_stocks: Vec<Vec<ArrayViewD<'a, T>>>,
     input_variables: Vec<Vec<ArrayViewD<'a, T>>>,
+    sequential_flow: NNSequentialNodeFlow,
 }
 
 // impl<'a, T> NNModule<T> for NNDataFlowTree<T>
@@ -33,6 +38,7 @@ impl<'a, T> NNDataFlowTree<'a, T> {
         let use_calculation_result_times = Vec::<usize>::new();
         let variables_stocks = Vec::<Vec<ArrayViewD<'a, T>>>::new();
         let input_variables = Vec::<Vec<ArrayViewD<'a, T>>>::new();
+        let sequential_flow = NNSequentialNodeFlow::new();
 
         Self {
             modules,
@@ -42,6 +48,7 @@ impl<'a, T> NNDataFlowTree<'a, T> {
             use_calculation_result_times,
             variables_stocks,
             input_variables,
+            sequential_flow,
         }
     }
 
@@ -70,5 +77,13 @@ impl<'a, T> NNDataFlowTree<'a, T> {
         self.adjacency_list[from_index].push(to_index);
 
         NNDataFlowNodeIndexInfo { index: to_index }
+    }
+
+    fn calc_sequential_node_flow(&mut self) {
+        // 隣接リストは既に生成済みであるとする
+        // ルートノードに繋がっているモジュールには既に適切な変数が指定されているものとする
+        for index in &self.root_node_indices {
+            // そういやルートノードのインデックスの表現はどうしようか？
+        }
     }
 }

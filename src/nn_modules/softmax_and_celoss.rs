@@ -3,10 +3,10 @@ use std::{
     ops::{Add, Div, Mul, Sub},
 };
 
-use ndarray::{Array2, ArrayD, ArrayViewD, Ix2, LinalgScalar, ScalarOperand};
+use ndarray::{Array2, ArrayD, Ix2, LinalgScalar, ScalarOperand};
 use num_traits::{ConstZero, Float};
 
-use crate::nn_modules::{CrossEntropyLoss, NNForwardInput, NNModule, Softmax, softmax};
+use crate::nn_modules::{CrossEntropyLoss, NNForwardInput, NNModule, nn_data_flow_tree::NNTreeNode, Softmax};
 
 #[derive(Debug)]
 pub struct SoftmaxAndCELoss<T> {
@@ -50,4 +50,8 @@ where
         self.grad = Some(&softmax_result_2d - &target_2d);
         loss
     }
+}
+
+impl<T> NNTreeNode for SoftmaxAndCELoss<T> {
+    const NECESSARY_VARIABLE_VALUE: usize = 1;
 }

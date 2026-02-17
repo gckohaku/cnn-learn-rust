@@ -7,6 +7,7 @@ pub mod softmax_and_celoss;
 pub mod nn_data_flow_node;
 pub mod nn_data_flow_tree;
 pub mod input_tensor;
+pub mod nn_sequential_node_flow;
 
 use std::fmt::Debug;
 
@@ -18,7 +19,6 @@ pub use relu::ReLU;
 pub use softmax::Softmax;
 pub use softmax_and_celoss::SoftmaxAndCELoss;
 pub use nn_data_flow_tree::NNDataFlowTree;
-pub use nn_data_flow_node::NNDataFlowNode;
 pub use nn_data_flow_node::NNDataFlowNodeIndexInfo;
 
 pub struct NNForwardInput<'a, 'b, T> {

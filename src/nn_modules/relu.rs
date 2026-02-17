@@ -1,9 +1,9 @@
 use std::fmt::Debug;
 
 use ndarray::{ArrayD, LinalgScalar};
-use num_traits::{ConstOne, ConstZero, Float};
+use num_traits::{ConstOne, ConstZero};
 
-use crate::nn_modules::{NNForwardInput, NNModule};
+use crate::nn_modules::{NNForwardInput, NNModule, nn_data_flow_tree::NNTreeNode};
 
 #[derive(Debug)]
 pub struct ReLU<T> {
@@ -37,4 +37,8 @@ where
         let grad = result.map(|y: &T| if *y > T::ZERO { T::ONE } else { T::ZERO });
         grad
     }
+}
+
+impl<T> NNTreeNode for ReLU<T> {
+    const NECESSARY_VARIABLE_VALUE: usize = 1;
 }

@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use ndarray::{Array1, Array2, ArrayD, Ix2, LinalgScalar};
 
-use crate::nn_modules::{NNForwardInput, NNModule};
+use crate::nn_modules::{NNForwardInput, NNModule, nn_data_flow_tree::NNTreeNode};
 
 /// アフィン変換を行うニューラルネットワークモジュール
 pub struct Linear<T> {
@@ -44,4 +44,8 @@ where
         writeln!(f, "}}")?;
         Ok(())
     }
+}
+
+impl<T> NNTreeNode for Linear<T> {
+    const NECESSARY_VARIABLE_VALUE: usize = 1;
 }

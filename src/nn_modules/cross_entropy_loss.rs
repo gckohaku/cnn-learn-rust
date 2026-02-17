@@ -3,7 +3,7 @@ use std::{fmt::Debug, ops::{Add, Mul}};
 use ndarray::{Array2, ArrayD, Ix2, LinalgScalar, Zip, arr0};
 use num_traits::{ConstZero, Float};
 
-use crate::nn_modules::{NNForwardInput, NNModule};
+use crate::nn_modules::{NNForwardInput, NNModule, nn_data_flow_tree::NNTreeNode};
 
 #[derive(Debug)]
 pub struct CrossEntropyLoss<T> {
@@ -32,4 +32,8 @@ where
 
         arr0(error).into_dyn()
     }
+}
+
+impl<T> NNTreeNode for CrossEntropyLoss<T> {
+    const NECESSARY_VARIABLE_VALUE: usize = 1;
 }
