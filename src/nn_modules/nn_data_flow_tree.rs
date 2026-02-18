@@ -1,10 +1,12 @@
 use ndarray::ArrayViewD;
 
-use crate::nn_modules::{NNDataFlowNodeIndexInfo, NNModule, nn_sequential_node_flow::NNSequentialNodeFlow};
+use crate::nn_modules::{
+    NNDataFlowNodeIndexInfo, NNModule, nn_sequential_node_flow::NNSequentialNodeFlow,
+};
 use std::fmt::Debug;
 
-pub trait NNTreeNode {
-    const NECESSARY_VARIABLE_VALUE: usize;
+pub trait NNNodeNeedsParameter {
+    fn parameter_value(&self) -> usize;
 }
 
 #[derive(Debug, Clone)]
@@ -16,7 +18,7 @@ pub struct NNDataFlowTree<'a, T> {
     // 計算結果を使用する回数　この値が 0 になるまでは clone する
     use_calculation_result_times: Vec<usize>,
     variables_stocks: Vec<Vec<ArrayViewD<'a, T>>>,
-    input_variables: Vec<Vec<ArrayViewD<'a, T>>>,
+    input_variables_indices: Vec<Vec<usize>>,
     sequential_flow: NNSequentialNodeFlow,
 }
 
@@ -37,7 +39,7 @@ impl<'a, T> NNDataFlowTree<'a, T> {
         let root_node_indices = Vec::<usize>::new();
         let use_calculation_result_times = Vec::<usize>::new();
         let variables_stocks = Vec::<Vec<ArrayViewD<'a, T>>>::new();
-        let input_variables = Vec::<Vec<ArrayViewD<'a, T>>>::new();
+        let input_variables_indices = Vec::<Vec<usize>>::new();
         let sequential_flow = NNSequentialNodeFlow::new();
 
         Self {
@@ -47,12 +49,18 @@ impl<'a, T> NNDataFlowTree<'a, T> {
             root_node_indices,
             use_calculation_result_times,
             variables_stocks,
-            input_variables,
+            input_variables_indices,
             sequential_flow,
         }
     }
 
-    pub fn add_from_root(&mut self, module: &'a dyn NNModule<T>) -> NNDataFlowNodeIndexInfo {
+    pub fn add_from_root(
+        &mut self,
+        module: &'a (impl NNModule<T> + NNNodeNeedsParameter),
+    ) -> NNDataFlowNodeIndexInfo {
+        for _ in 0..module.parameter_value() {
+            
+        }
         self.modules.push(Box::new(module));
         let index = self.current_count;
         self.current_count += 1;

@@ -3,7 +3,7 @@ use std::{fmt::Debug, ops::{Div, Sub}};
 use ndarray::{Array2, ArrayD, Axis, Ix2, LinalgScalar, ScalarOperand, Zip};
 use num_traits::Float;
 
-use crate::nn_modules::{NNForwardInput, NNModule, nn_data_flow_tree::NNTreeNode};
+use crate::nn_modules::{NNForwardInput, NNModule, nn_data_flow_tree::NNNodeNeedsParameter};
 
 #[derive(Debug)]
 pub struct Softmax<T> {
@@ -55,6 +55,8 @@ where
     }
 }
 
-impl<T> NNTreeNode for Softmax<T> {
-    const NECESSARY_VARIABLE_VALUE: usize = 1;
+impl<T> NNNodeNeedsParameter for Softmax<T> {
+    fn parameter_value(&self) -> usize {
+        1
+    }
 }

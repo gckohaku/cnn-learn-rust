@@ -15,3 +15,7 @@ where
         return self.data.to_owned();
     }
 }
+
+impl<T> InputTensor<T> {
+    
+}

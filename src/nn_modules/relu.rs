@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use ndarray::{ArrayD, LinalgScalar};
 use num_traits::{ConstOne, ConstZero};
 
-use crate::nn_modules::{NNForwardInput, NNModule, nn_data_flow_tree::NNTreeNode};
+use crate::nn_modules::{NNForwardInput, NNModule, nn_data_flow_tree::NNNodeNeedsParameter};
 
 #[derive(Debug)]
 pub struct ReLU<T> {
@@ -39,6 +39,8 @@ where
     }
 }
 
-impl<T> NNTreeNode for ReLU<T> {
-    const NECESSARY_VARIABLE_VALUE: usize = 1;
+impl<T> NNNodeNeedsParameter for ReLU<T> {
+    fn parameter_value(&self) -> usize {
+        1
+    }
 }

@@ -6,7 +6,7 @@ use std::{
 use ndarray::{Array2, ArrayD, Ix2, LinalgScalar, ScalarOperand};
 use num_traits::{ConstZero, Float};
 
-use crate::nn_modules::{CrossEntropyLoss, NNForwardInput, NNModule, nn_data_flow_tree::NNTreeNode, Softmax};
+use crate::nn_modules::{CrossEntropyLoss, NNForwardInput, NNModule, nn_data_flow_tree::NNNodeNeedsParameter, Softmax};
 
 #[derive(Debug)]
 pub struct SoftmaxAndCELoss<T> {
@@ -52,6 +52,8 @@ where
     }
 }
 
-impl<T> NNTreeNode for SoftmaxAndCELoss<T> {
-    const NECESSARY_VARIABLE_VALUE: usize = 1;
+impl<T> NNNodeNeedsParameter for SoftmaxAndCELoss<T> {
+    fn parameter_value(&self) -> usize {
+        1
+    }
 }
