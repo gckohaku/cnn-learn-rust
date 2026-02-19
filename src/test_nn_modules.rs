@@ -17,5 +17,7 @@ pub fn run_test() {
 	let linear2_info = tree.add(&relu_info, &linear2);
 	let output_info = tree.add(&linear2_info, &output_module);
 
+	tree.calc_sequential_node_flow();
+
 	dbg!(tree);
 }

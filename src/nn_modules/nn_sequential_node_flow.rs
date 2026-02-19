@@ -15,6 +15,10 @@ impl NNSequentialNodeFlow {
         }
     }
 
+    pub fn add(&mut self, from: usize, to: usize) {
+        self.sequential_process_info.push((from, to));
+    }
+
     pub fn next(&mut self) -> &(usize, usize) {
         let index = self.current_index;
         self.current_index += 1;
