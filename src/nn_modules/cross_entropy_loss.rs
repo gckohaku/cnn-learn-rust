@@ -3,7 +3,7 @@ use std::{fmt::Debug, ops::{Add, Mul}};
 use ndarray::{Array2, ArrayD, Ix2, LinalgScalar, Zip, arr0};
 use num_traits::{ConstZero, Float};
 
-use crate::nn_modules::{NNForwardInput, NNModule, nn_data_flow_tree::NNNodeNeedsParameter};
+use crate::nn_modules::{NNForwardInput, NNModule};
 
 #[derive(Debug)]
 pub struct CrossEntropyLoss<T> {
@@ -17,6 +17,10 @@ where
     T: Send + Sync + LinalgScalar + Float + ConstZero + Debug,
     for<'a> &'a T: Add<T, Output = T> + Mul<Output = T>
 {
+    fn necessary_parameter_value(&self) -> usize {
+        1
+    }
+
     fn forward<'a>(&mut self, input: &NNForwardInput<'_, '_, T>) -> ArrayD<T> {
         let nn_result = &input.inputs[0];
         let target = input.target.as_ref().unwrap();
@@ -34,8 +38,8 @@ where
     }
 }
 
-impl<T> NNNodeNeedsParameter for CrossEntropyLoss<T> {
-    fn parameter_value(&self) -> usize {
-        1
-    }
-}
+// impl<T> NNNodeNeedsParameter for CrossEntropyLoss<T> {
+//     fn parameter_value(&self) -> usize {
+//         1
+//     }
+// }

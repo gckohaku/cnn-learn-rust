@@ -1,26 +1,26 @@
 pub mod builders;
+pub mod calculation_node_state;
 pub mod cross_entropy_loss;
+pub mod input_tensor;
 pub mod linear;
+pub mod nn_data_flow_node;
+pub mod nn_data_flow_tree;
+pub mod nn_sequential_node_flow;
 pub mod relu;
 pub mod softmax;
 pub mod softmax_and_celoss;
-pub mod nn_data_flow_node;
-pub mod nn_data_flow_tree;
-pub mod input_tensor;
-pub mod nn_sequential_node_flow;
-pub mod calculation_node_state;
 
 use std::fmt::Debug;
 
 pub use cross_entropy_loss::CrossEntropyLoss;
 pub use linear::Linear;
 use ndarray::{ArrayD, ArrayViewD};
+pub use nn_data_flow_node::NNDataFlowNodeIndexInfo;
+pub use nn_data_flow_tree::NNDataFlowTree;
 use num_traits::Zero;
 pub use relu::ReLU;
 pub use softmax::Softmax;
 pub use softmax_and_celoss::SoftmaxAndCELoss;
-pub use nn_data_flow_tree::NNDataFlowTree;
-pub use nn_data_flow_node::NNDataFlowNodeIndexInfo;
 
 pub struct NNForwardInput<'a, 'b, T> {
     pub inputs: Vec<ArrayViewD<'a, T>>,
@@ -28,12 +28,12 @@ pub struct NNForwardInput<'a, 'b, T> {
 }
 
 pub trait NNModule<T>: Debug {
+    fn necessary_parameter_value(&self) -> usize;
+
     fn forward(&mut self, input: &NNForwardInput<'_, '_, T>) -> ArrayD<T>;
 }
 
-pub trait NNModuleBuilder<T>
-where
-{
+pub trait NNModuleBuilder<T> {
     type BuiltObject;
     fn new() -> Self;
     fn build(self) -> Self::BuiltObject;

@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use ndarray::{ArrayD, LinalgScalar};
 use num_traits::{ConstOne, ConstZero};
 
-use crate::nn_modules::{NNForwardInput, NNModule, nn_data_flow_tree::NNNodeNeedsParameter};
+use crate::nn_modules::{NNForwardInput, NNModule};
 
 #[derive(Debug)]
 pub struct ReLU<T> {
@@ -17,6 +17,10 @@ impl<T> NNModule<T> for ReLU<T>
 where
     T: LinalgScalar + Send + Sync + PartialOrd + ConstZero + ConstOne + Debug,
 {
+    fn necessary_parameter_value(&self) -> usize {
+        1
+    }
+
     fn forward<'a>(&mut self, forward_input: &NNForwardInput<'_, '_, T>) -> ArrayD<T> {
         let input = &forward_input.inputs[0];
         let mut clone_array = input.to_owned();
@@ -39,8 +43,8 @@ where
     }
 }
 
-impl<T> NNNodeNeedsParameter for ReLU<T> {
-    fn parameter_value(&self) -> usize {
-        1
-    }
-}
+// impl<T> NNNodeNeedsParameter for ReLU<T> {
+//     fn parameter_value(&self) -> usize {
+//         1
+//     }
+// }

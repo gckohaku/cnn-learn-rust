@@ -1,13 +1,10 @@
 use ndarray::{ArrayD, ArrayViewD};
 
 use crate::nn_modules::{
-    NNDataFlowNodeIndexInfo, NNModule, calculation_node_state::CalculationNodeState, input_tensor::InputTensor, nn_sequential_node_flow::NNSequentialNodeFlow
+    NNDataFlowNodeIndexInfo, NNModule, calculation_node_state::CalculationNodeState,
+    input_tensor::InputTensor, nn_sequential_node_flow::NNSequentialNodeFlow,
 };
 use std::{collections::VecDeque, fmt::Debug};
-
-pub trait NNNodeNeedsParameter {
-    fn parameter_value(&self) -> usize;
-}
 
 #[derive(Debug, Clone)]
 pub struct NNDataFlowTree<'a, T> {
@@ -57,24 +54,21 @@ where
         }
     }
 
-    pub fn add_from_root(
-        &mut self,
-        module: &'a (impl NNModule<T> + NNNodeNeedsParameter),
-    ) -> NNDataFlowNodeIndexInfo {
-        let parameter_value = module.parameter_value();
+    pub fn add_from_root(&mut self, module: &'a dyn NNModule<T>) -> NNDataFlowNodeIndexInfo {
+        let parameter_value = module.necessary_parameter_value();
         for i in 0..parameter_value {
             self.modules.push(Box::new(&InputTensor {}));
             self.adjacency_list.push(Vec::<usize>::new());
             self.adjacency_list[self.current_count + i].push(self.current_count + parameter_value);
         }
         self.current_count += 1;
-        
+
         self.modules.push(Box::new(module));
         let index = self.current_count;
         self.current_count += 1;
 
         self.adjacency_list.push(Vec::<usize>::new());
-        
+
         for i in 1..=parameter_value {
             self.root_node_parameters.push(index - i);
         }
@@ -104,18 +98,37 @@ where
 
         let mut calculation_queue = VecDeque::<CalculationNodeState>::new();
 
-        self.input_variables_indices.resize(self.modules.len(), Vec::<usize>::new());
+        self.input_variables_indices
+            .resize(self.modules.len(), Vec::<usize>::new());
+
+        let mut queue_match =
+            |source: usize, destination: usize, queue: &mut VecDeque<CalculationNodeState>| {
+                match queue.iter().position(|state| state.id == destination) {
+                    None => queue.push_back(CalculationNodeState {
+                        id: destination,
+                        args: vec![source],
+                    }),
+                    Some(pos) => queue.get_mut(pos).unwrap().args.push(source),
+                }
+            };
 
         // 入力パラメータがどのノードに渡されるのかを表現する
         for index in &self.root_node_parameters {
             for destination in &self.adjacency_list[*index] {
-                self.sequential_flow.add(*index, *destination);
+                self.sequential_flow.add(*index, vec![*destination]);
                 self.input_variables_indices[*destination].push(*index);
 
-                match calculation_queue.iter().position(|state| state.id == *destination) {
-                    None => {calculation_queue.push_back(CalculationNodeState { id: *destination, args: vec![*index] })},
-                    Some(pos) => calculation_queue.get_mut(pos).unwrap().args.push(*index),
-                }
+                // match calculation_queue
+                //     .iter()
+                //     .position(|state| state.id == *destination)
+                // {
+                //     None => calculation_queue.push_back(CalculationNodeState {
+                //         id: *destination,
+                //         args: vec![*index],
+                //     }),
+                //     Some(pos) => calculation_queue.get_mut(pos).unwrap().args.push(*index),
+                // }
+                queue_match(*index, *destination, &mut calculation_queue);
             }
         }
 
@@ -124,9 +137,39 @@ where
             let current_state = calculation_queue.pop_front().unwrap();
             let current_id = current_state.id;
             let current_module = &self.modules[current_id];
-            // let necessary_parameter_value = ;
-            // parameter_value メソッドは NNModule トレイトで要請した方がいいかもしれない
-            // パラメータを必要としない場合は、結果を 0 とすればよい
+            let necessary_parameter_value = current_module.necessary_parameter_value();
+            let current_parameter_value = current_state.args.len();
+
+            if current_parameter_value > necessary_parameter_value {
+                panic!(
+                    "Parameter value is Exceeded\n    necessary: {}\n    current: {}",
+                    necessary_parameter_value, current_parameter_value
+                );
+            }
+            if current_parameter_value < necessary_parameter_value {
+                calculation_queue.push_back(current_state);
+                continue;
+            }
+
+            // パラメータの数がちょうど求められていた数の場合は、self.sequential_flow に情報を入れ、calculation_queue に必要な情報を入れる
+            let destinations = &self.adjacency_list[current_id];
+            let push_index = self.sequential_flow.add(current_id, vec![]) - 1;
+
+            for dst in destinations {
+                // match calculation_queue.iter().position(|state| state.id == *dst) {
+                //     None => calculation_queue.push_back(CalculationNodeState {
+                //         id: *dst,
+                //         args: vec![current_id],
+                //     }),
+                //     Some(pos) => calculation_queue
+                //         .get_mut(pos)
+                //         .unwrap()
+                //         .args
+                //         .push(current_id),
+                // }
+                queue_match(current_id, *dst, &mut calculation_queue);
+                self.sequential_flow.add_destination_to_index(push_index, *dst);
+            }
         }
     }
 }

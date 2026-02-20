@@ -3,7 +3,7 @@ use std::{fmt::Debug, ops::{Div, Sub}};
 use ndarray::{Array2, ArrayD, Axis, Ix2, LinalgScalar, ScalarOperand, Zip};
 use num_traits::Float;
 
-use crate::nn_modules::{NNForwardInput, NNModule, nn_data_flow_tree::NNNodeNeedsParameter};
+use crate::nn_modules::{NNForwardInput, NNModule};
 
 #[derive(Debug)]
 pub struct Softmax<T> {
@@ -18,6 +18,10 @@ where
     T: ScalarOperand + Send + Sync + LinalgScalar + PartialOrd + Float + Debug,
     for<'a> &'a T: Sub<Output = T> + Div<Output = T>
 {
+    fn necessary_parameter_value(&self) -> usize {
+        1
+    }
+
     fn forward<'a>(&mut self, forward_input: &NNForwardInput<T>) -> ArrayD<T> {
         let input = &forward_input.inputs[0];
 
@@ -52,11 +56,5 @@ where
         self.output_value = Some(after_softmax.clone());
 
         after_softmax.into_dyn()
-    }
-}
-
-impl<T> NNNodeNeedsParameter for Softmax<T> {
-    fn parameter_value(&self) -> usize {
-        1
     }
 }

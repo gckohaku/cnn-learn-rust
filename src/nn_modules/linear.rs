@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use ndarray::{Array1, Array2, ArrayD, Ix2, LinalgScalar};
 
-use crate::nn_modules::{NNForwardInput, NNModule, nn_data_flow_tree::NNNodeNeedsParameter};
+use crate::nn_modules::{NNForwardInput, NNModule};
 
 /// アフィン変換を行うニューラルネットワークモジュール
 pub struct Linear<T> {
@@ -18,6 +18,10 @@ impl<T> NNModule<T> for Linear<T>
 where
     T: Send + Sync + LinalgScalar + Debug,
 {
+    fn necessary_parameter_value(&self) -> usize {
+        1
+    }
+
     fn forward<'a>(&mut self, forward_input: &NNForwardInput<'_, '_, T>) -> ArrayD<T> {
         let input = &forward_input.inputs[0];
         let input_2d = input.clone().into_dimensionality::<Ix2>().unwrap();
@@ -46,8 +50,8 @@ where
     }
 }
 
-impl<T> NNNodeNeedsParameter for Linear<T> {
-    fn parameter_value(&self) -> usize {
-        1
-    }
-}
+// impl<T> NNNodeNeedsParameter for Linear<T> {
+//     fn parameter_value(&self) -> usize {
+//         1
+//     }
+// }
