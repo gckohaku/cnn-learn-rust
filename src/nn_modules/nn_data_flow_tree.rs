@@ -15,7 +15,7 @@ pub struct NNDataFlowTree<'a, T> {
     // 計算結果を使用する回数　この値が 0 になるまでは clone する
     use_calculation_result_times: Vec<usize>,
     variables_stocks: Vec<Vec<ArrayViewD<'a, T>>>,
-    input_variables_indices: Vec<Vec<usize>>,
+    // input_variables_indices: Vec<Vec<usize>>,            
     sequential_flow: NNSequentialNodeFlow,
 }
 
@@ -39,7 +39,7 @@ where
         let root_node_indices = Vec::<usize>::new();
         let use_calculation_result_times = Vec::<usize>::new();
         let variables_stocks = Vec::<Vec<ArrayViewD<'a, T>>>::new();
-        let input_variables_indices = Vec::<Vec<usize>>::new();
+        // let input_variables_indices = Vec::<Vec<usize>>::new();
         let sequential_flow = NNSequentialNodeFlow::new();
 
         Self {
@@ -49,7 +49,7 @@ where
             root_node_parameters: root_node_indices,
             use_calculation_result_times,
             variables_stocks,
-            input_variables_indices,
+            // input_variables_indices,
             sequential_flow,
         }
     }
@@ -98,8 +98,8 @@ where
 
         let mut calculation_queue = VecDeque::<CalculationNodeState>::new();
 
-        self.input_variables_indices
-            .resize(self.modules.len(), Vec::<usize>::new());
+        // self.input_variables_indices
+        //     .resize(self.modules.len(), Vec::<usize>::new());
 
         let queue_match =
             |source: usize, destination: usize, queue: &mut VecDeque<CalculationNodeState>| {
@@ -116,7 +116,7 @@ where
         for index in &self.root_node_parameters {
             for destination in &self.adjacency_list[*index] {
                 self.sequential_flow.add(*index, vec![*destination]);
-                self.input_variables_indices[*destination].push(*index);
+                // self.input_variables_indices[*destination].push(*index);
 
                 queue_match(*index, *destination, &mut calculation_queue);
             }
