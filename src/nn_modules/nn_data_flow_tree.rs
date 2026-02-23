@@ -1,4 +1,4 @@
-use ndarray::{ArrayD, ArrayViewD};
+use ndarray::ArrayViewD;
 
 use crate::nn_modules::{
     NNDataFlowNodeIndexInfo, NNModule, calculation_node_state::CalculationNodeState,
@@ -101,7 +101,7 @@ where
         self.input_variables_indices
             .resize(self.modules.len(), Vec::<usize>::new());
 
-        let mut queue_match =
+        let queue_match =
             |source: usize, destination: usize, queue: &mut VecDeque<CalculationNodeState>| {
                 match queue.iter().position(|state| state.id == destination) {
                     None => queue.push_back(CalculationNodeState {
@@ -118,16 +118,6 @@ where
                 self.sequential_flow.add(*index, vec![*destination]);
                 self.input_variables_indices[*destination].push(*index);
 
-                // match calculation_queue
-                //     .iter()
-                //     .position(|state| state.id == *destination)
-                // {
-                //     None => calculation_queue.push_back(CalculationNodeState {
-                //         id: *destination,
-                //         args: vec![*index],
-                //     }),
-                //     Some(pos) => calculation_queue.get_mut(pos).unwrap().args.push(*index),
-                // }
                 queue_match(*index, *destination, &mut calculation_queue);
             }
         }
@@ -156,17 +146,6 @@ where
             let push_index = self.sequential_flow.add(current_id, vec![]) - 1;
 
             for dst in destinations {
-                // match calculation_queue.iter().position(|state| state.id == *dst) {
-                //     None => calculation_queue.push_back(CalculationNodeState {
-                //         id: *dst,
-                //         args: vec![current_id],
-                //     }),
-                //     Some(pos) => calculation_queue
-                //         .get_mut(pos)
-                //         .unwrap()
-                //         .args
-                //         .push(current_id),
-                // }
                 queue_match(current_id, *dst, &mut calculation_queue);
                 self.sequential_flow.add_destination_to_index(push_index, *dst);
             }
