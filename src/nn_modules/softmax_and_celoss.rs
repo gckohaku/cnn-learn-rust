@@ -3,12 +3,12 @@ use std::{
     ops::{Add, Div, Mul, Sub},
 };
 
-use ndarray::{Array2, ArrayD, Ix2, LinalgScalar, ScalarOperand};
+use ndarray::{Array2, ArrayD, Ix2, LinalgScalar};
 use num_traits::{ConstZero, Float};
 
 use crate::nn_modules::{CrossEntropyLoss, NNForwardInput, NNModule, Softmax};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SoftmaxAndCELoss<T> {
     pub softmax: Softmax<T>,
     pub cross_entropy_loss: CrossEntropyLoss<T>,
@@ -19,7 +19,7 @@ pub struct SoftmaxAndCELoss<T> {
 
 impl<T> NNModule<T> for SoftmaxAndCELoss<T>
 where
-    T: ScalarOperand + Send + Sync + LinalgScalar + PartialOrd + Float + Debug + ConstZero,
+    T: Send + Sync + LinalgScalar + PartialOrd + Float + Debug + ConstZero,
     for<'a, 'b> &'a T: Sub<Output = T> + Div<Output = T> + Add<T, Output = T> + Mul<Output = T>,
 {
     fn necessary_parameter_value(&self) -> usize {

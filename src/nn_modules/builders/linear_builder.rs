@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use ndarray::{Array1, Array2};
 use num_traits::Zero;
 
-use crate::nn_modules::{NNModuleBuilder, linear::Linear};
+use crate::nn_modules::{NNModuleBuilder, NNModuleType, linear::Linear};
 
 
 pub struct LinearBuilder<T> {
@@ -17,7 +17,7 @@ impl<T> NNModuleBuilder<T> for LinearBuilder<T>
 where
     T: Clone + Zero,
 {
-    type BuiltObject = Linear<T>;
+    type BuiltObject = NNModuleType<T>;
 
     fn new() -> Self {
         let input_node_value = 0;
@@ -32,17 +32,17 @@ where
         }
     }
 
-    fn build(self) -> Linear<T> {
+    fn build(self) -> NNModuleType<T> {
         let weights = Array2::<T>::zeros((self._input_node_value, self._output_node_value));
         let biases = Array1::<T>::zeros(self._output_node_value);
 
-        Linear::<T> {
+        NNModuleType::Linear(Linear::<T> {
             weights,
             biases,
             is_grad: self._is_grad,
             input_value: None,
             grad: None,
-        }
+        })
     }
 }
 

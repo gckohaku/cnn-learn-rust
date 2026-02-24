@@ -5,6 +5,7 @@ use ndarray::{Array1, Array2, ArrayD, Ix2, LinalgScalar};
 use crate::nn_modules::{NNForwardInput, NNModule};
 
 /// アフィン変換を行うニューラルネットワークモジュール
+#[derive(Clone)]
 pub struct Linear<T> {
     pub weights: Array2<T>,
     pub biases: Array1<T>,
@@ -22,7 +23,7 @@ where
         1
     }
 
-    fn forward<'a>(&mut self, forward_input: &NNForwardInput<'_, '_, T>) -> ArrayD<T> {
+    fn forward(&mut self, forward_input: &NNForwardInput<'_, '_, T>) -> ArrayD<T> {
         let input = &forward_input.inputs[0];
         let input_2d = input.clone().into_dimensionality::<Ix2>().unwrap();
 

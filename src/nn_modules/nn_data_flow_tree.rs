@@ -1,21 +1,24 @@
-use ndarray::ArrayViewD;
+use ndarray::{ArrayViewD, LinalgScalar};
+use num_traits::{ConstOne, ConstZero, Float};
 
 use crate::nn_modules::{
-    NNDataFlowNodeIndexInfo, NNModule, calculation_node_state::CalculationNodeState,
+    NNDataFlowNodeIndexInfo, NNModule, NNModuleType, calculation_node_state::CalculationNodeState,
     input_tensor::InputTensor, nn_sequential_node_flow::NNSequentialNodeFlow,
 };
-use std::{collections::VecDeque, fmt::Debug};
+use std::{
+    collections::VecDeque, fmt::Debug, marker::PhantomData, ops::{Add, Div, Mul, Sub}
+};
 
 #[derive(Debug, Clone)]
 pub struct NNDataFlowTree<'a, T> {
-    pub modules: Vec<Box<&'a dyn NNModule<T>>>,
+    pub modules: Vec<NNModuleType<T>>,
     adjacency_list: Vec<Vec<usize>>,
     current_count: usize,
     root_node_parameters: Vec<usize>,
     // 計算結果を使用する回数　この値が 0 になるまでは clone する
     use_calculation_result_times: Vec<usize>,
     variables_stocks: Vec<Vec<ArrayViewD<'a, T>>>,
-    // input_variables_indices: Vec<Vec<usize>>,            
+    // input_variables_indices: Vec<Vec<usize>>,
     sequential_flow: NNSequentialNodeFlow,
 }
 
@@ -28,17 +31,17 @@ pub struct NNDataFlowTree<'a, T> {
 //     }
 // }
 
-impl<'a, T> NNDataFlowTree<'a, T>
+impl<T> NNDataFlowTree<'_, T>
 where
     T: Clone + std::fmt::Debug,
 {
     pub fn new() -> Self {
-        let modules = Vec::<Box<&'_ dyn NNModule<T>>>::new();
+        let modules = Vec::<NNModuleType<T>>::new();
         let adjacency_list = Vec::<Vec<usize>>::new();
         let current_count = 0;
         let root_node_indices = Vec::<usize>::new();
         let use_calculation_result_times = Vec::<usize>::new();
-        let variables_stocks = Vec::<Vec<ArrayViewD<'a, T>>>::new();
+        let variables_stocks = Vec::<Vec<ArrayViewD<T>>>::new();
         // let input_variables_indices = Vec::<Vec<usize>>::new();
         let sequential_flow = NNSequentialNodeFlow::new();
 
@@ -54,16 +57,21 @@ where
         }
     }
 
-    pub fn add_from_root(&mut self, module: &'a dyn NNModule<T>) -> NNDataFlowNodeIndexInfo {
+    pub fn add_from_root(&mut self, module: NNModuleType<T>) -> NNDataFlowNodeIndexInfo
+    where
+        T: Send + Sync + LinalgScalar + Debug + ConstOne + ConstZero + PartialOrd + Float,
+        T: Add<T, Output = T> + Sub<Output = T> + Mul<Output = T> + Div<Output = T>,
+        NNModuleType<T>: NNModule<T>,
+    {
         let parameter_value = module.necessary_parameter_value();
         for i in 0..parameter_value {
-            self.modules.push(Box::new(&InputTensor {}));
+            self.modules.push(NNModuleType::InputTensor(InputTensor::<T> {phantom: PhantomData}));
             self.adjacency_list.push(Vec::<usize>::new());
             self.adjacency_list[self.current_count + i].push(self.current_count + parameter_value);
         }
         self.current_count += 1;
 
-        self.modules.push(Box::new(module));
+        self.modules.push(module);
         let index = self.current_count;
         self.current_count += 1;
 
@@ -79,9 +87,9 @@ where
     pub fn add(
         &mut self,
         from: &NNDataFlowNodeIndexInfo,
-        module: &'a dyn NNModule<T>,
+        module: NNModuleType<T>,
     ) -> NNDataFlowNodeIndexInfo {
-        self.modules.push(Box::new(module));
+        self.modules.push(module);
         let from_index = from.index;
         let to_index = self.current_count;
         self.current_count += 1;
@@ -92,7 +100,10 @@ where
         NNDataFlowNodeIndexInfo { index: to_index }
     }
 
-    pub fn calc_sequential_node_flow(&mut self) {
+    pub fn calc_sequential_node_flow(&mut self)
+    where
+        NNModuleType<T>: NNModule<T>,
+    {
         // 隣接リストは既に生成済みであるとする
         // ルートノードに繋がっているモジュールには既に適切な変数が指定されているものとする
 
@@ -147,7 +158,8 @@ where
 
             for dst in destinations {
                 queue_match(current_id, *dst, &mut calculation_queue);
-                self.sequential_flow.add_destination_to_index(push_index, *dst);
+                self.sequential_flow
+                    .add_destination_to_index(push_index, *dst);
             }
         }
     }

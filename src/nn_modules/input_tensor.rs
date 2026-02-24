@@ -1,13 +1,17 @@
+use std::marker::PhantomData;
+
 use ndarray::ArrayD;
 
 use crate::nn_modules::NNModule;
 
 // これは計算を行う NNModule の集合体と入力パラメータのインターフェースの役割を担う
 // NNModule として扱うことで他の NNModule と同じように扱うことができる
-#[derive(Debug)]
-pub struct InputTensor {}
+#[derive(Debug, Clone)]
+pub struct InputTensor<T> {
+    pub phantom: PhantomData<T>,
+}
 
-impl<T> NNModule<T> for InputTensor
+impl<T> NNModule<T> for InputTensor<T>
 where
     T: Clone + std::fmt::Debug,
 {
@@ -20,4 +24,4 @@ where
     }
 }
 
-impl InputTensor {}
+impl<T> InputTensor<T> {}

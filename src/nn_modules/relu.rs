@@ -5,7 +5,7 @@ use num_traits::{ConstOne, ConstZero};
 
 use crate::nn_modules::{NNForwardInput, NNModule};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ReLU<T> {
     pub is_grad: bool,
     // 勾配計算のために保持するデータ

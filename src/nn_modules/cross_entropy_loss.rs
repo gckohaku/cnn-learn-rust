@@ -5,7 +5,7 @@ use num_traits::{ConstZero, Float};
 
 use crate::nn_modules::{NNForwardInput, NNModule};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CrossEntropyLoss<T> {
     pub is_grad: bool,
     // 勾配を求めるために期待値を保持しておく

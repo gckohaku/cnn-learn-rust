@@ -1,11 +1,8 @@
 use std::marker::PhantomData;
 
 use crate::nn_modules::{
-    NNModuleBuilder, SoftmaxAndCELoss,
-    builders::{CrossEntropyLossBuilder, SoftmaxBuilder},
-    cross_entropy_loss, softmax,
+    NNModuleBuilder, NNModuleType, Softmax, SoftmaxAndCELoss, builders::{CrossEntropyLossBuilder, SoftmaxBuilder}
 };
-
 
 pub struct SoftmaxAndCELossBuilder<T> {
     _is_grad: bool,
@@ -13,7 +10,7 @@ pub struct SoftmaxAndCELossBuilder<T> {
 }
 
 impl<T> NNModuleBuilder<T> for SoftmaxAndCELossBuilder<T> {
-    type BuiltObject = SoftmaxAndCELoss<T>;
+    type BuiltObject = NNModuleType<T>;
 
     fn new() -> Self {
         let is_grad = false;
@@ -25,15 +22,15 @@ impl<T> NNModuleBuilder<T> for SoftmaxAndCELossBuilder<T> {
     }
 
     fn build(self) -> Self::BuiltObject {
-        let softmax = SoftmaxBuilder::new().build();
+        let softmax: NNModuleType<Softmax<T>> = SoftmaxBuilder::new().build();
         let cross_entropy_loss = CrossEntropyLossBuilder::new().build();
 
-        SoftmaxAndCELoss::<T> {
+        NNModuleType::SoftmaxAndCELoss(SoftmaxAndCELoss::<T> {
             softmax,
             cross_entropy_loss,
             is_grad: self._is_grad,
             grad: None,
-        }
+        })
     }
 }
 

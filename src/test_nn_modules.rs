@@ -12,9 +12,9 @@ pub fn run_test() {
 	let linear2 = LinearBuilder::<ElementType>::new().input_node_value(100).output_node_value(10).build();
 	let output_module = SoftmaxAndCELossBuilder::<ElementType>::new().build();
 
-	let linear_info = tree.add_from_root(&linear1);
-	let relu_info = tree.add(&linear_info, &relu);
-	let linear2_info = tree.add(&relu_info, &linear2);
+	let linear_info = tree.add_from_root(linear1);
+	let relu_info = tree.add(&linear_info, relu);
+	let linear2_info = tree.add(&relu_info, linear2);
 	let output_info = tree.add(&linear2_info, &output_module);
 
 	tree.calc_sequential_node_flow();

@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::nn_modules::{CrossEntropyLoss, NNModuleBuilder};
+use crate::nn_modules::{CrossEntropyLoss, NNModuleBuilder, NNModuleType};
 
 pub struct CrossEntropyLossBuilder<T> {
     _is_grad: bool,
@@ -8,7 +8,7 @@ pub struct CrossEntropyLossBuilder<T> {
 }
 
 impl<T> NNModuleBuilder<T> for CrossEntropyLossBuilder<T> {
-    type BuiltObject = CrossEntropyLoss<T>;
+    type BuiltObject = NNModuleType<T>;
 
     fn new() -> Self {
         let is_grad = false;
@@ -19,16 +19,16 @@ impl<T> NNModuleBuilder<T> for CrossEntropyLossBuilder<T> {
         }
     }
 
-    fn build(self) -> Self::BuiltObject {
-        CrossEntropyLoss {
-			is_grad: self._is_grad,
+    fn build(self) -> NNModuleType<T> {
+        NNModuleType::CrossEntropyLoss(CrossEntropyLoss {
+            is_grad: self._is_grad,
             expected_value: None,
-        }
+        })
     }
 }
 
 impl<T> CrossEntropyLossBuilder<T> {
-	pub fn is_grad(mut self, value: bool) -> Self {
+    pub fn is_grad(mut self, value: bool) -> Self {
         self._is_grad = value;
         self
     }

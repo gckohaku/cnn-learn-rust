@@ -1,14 +1,14 @@
 use std::marker::PhantomData;
 
-use crate::nn_modules::{NNModuleBuilder, Softmax};
+use crate::nn_modules::{NNModuleBuilder, NNModuleType, Softmax};
 
 pub struct SoftmaxBuilder<T> {
     _is_grad: bool,
-    _phantom: PhantomData<T>
+    _phantom: PhantomData<T>,
 }
 
 impl<T> NNModuleBuilder<T> for SoftmaxBuilder<T> {
-    type BuiltObject = Softmax<T>;
+    type BuiltObject = NNModuleType<T>;
 
     fn new() -> Self {
         let is_grad = false;
@@ -19,12 +19,12 @@ impl<T> NNModuleBuilder<T> for SoftmaxBuilder<T> {
         }
     }
 
-    fn build(self) -> Self::BuiltObject {
-        Softmax {
+    fn build(self) -> NNModuleType<T> {
+        NNModuleType::Softmax(Softmax {
             is_grad: self._is_grad,
             output_value: None,
             grad: None,
-        }
+        })
     }
 }
 

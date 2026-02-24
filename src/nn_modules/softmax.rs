@@ -1,11 +1,11 @@
 use std::{fmt::Debug, ops::{Div, Sub}};
 
-use ndarray::{Array2, ArrayD, Axis, Ix2, LinalgScalar, ScalarOperand, Zip};
+use ndarray::{Array2, ArrayD, Axis, Ix2, LinalgScalar, Zip};
 use num_traits::Float;
 
 use crate::nn_modules::{NNForwardInput, NNModule};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Softmax<T> {
     pub is_grad: bool,
     // 勾配を求めるとき用に出力値を保持しておく
@@ -15,14 +15,14 @@ pub struct Softmax<T> {
 
 impl<T> NNModule<T> for Softmax<T>
 where
-    T: ScalarOperand + Send + Sync + LinalgScalar + PartialOrd + Float + Debug,
-    for<'a> &'a T: Sub<Output = T> + Div<Output = T>
+    T: Send + Sync + LinalgScalar + PartialOrd + Float + Debug,
+    for<'a> &'a T: Sub<Output = T> + Div<Output = T>,
 {
     fn necessary_parameter_value(&self) -> usize {
         1
     }
 
-    fn forward<'a>(&mut self, forward_input: &NNForwardInput<T>) -> ArrayD<T> {
+    fn forward(&mut self, forward_input: &NNForwardInput<T>) -> ArrayD<T> {
         let input = &forward_input.inputs[0];
 
         let input_2d = input.clone().into_dimensionality::<Ix2>().unwrap();
