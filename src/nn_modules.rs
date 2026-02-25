@@ -45,19 +45,24 @@ pub trait NNModuleBuilder<T> {
 }
 
 #[derive(Debug, Clone)]
-pub enum NNModuleType<T> {
+pub enum NNModuleType<T>
+where
+    Box<dyn NNModule<T>>: Clone,
+{
     InputTensor(InputTensor<T>),
     Linear(Linear<T>),
     ReLU(ReLU<T>),
     Softmax(Softmax<T>),
     CrossEntropyLoss(CrossEntropyLoss<T>),
     SoftmaxAndCELoss(SoftmaxAndCELoss<T>),
+    Custom(Box<dyn NNModule<T>>),
 }
 
 impl<T> NNModule<T> for NNModuleType<T>
 where
     T: Send + Sync + LinalgScalar + Debug + ConstOne + ConstZero + PartialOrd + Float,
     for<'a> &'a T: Add<T, Output = T> + Sub<Output = T> + Mul<Output = T> + Div<Output = T>,
+    Box<dyn NNModule<T>>: Clone,
 {
     fn necessary_parameter_value(&self) -> usize {
         match self {
@@ -67,6 +72,7 @@ where
             NNModuleType::Softmax(s) => s.necessary_parameter_value(),
             NNModuleType::CrossEntropyLoss(s) => s.necessary_parameter_value(),
             NNModuleType::SoftmaxAndCELoss(s) => s.necessary_parameter_value(),
+            NNModuleType::Custom(s) => s.necessary_parameter_value(),
         }
     }
 
@@ -78,6 +84,7 @@ where
             NNModuleType::Softmax(s) => s.forward(input),
             NNModuleType::CrossEntropyLoss(s) => s.forward(input),
             NNModuleType::SoftmaxAndCELoss(s) => s.forward(input),
+            NNModuleType::Custom(s) => s.forward(input),
         }
     }
 }

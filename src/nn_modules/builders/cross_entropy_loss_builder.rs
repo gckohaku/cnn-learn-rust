@@ -1,13 +1,16 @@
 use std::marker::PhantomData;
 
-use crate::nn_modules::{CrossEntropyLoss, NNModuleBuilder, NNModuleType};
+use crate::nn_modules::{CrossEntropyLoss, NNModule, NNModuleBuilder, NNModuleType};
 
 pub struct CrossEntropyLossBuilder<T> {
     _is_grad: bool,
     _marker: PhantomData<T>,
 }
 
-impl<T> NNModuleBuilder<T> for CrossEntropyLossBuilder<T> {
+impl<T> NNModuleBuilder<T> for CrossEntropyLossBuilder<T>
+where
+    Box<dyn NNModule<T>>: Clone,
+{
     type BuiltObject = NNModuleType<T>;
 
     fn new() -> Self {

@@ -6,11 +6,17 @@ use crate::nn_modules::{
     input_tensor::InputTensor, nn_sequential_node_flow::NNSequentialNodeFlow,
 };
 use std::{
-    collections::VecDeque, fmt::Debug, marker::PhantomData, ops::{Add, Div, Mul, Sub}
+    collections::VecDeque,
+    fmt::Debug,
+    marker::PhantomData,
+    ops::{Add, Div, Mul, Sub},
 };
 
 #[derive(Debug, Clone)]
-pub struct NNDataFlowTree<'a, T> {
+pub struct NNDataFlowTree<'a, T>
+where
+    Box<dyn NNModule<T>>: Clone,
+{
     pub modules: Vec<NNModuleType<T>>,
     adjacency_list: Vec<Vec<usize>>,
     current_count: usize,
@@ -34,6 +40,7 @@ pub struct NNDataFlowTree<'a, T> {
 impl<T> NNDataFlowTree<'_, T>
 where
     T: Clone + std::fmt::Debug,
+    Box<dyn NNModule<T>>: Clone,
 {
     pub fn new() -> Self {
         let modules = Vec::<NNModuleType<T>>::new();
@@ -65,7 +72,10 @@ where
     {
         let parameter_value = module.necessary_parameter_value();
         for i in 0..parameter_value {
-            self.modules.push(NNModuleType::InputTensor(InputTensor::<T> {phantom: PhantomData}));
+            self.modules
+                .push(NNModuleType::InputTensor(InputTensor::<T> {
+                    phantom: PhantomData,
+                }));
             self.adjacency_list.push(Vec::<usize>::new());
             self.adjacency_list[self.current_count + i].push(self.current_count + parameter_value);
         }

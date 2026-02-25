@@ -1,13 +1,16 @@
 use std::marker::PhantomData;
 
-use crate::nn_modules::{NNModuleBuilder, NNModuleType, Softmax};
+use crate::nn_modules::{NNModuleBuilder, NNModuleType, Softmax, NNModule};
 
 pub struct SoftmaxBuilder<T> {
     _is_grad: bool,
     _phantom: PhantomData<T>,
 }
 
-impl<T> NNModuleBuilder<T> for SoftmaxBuilder<T> {
+impl<T> NNModuleBuilder<T> for SoftmaxBuilder<T>
+where
+    Box<dyn NNModule<T>>: Clone,
+{
     type BuiltObject = NNModuleType<T>;
 
     fn new() -> Self {
