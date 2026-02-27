@@ -10,17 +10,14 @@ pub mod relu;
 pub mod softmax;
 pub mod softmax_and_celoss;
 
-use std::{
-    fmt::Debug,
-    ops::{Add, Div, Mul, Sub},
-};
+use std::fmt::Debug;
 
 pub use cross_entropy_loss::CrossEntropyLoss;
 pub use linear::Linear;
-use ndarray::{ArrayD, ArrayViewD, LinalgScalar};
+use ndarray::{ArrayD, ArrayViewD};
 pub use nn_data_flow_node::NNDataFlowNodeIndexInfo;
 pub use nn_data_flow_tree::NNDataFlowTree;
-use num_traits::{ConstOne, ConstZero, Float};
+use num_traits::{AsPrimitive, ConstOne, ConstZero, Float, Num, NumRef};
 pub use relu::ReLU;
 pub use softmax::Softmax;
 pub use softmax_and_celoss::SoftmaxAndCELoss;
@@ -45,24 +42,20 @@ pub trait NNModuleBuilder<T> {
 }
 
 #[derive(Debug, Clone)]
-pub enum NNModuleType<T>
-where
-    Box<dyn NNModule<T>>: Clone,
-{
+pub enum NNModuleType<T> {
     InputTensor(InputTensor<T>),
     Linear(Linear<T>),
     ReLU(ReLU<T>),
     Softmax(Softmax<T>),
     CrossEntropyLoss(CrossEntropyLoss<T>),
     SoftmaxAndCELoss(SoftmaxAndCELoss<T>),
-    Custom(Box<dyn NNModule<T>>),
+    // Custom(Box<dyn NNModule<T>>),
 }
 
 impl<T> NNModule<T> for NNModuleType<T>
 where
-    T: Send + Sync + LinalgScalar + Debug + ConstOne + ConstZero + PartialOrd + Float,
-    for<'a> &'a T: Add<T, Output = T> + Sub<Output = T> + Mul<Output = T> + Div<Output = T>,
-    Box<dyn NNModule<T>>: Clone,
+    T: Send + Sync + Debug + Num + Float + ConstOne + ConstZero + 'static,
+    for<'a> &'a T: Num,
 {
     fn necessary_parameter_value(&self) -> usize {
         match self {
@@ -72,7 +65,7 @@ where
             NNModuleType::Softmax(s) => s.necessary_parameter_value(),
             NNModuleType::CrossEntropyLoss(s) => s.necessary_parameter_value(),
             NNModuleType::SoftmaxAndCELoss(s) => s.necessary_parameter_value(),
-            NNModuleType::Custom(s) => s.necessary_parameter_value(),
+            // NNModuleType::Custom(s) => s.necessary_parameter_value(),
         }
     }
 
@@ -84,7 +77,7 @@ where
             NNModuleType::Softmax(s) => s.forward(input),
             NNModuleType::CrossEntropyLoss(s) => s.forward(input),
             NNModuleType::SoftmaxAndCELoss(s) => s.forward(input),
-            NNModuleType::Custom(s) => s.forward(input),
+            // NNModuleType::Custom(s) => s.forward(input),
         }
     }
 }

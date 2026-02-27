@@ -4,7 +4,7 @@ use std::{
 };
 
 use ndarray::{Array2, ArrayD, Ix2, LinalgScalar};
-use num_traits::{ConstZero, Float};
+use num_traits::{ConstZero, Float, Num};
 
 use crate::nn_modules::{CrossEntropyLoss, NNForwardInput, NNModule, Softmax};
 
@@ -20,7 +20,7 @@ pub struct SoftmaxAndCELoss<T> {
 impl<T> NNModule<T> for SoftmaxAndCELoss<T>
 where
     T: Send + Sync + LinalgScalar + PartialOrd + Float + Debug + ConstZero,
-    for<'a, 'b> &'a T: Sub<Output = T> + Div<Output = T> + Add<T, Output = T> + Mul<Output = T>,
+    for<'a, 'b> &'a T: Num,
 {
     fn necessary_parameter_value(&self) -> usize {
         1
@@ -55,9 +55,3 @@ where
         loss
     }
 }
-
-// impl<T> NNNodeNeedsParameter for SoftmaxAndCELoss<T> {
-//     fn parameter_value(&self) -> usize {
-//         1
-//     }
-// }

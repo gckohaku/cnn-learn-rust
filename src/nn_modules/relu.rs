@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use ndarray::{ArrayD, LinalgScalar};
-use num_traits::{ConstOne, ConstZero};
+use num_traits::{ConstOne, ConstZero, Float, FloatConst, Num};
 
 use crate::nn_modules::{NNForwardInput, NNModule};
 
@@ -15,7 +15,7 @@ pub struct ReLU<T> {
 
 impl<T> NNModule<T> for ReLU<T>
 where
-    T: LinalgScalar + Send + Sync + PartialOrd + ConstZero + ConstOne + Debug,
+    T: LinalgScalar + Send + Sync + Num + Float + ConstOne + ConstZero + Debug,
 {
     fn necessary_parameter_value(&self) -> usize {
         1
@@ -35,7 +35,7 @@ where
 
 impl<T> ReLU<T>
 where
-    T: LinalgScalar + Send + Sync + PartialOrd + ConstZero + ConstOne,
+    T: Send + Sync + Num + Float + ConstOne + ConstZero,
 {
     fn calc_grad(&mut self, result: &ArrayD<T>) -> ArrayD<T> {
         let grad = result.map(|y: &T| if *y > T::ZERO { T::ONE } else { T::ZERO });

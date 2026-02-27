@@ -9,7 +9,6 @@ pub struct SoftmaxBuilder<T> {
 
 impl<T> NNModuleBuilder<T> for SoftmaxBuilder<T>
 where
-    Box<dyn NNModule<T>>: Clone,
 {
     type BuiltObject = NNModuleType<T>;
 

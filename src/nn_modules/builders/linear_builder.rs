@@ -16,7 +16,6 @@ pub struct LinearBuilder<T> {
 impl<T> NNModuleBuilder<T> for LinearBuilder<T>
 where
     T: Clone + Zero,
-    Box<dyn NNModule<T>>: Clone,
 {
     type BuiltObject = NNModuleType<T>;
 

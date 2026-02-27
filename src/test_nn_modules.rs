@@ -15,7 +15,7 @@ pub fn run_test() {
 	let linear_info = tree.add_from_root(linear1);
 	let relu_info = tree.add(&linear_info, relu);
 	let linear2_info = tree.add(&relu_info, linear2);
-	let output_info = tree.add(&linear2_info, &output_module);
+	let output_info = tree.add(&linear2_info, output_module);
 
 	tree.calc_sequential_node_flow();
 

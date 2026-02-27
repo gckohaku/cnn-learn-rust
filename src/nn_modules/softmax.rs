@@ -1,7 +1,7 @@
 use std::{fmt::Debug, ops::{Div, Sub}};
 
 use ndarray::{Array2, ArrayD, Axis, Ix2, LinalgScalar, Zip};
-use num_traits::Float;
+use num_traits::{Float, Num};
 
 use crate::nn_modules::{NNForwardInput, NNModule};
 
@@ -15,8 +15,8 @@ pub struct Softmax<T> {
 
 impl<T> NNModule<T> for Softmax<T>
 where
-    T: Send + Sync + LinalgScalar + PartialOrd + Float + Debug,
-    for<'a> &'a T: Sub<Output = T> + Div<Output = T>,
+    T: Send + Sync + Num + Float + Debug,
+    for<'a> &'a T: Num,
 {
     fn necessary_parameter_value(&self) -> usize {
         1
@@ -46,7 +46,7 @@ where
         Zip::from(&mut after_softmax)
             .and(&processed_transposed_value)
             .and_broadcast(&sum_exps.to_shape((batch_size, 1)).unwrap())
-            .for_each(|result, value, sum| *result = value / sum);
+            .for_each(|result, value, sum| *result = *(value / sum));
 
         #[cfg(debug_assertions)]
         {

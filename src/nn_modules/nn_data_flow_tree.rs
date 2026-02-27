@@ -1,5 +1,5 @@
-use ndarray::{ArrayViewD, LinalgScalar};
-use num_traits::{ConstOne, ConstZero, Float};
+use ndarray::ArrayViewD;
+use num_traits::{ConstOne, ConstZero, Float, Num};
 
 use crate::nn_modules::{
     NNDataFlowNodeIndexInfo, NNModule, NNModuleType, calculation_node_state::CalculationNodeState,
@@ -9,13 +9,12 @@ use std::{
     collections::VecDeque,
     fmt::Debug,
     marker::PhantomData,
-    ops::{Add, Div, Mul, Sub},
 };
 
 #[derive(Debug, Clone)]
 pub struct NNDataFlowTree<'a, T>
 where
-    Box<dyn NNModule<T>>: Clone,
+    T: Clone,
 {
     pub modules: Vec<NNModuleType<T>>,
     adjacency_list: Vec<Vec<usize>>,
@@ -40,7 +39,6 @@ where
 impl<T> NNDataFlowTree<'_, T>
 where
     T: Clone + std::fmt::Debug,
-    Box<dyn NNModule<T>>: Clone,
 {
     pub fn new() -> Self {
         let modules = Vec::<NNModuleType<T>>::new();
@@ -66,9 +64,8 @@ where
 
     pub fn add_from_root(&mut self, module: NNModuleType<T>) -> NNDataFlowNodeIndexInfo
     where
-        T: Send + Sync + LinalgScalar + Debug + ConstOne + ConstZero + PartialOrd + Float,
-        T: Add<T, Output = T> + Sub<Output = T> + Mul<Output = T> + Div<Output = T>,
-        NNModuleType<T>: NNModule<T>,
+        T: Send + Sync + Debug + Num + Float + ConstOne + ConstZero + 'static,
+        for<'a> &'a T: Num
     {
         let parameter_value = module.necessary_parameter_value();
         for i in 0..parameter_value {

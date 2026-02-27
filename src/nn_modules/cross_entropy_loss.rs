@@ -1,7 +1,7 @@
 use std::{fmt::Debug, ops::{Add, Mul}};
 
 use ndarray::{Array2, ArrayD, Ix2, LinalgScalar, Zip, arr0};
-use num_traits::{ConstZero, Float};
+use num_traits::{ConstZero, Float, Num};
 
 use crate::nn_modules::{NNForwardInput, NNModule};
 
@@ -14,8 +14,8 @@ pub struct CrossEntropyLoss<T> {
 
 impl<T> NNModule<T> for CrossEntropyLoss<T>
 where
-    T: Send + Sync + LinalgScalar + Float + ConstZero + Debug,
-    for<'a> &'a T: Add<T, Output = T> + Mul<Output = T>
+    T: Send + Sync + Num + Float + ConstZero + Debug,
+    for<'a> &'a T: Num
 {
     fn necessary_parameter_value(&self) -> usize {
         1
@@ -28,11 +28,11 @@ where
         let nn_result_2d = nn_result.clone().into_dimensionality::<Ix2>().unwrap();
         let target_2d = target.clone().into_dimensionality::<Ix2>().unwrap();
 
-        let ln_output = nn_result_2d.map(|x| (x + T::epsilon()).ln());
+        let ln_output = nn_result_2d.map(|x| (x + &T::epsilon()).ln());
 
         let error = -Zip::from(target_2d)
             .and(&ln_output)
-            .fold(T::ZERO, |t, e, o| t + e * o);
+            .fold(T::ZERO, |t, e, o| t + *(e * o));
 
         arr0(error).into_dyn()
     }

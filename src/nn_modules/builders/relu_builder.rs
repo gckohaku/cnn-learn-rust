@@ -10,7 +10,6 @@ pub struct ReLUBuilder<T> {
 impl<T> NNModuleBuilder<T> for ReLUBuilder<T>
 where
     T: Clone,
-    Box<dyn NNModule<T>>: Clone,
 {
     type BuiltObject = NNModuleType<T>;
 

@@ -9,7 +9,6 @@ pub struct CrossEntropyLossBuilder<T> {
 
 impl<T> NNModuleBuilder<T> for CrossEntropyLossBuilder<T>
 where
-    Box<dyn NNModule<T>>: Clone,
 {
     type BuiltObject = NNModuleType<T>;
 
