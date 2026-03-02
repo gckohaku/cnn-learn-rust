@@ -54,8 +54,7 @@ pub enum NNModuleType<T> {
 
 impl<T> NNModule<T> for NNModuleType<T>
 where
-    T: Send + Sync + Debug + Num + Float + ConstOne + ConstZero + 'static,
-    for<'a> &'a T: Num,
+    T: Send + Sync + Debug + Float + ConstOne + ConstZero + 'static,
 {
     fn necessary_parameter_value(&self) -> usize {
         match self {

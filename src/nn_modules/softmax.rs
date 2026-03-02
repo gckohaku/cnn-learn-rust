@@ -16,7 +16,6 @@ pub struct Softmax<T> {
 impl<T> NNModule<T> for Softmax<T>
 where
     T: Send + Sync + Num + Float + Debug,
-    for<'a> &'a T: Num,
 {
     fn necessary_parameter_value(&self) -> usize {
         1
@@ -37,7 +36,7 @@ where
         Zip::from(&mut processed_transposed_value)
             .and(input_2d)
             .and_broadcast(&max_each_sample.to_shape((batch_size, 1)).unwrap())
-            .for_each(|result, value, max| *result = (value - max).exp());
+            .for_each(|result, value, max| *result = (*value - *max).exp());
 
         // サンプルごとに指数関数の値の合計で除算する
         let sum_exps = processed_transposed_value.sum_axis(Axis(1));
@@ -46,7 +45,7 @@ where
         Zip::from(&mut after_softmax)
             .and(&processed_transposed_value)
             .and_broadcast(&sum_exps.to_shape((batch_size, 1)).unwrap())
-            .for_each(|result, value, sum| *result = *(value / sum));
+            .for_each(|result, value, sum| *result = (*value / *sum));
 
         #[cfg(debug_assertions)]
         {

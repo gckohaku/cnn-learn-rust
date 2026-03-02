@@ -64,8 +64,7 @@ where
 
     pub fn add_from_root(&mut self, module: NNModuleType<T>) -> NNDataFlowNodeIndexInfo
     where
-        T: Send + Sync + Debug + Num + Float + ConstOne + ConstZero + 'static,
-        for<'a> &'a T: Num
+        T: Send + Sync + Debug + Float + ConstOne + ConstZero + 'static,
     {
         let parameter_value = module.necessary_parameter_value();
         for i in 0..parameter_value {

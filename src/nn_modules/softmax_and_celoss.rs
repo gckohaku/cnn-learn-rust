@@ -20,7 +20,6 @@ pub struct SoftmaxAndCELoss<T> {
 impl<T> NNModule<T> for SoftmaxAndCELoss<T>
 where
     T: Send + Sync + LinalgScalar + PartialOrd + Float + Debug + ConstZero,
-    for<'a, 'b> &'a T: Num,
 {
     fn necessary_parameter_value(&self) -> usize {
         1
