@@ -1,14 +1,13 @@
-use ndarray::ArrayViewD;
-use num_traits::{ConstOne, ConstZero, Float, Num};
+use ndarray::{ArrayD, ArrayViewD, IxDyn};
+use num_traits::{ConstOne, ConstZero, Float, Num, Zero};
 
 use crate::nn_modules::{
-    NNDataFlowNodeIndexInfo, NNModule, NNModuleType, calculation_node_state::CalculationNodeState,
-    input_tensor::InputTensor, nn_sequential_node_flow::NNSequentialNodeFlow,
+    NNDataFlowNodeIndexInfo, NNForwardInput, NNModule, NNModuleType, NNNecessaryTraits, calculation_node_state::CalculationNodeState, input_tensor::InputTensor, nn_sequential_node_flow::NNSequentialNodeFlow
 };
 use std::{
     collections::VecDeque,
     fmt::Debug,
-    marker::PhantomData,
+    marker::PhantomData, usize,
 };
 
 #[derive(Debug, Clone)]
@@ -27,14 +26,18 @@ where
     sequential_flow: NNSequentialNodeFlow,
 }
 
-// impl<'a, T> NNModule<T> for NNDataFlowTree<T>
-// where
-//     T: Clone + Zero,
-// {
-//     fn forward(&mut self, input: &NNForwardInput<'_, '_, T>) -> ArrayD<T> {
+impl<'a, T> NNModule<T> for NNDataFlowTree<'_, T>
+where
+    T: NNNecessaryTraits,
+{
+    fn necessary_parameter_value(&self) -> usize {
+        usize::MAX
+    }
 
-//     }
-// }
+    fn forward(&mut self, input: &NNForwardInput<'_, '_, T>) -> ArrayD<T> {
+        
+    }
+}
 
 impl<T> NNDataFlowTree<'_, T>
 where

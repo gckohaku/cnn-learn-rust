@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use ndarray::{Array1, Array2, ArrayD, Ix2, LinalgScalar};
 use num_traits::{AsPrimitive, Float, Num, PrimInt};
 
-use crate::nn_modules::{NNForwardInput, NNModule};
+use crate::nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits};
 
 /// アフィン変換を行うニューラルネットワークモジュール
 #[derive(Clone)]
@@ -18,7 +18,7 @@ pub struct Linear<T> {
 
 impl<T> NNModule<T> for Linear<T>
 where
-    T: Send + Sync + Num + Float + Debug + 'static,
+    T: NNNecessaryTraits,
 {
     fn necessary_parameter_value(&self) -> usize {
         1

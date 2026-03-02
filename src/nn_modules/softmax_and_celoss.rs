@@ -6,7 +6,7 @@ use std::{
 use ndarray::{Array2, ArrayD, Ix2, LinalgScalar};
 use num_traits::{ConstZero, Float, Num};
 
-use crate::nn_modules::{CrossEntropyLoss, NNForwardInput, NNModule, Softmax};
+use crate::nn_modules::{CrossEntropyLoss, NNForwardInput, NNModule, NNNecessaryTraits, Softmax};
 
 #[derive(Debug, Clone)]
 pub struct SoftmaxAndCELoss<T> {
@@ -19,7 +19,7 @@ pub struct SoftmaxAndCELoss<T> {
 
 impl<T> NNModule<T> for SoftmaxAndCELoss<T>
 where
-    T: Send + Sync + LinalgScalar + PartialOrd + Float + Debug + ConstZero,
+    T: NNNecessaryTraits,
 {
     fn necessary_parameter_value(&self) -> usize {
         1

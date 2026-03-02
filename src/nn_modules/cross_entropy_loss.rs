@@ -3,7 +3,7 @@ use std::{fmt::Debug, ops::{Add, Mul}};
 use ndarray::{Array2, ArrayD, Ix2, LinalgScalar, Zip, arr0};
 use num_traits::{ConstZero, Float, Num};
 
-use crate::nn_modules::{NNForwardInput, NNModule};
+use crate::nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits};
 
 #[derive(Debug, Clone)]
 pub struct CrossEntropyLoss<T> {
@@ -14,7 +14,7 @@ pub struct CrossEntropyLoss<T> {
 
 impl<T> NNModule<T> for CrossEntropyLoss<T>
 where
-    T: Send + Sync + Float + ConstZero + Debug,
+    T: NNNecessaryTraits,
 {
     fn necessary_parameter_value(&self) -> usize {
         1

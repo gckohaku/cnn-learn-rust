@@ -52,9 +52,14 @@ pub enum NNModuleType<T> {
     // Custom(Box<dyn NNModule<T>>),
 }
 
+pub trait NNNecessaryTraits: Send + Sync + Debug + Float + ConstOne + ConstZero + 'static {}
+
+impl<T> NNNecessaryTraits for T where T: Send + Sync + Debug + Float + ConstOne + ConstZero + 'static
+{}
+
 impl<T> NNModule<T> for NNModuleType<T>
 where
-    T: Send + Sync + Debug + Float + ConstOne + ConstZero + 'static,
+    T: NNNecessaryTraits,
 {
     fn necessary_parameter_value(&self) -> usize {
         match self {

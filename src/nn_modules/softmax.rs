@@ -3,7 +3,7 @@ use std::{fmt::Debug, ops::{Div, Sub}};
 use ndarray::{Array2, ArrayD, Axis, Ix2, LinalgScalar, Zip};
 use num_traits::{Float, Num};
 
-use crate::nn_modules::{NNForwardInput, NNModule};
+use crate::nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits};
 
 #[derive(Debug, Clone)]
 pub struct Softmax<T> {
@@ -15,7 +15,7 @@ pub struct Softmax<T> {
 
 impl<T> NNModule<T> for Softmax<T>
 where
-    T: Send + Sync + Num + Float + Debug,
+    T: NNNecessaryTraits,
 {
     fn necessary_parameter_value(&self) -> usize {
         1

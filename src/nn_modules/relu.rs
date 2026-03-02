@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use ndarray::{ArrayD, LinalgScalar};
 use num_traits::{ConstOne, ConstZero, Float, FloatConst, Num};
 
-use crate::nn_modules::{NNForwardInput, NNModule};
+use crate::nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits};
 
 #[derive(Debug, Clone)]
 pub struct ReLU<T> {
@@ -15,7 +15,7 @@ pub struct ReLU<T> {
 
 impl<T> NNModule<T> for ReLU<T>
 where
-    T: LinalgScalar + Send + Sync + Num + Float + ConstOne + ConstZero + Debug,
+    T: NNNecessaryTraits,
 {
     fn necessary_parameter_value(&self) -> usize {
         1
