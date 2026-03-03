@@ -1,17 +1,15 @@
-use ndarray::{ArrayD, ArrayViewD, IxDyn};
-use num_traits::{ConstOne, ConstZero, Float, Num, Zero};
+use ndarray::{ArrayD};
+use num_traits::{ConstOne, ConstZero, Float};
 
 use crate::nn_modules::{
-    NNDataFlowNodeIndexInfo, NNForwardInput, NNModule, NNModuleType, NNNecessaryTraits, calculation_node_state::CalculationNodeState, input_tensor::InputTensor, nn_sequential_node_flow::NNSequentialNodeFlow
+    NNDataFlowNodeIndexInfo, NNForwardInput, NNModule, NNModuleType, NNNecessaryTraits,
+    calculation_node_state::CalculationNodeState, input_tensor::InputTensor,
+    nn_sequential_node_flow::NNSequentialNodeFlow,
 };
-use std::{
-    collections::VecDeque,
-    fmt::Debug,
-    marker::PhantomData, usize,
-};
+use std::{collections::VecDeque, fmt::Debug, marker::PhantomData, usize};
 
 #[derive(Debug, Clone)]
-pub struct NNDataFlowTree<'a, T>
+pub struct NNDataFlowTree<T>
 where
     T: Clone,
 {
@@ -20,13 +18,13 @@ where
     current_count: usize,
     root_node_parameters: Vec<usize>,
     // 計算結果を使用する回数　この値が 0 になるまでは clone する
-    use_calculation_result_times: Vec<usize>,
-    variables_stocks: Vec<Vec<ArrayViewD<'a, T>>>,
+    // use_calculation_result_times: Vec<usize>,
+    variables_stocks: Vec<Vec<ArrayD<T>>>,
     // input_variables_indices: Vec<Vec<usize>>,
     sequential_flow: NNSequentialNodeFlow,
 }
 
-impl<'a, T> NNModule<T> for NNDataFlowTree<'_, T>
+impl<'a, T> NNModule<T> for NNDataFlowTree<T>
 where
     T: NNNecessaryTraits,
 {
@@ -35,11 +33,37 @@ where
     }
 
     fn forward(&mut self, input: &NNForwardInput<'_, '_, T>) -> ArrayD<T> {
-        
+        let target = input.target.as_ref().unwrap();
+        let mut loop_result = ArrayD::<T>::zeros(vec![]);
+
+        // まず、すべての入力引数を適切なところに保管する
+        for i in 0..self.root_node_parameters.len() {
+            let set_index = self.root_node_parameters[i];
+            self.variables_stocks[set_index].push(input.inputs[i].to_owned());
+        }
+
+        // sequential_flow をそのままループすれば大丈夫なはず
+        for flow in self.sequential_flow.into_iter() {
+            let index = flow.0;
+            let destinations = &flow.1;
+            let module = &mut self.modules[index];
+
+            if module.necessary_parameter_value() !=  self.variables_stocks[index].len() {
+                panic!("Mismatch parameter value:\n    necessary: {},\n    actual: {}.", module.necessary_parameter_value(), self.variables_stocks[index].len());
+            }
+
+            loop_result = module.forward(&NNForwardInput { inputs: self.variables_stocks[index].iter().map(|m| m.view()).collect(), target: Some(target.clone()) });
+
+            for dst in destinations {
+                self.variables_stocks[*dst].push(loop_result.clone());
+            }
+        }
+
+        loop_result
     }
 }
 
-impl<T> NNDataFlowTree<'_, T>
+impl<T> NNDataFlowTree<T>
 where
     T: Clone + std::fmt::Debug,
 {
@@ -48,8 +72,8 @@ where
         let adjacency_list = Vec::<Vec<usize>>::new();
         let current_count = 0;
         let root_node_indices = Vec::<usize>::new();
-        let use_calculation_result_times = Vec::<usize>::new();
-        let variables_stocks = Vec::<Vec<ArrayViewD<T>>>::new();
+        // let use_calculation_result_times = Vec::<usize>::new();
+        let variables_stocks = Vec::<Vec<ArrayD<T>>>::new();
         // let input_variables_indices = Vec::<Vec<usize>>::new();
         let sequential_flow = NNSequentialNodeFlow::new();
 
@@ -58,7 +82,7 @@ where
             adjacency_list,
             current_count,
             root_node_parameters: root_node_indices,
-            use_calculation_result_times,
+            // use_calculation_result_times,
             variables_stocks,
             // input_variables_indices,
             sequential_flow,
@@ -113,13 +137,7 @@ where
     where
         NNModuleType<T>: NNModule<T>,
     {
-        // 隣接リストは既に生成済みであるとする
-        // ルートノードに繋がっているモジュールには既に適切な変数が指定されているものとする
-
         let mut calculation_queue = VecDeque::<CalculationNodeState>::new();
-
-        // self.input_variables_indices
-        //     .resize(self.modules.len(), Vec::<usize>::new());
 
         let queue_match =
             |source: usize, destination: usize, queue: &mut VecDeque<CalculationNodeState>| {

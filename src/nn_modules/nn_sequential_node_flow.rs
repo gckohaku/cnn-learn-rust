@@ -32,3 +32,33 @@ impl NNSequentialNodeFlow {
         &self.sequential_process_info[index]
     }
 }
+
+pub struct NNSequentialNodeFlowIter<'a> {
+    holder: &'a NNSequentialNodeFlow,
+    index: usize,
+}
+
+impl<'a> Iterator for NNSequentialNodeFlowIter<'a> {
+    type Item = &'a (usize, Vec<usize>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index >= self.holder.sequential_process_info.len() {
+            return None;
+        }
+
+        self.index += 1;
+        Some(&self.holder.sequential_process_info[self.index - 1])
+    }
+}
+
+impl<'a> IntoIterator for &'a NNSequentialNodeFlow {
+    type Item = &'a (usize, Vec<usize>);
+    type IntoIter = NNSequentialNodeFlowIter<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        NNSequentialNodeFlowIter {
+            holder: self,
+            index: 0,
+        }
+    }
+}
