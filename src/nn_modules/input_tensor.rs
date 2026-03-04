@@ -16,7 +16,7 @@ where
     T: Clone + std::fmt::Debug,
 {
     fn necessary_parameter_value(&self) -> usize {
-        0
+        1
     }
 
     fn forward(&mut self, input: &super::NNForwardInput<'_, '_, T>) -> ArrayD<T> {

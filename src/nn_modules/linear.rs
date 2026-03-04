@@ -16,6 +16,18 @@ pub struct Linear<T> {
     pub(super) grad: Option<Array2<T>>,
 }
 
+impl<T> Linear<T> {
+    #[cfg(debug_assertions)]
+    pub fn debug_set_weights(&mut self, w: Array2<T>) {
+        self.weights = w;
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn debug_set_biases(&mut self, b: Array1<T>) {
+        self.biases = b;
+    }
+}
+
 impl<T> NNModule<T> for Linear<T>
 where
     T: NNNecessaryTraits,
@@ -52,8 +64,3 @@ where
     }
 }
 
-// impl<T> NNNodeNeedsParameter for Linear<T> {
-//     fn parameter_value(&self) -> usize {
-//         1
-//     }
-// }

@@ -37,6 +37,7 @@ where
         let mut loop_result = ArrayD::<T>::zeros(vec![]);
 
         // まず、すべての入力引数を適切なところに保管する
+        self.variables_stocks.resize(self.modules.len(), vec![]);
         for i in 0..self.root_node_parameters.len() {
             let set_index = self.root_node_parameters[i];
             self.variables_stocks[set_index].push(input.inputs[i].to_owned());
