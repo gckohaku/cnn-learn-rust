@@ -40,6 +40,7 @@ where
         let input = &forward_input.inputs[0];
         let input_2d = input.clone().into_dimensionality::<Ix2>().unwrap();
 
+        // Linear 層では、勾配計算のために入力行列の転置を保持しておけばよい
         if self.is_grad == true {
             self.grad = Some(input_2d.t().to_owned());
         }

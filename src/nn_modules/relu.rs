@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use ndarray::{ArrayD, LinalgScalar};
+use ndarray::{ArrayD, parallel::prelude::*};
 use num_traits::{ConstOne, ConstZero, Float, FloatConst, Num};
 
 use crate::nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits};
@@ -38,7 +38,8 @@ where
     T: Send + Sync + Num + Float + ConstOne + ConstZero,
 {
     fn calc_grad(&mut self, result: &ArrayD<T>) -> ArrayD<T> {
-        let grad = result.map(|y: &T| if *y > T::ZERO { T::ONE } else { T::ZERO });
+        let mut grad = result.clone();
+        grad.par_mapv_inplace(|y: T| if y > T::ZERO { T::ONE } else { T::ZERO });
         grad
     }
 }
