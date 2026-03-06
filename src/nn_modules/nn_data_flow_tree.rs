@@ -15,6 +15,7 @@ where
 {
     pub modules: Vec<NNModuleType<T>>,
     adjacency_list: Vec<Vec<usize>>,
+    inverse_adjacency_list: Vec<Vec<usize>>,
     current_count: usize,
     root_node_parameters: Vec<usize>,
     // 計算結果を使用する回数　この値が 0 になるまでは clone する
@@ -71,6 +72,7 @@ where
     pub fn new() -> Self {
         let modules = Vec::<NNModuleType<T>>::new();
         let adjacency_list = Vec::<Vec<usize>>::new();
+        let inverse_adjacency_list = Vec::<Vec<usize>>::new();
         let current_count = 0;
         let root_node_indices = Vec::<usize>::new();
         // let use_calculation_result_times = Vec::<usize>::new();
@@ -81,6 +83,7 @@ where
         Self {
             modules,
             adjacency_list,
+            inverse_adjacency_list,
             current_count,
             root_node_parameters: root_node_indices,
             // use_calculation_result_times,
@@ -188,6 +191,15 @@ where
                 queue_match(current_id, *dst, &mut calculation_queue);
                 self.sequential_flow
                     .add_destination_to_index(push_index, *dst);
+            }
+        }
+
+        // すべての辺の向きが逆方向であるグラフの隣接リストを作成する
+        for dst in 0..self.adjacency_list.len() {
+            self.inverse_adjacency_list.resize(self.modules.len(), Vec::<usize>::new());
+
+            for from_id in &self.adjacency_list[dst] {
+                self.inverse_adjacency_list[*from_id].push(dst);
             }
         }
     }
