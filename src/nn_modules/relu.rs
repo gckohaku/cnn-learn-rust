@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use ndarray::{ArrayD, parallel::prelude::*};
+use ndarray::{ArrayD, Zip, parallel::prelude::*};
 use num_traits::{ConstOne, ConstZero, Float, FloatConst, Num};
 
 use crate::nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits};
@@ -31,6 +31,12 @@ where
         }
         return clone_array;
     }
+
+    fn propagate_grad(&mut self, grad: Option<&ndarray::ArrayViewD<T>>, eta: T) -> ArrayD<T> {
+        let mut before_grad = grad.unwrap().to_owned();
+        Zip::from(&before_grad).and(&self.grad.clone().unwrap()).par_for_each(|b, s: &T| *b *= *s);
+        before_grad
+    }
 }
 
 impl<T> ReLU<T>
@@ -43,9 +49,3 @@ where
         grad
     }
 }
-
-// impl<T> NNNodeNeedsParameter for ReLU<T> {
-//     fn parameter_value(&self) -> usize {
-//         1
-//     }
-// }

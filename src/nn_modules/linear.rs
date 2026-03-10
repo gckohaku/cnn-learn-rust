@@ -1,7 +1,6 @@
 use std::fmt::Debug;
 
-use ndarray::{Array1, Array2, ArrayD, Ix2, LinalgScalar};
-use num_traits::{AsPrimitive, Float, Num, PrimInt};
+use ndarray::{Array1, Array2, ArrayD, ArrayViewD, Axis, Ix2, Zip};
 
 use crate::nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits};
 
@@ -48,6 +47,23 @@ where
         let result = input_2d.dot(&self.weights) + &self.biases;
         result.into_dyn()
     }
+
+    fn propagate_grad(&mut self, grad: Option<&ArrayViewD<T>>, eta: T) -> ArrayD<T> {
+        let before_grad = &grad.unwrap().to_owned().into_dimensionality::<Ix2>().unwrap();
+
+        // 伝播させる勾配の計算
+        let propagated_to_before = before_grad.dot(&self.weights.t());
+
+        // 重み、バイアスの更新
+        Zip::from(&mut self.weights)
+            .and(&self.grad.clone().unwrap().t().dot(&before_grad.to_owned()))
+            .par_for_each(|weight, update| *weight -= eta * *update);
+        Zip::from(&mut self.biases)
+            .and(&before_grad.sum_axis(Axis(0)))
+            .for_each(|bias, update| *bias -= eta * *update);
+
+        propagated_to_before.into_dyn()
+    }
 }
 
 impl<T> Debug for Linear<T>
@@ -64,4 +80,3 @@ where
         Ok(())
     }
 }
-

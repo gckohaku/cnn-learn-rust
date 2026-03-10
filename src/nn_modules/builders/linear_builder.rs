@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use ndarray::{Array1, Array2};
 use num_traits::Zero;
 
-use crate::nn_modules::{NNModule, NNModuleBuilder, NNModuleType, linear::Linear};
+use crate::nn_modules::{NNModule, NNModuleBuilder, NNModuleType, NNNecessaryTraits, linear::Linear};
 
 
 pub struct LinearBuilder<T> {
@@ -15,7 +15,7 @@ pub struct LinearBuilder<T> {
 
 impl<T> NNModuleBuilder<T> for LinearBuilder<T>
 where
-    T: Clone + Zero,
+    T: NNNecessaryTraits,
 {
     type BuiltObject = NNModuleType<T>;
 

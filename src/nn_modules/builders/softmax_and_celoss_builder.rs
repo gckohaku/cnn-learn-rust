@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::nn_modules::{
-    NNModule, NNModuleBuilder, NNModuleType, Softmax, SoftmaxAndCELoss, builders::{CrossEntropyLossBuilder, SoftmaxBuilder}, cross_entropy_loss
+    NNModuleBuilder, NNModuleType, NNNecessaryTraits, SoftmaxAndCELoss, builders::{CrossEntropyLossBuilder, SoftmaxBuilder}
 };
 
 pub struct SoftmaxAndCELossBuilder<T> {
@@ -10,7 +10,7 @@ pub struct SoftmaxAndCELossBuilder<T> {
 }
 
 impl<T> NNModuleBuilder<T> for SoftmaxAndCELossBuilder<T>
-where
+where T: NNNecessaryTraits
 {
     type BuiltObject = NNModuleType<T>;
 

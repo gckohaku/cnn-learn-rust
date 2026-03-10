@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::nn_modules::{NNModuleBuilder, NNModuleType, Softmax, NNModule};
+use crate::nn_modules::{NNModuleBuilder, NNModuleType, NNNecessaryTraits, Softmax};
 
 pub struct SoftmaxBuilder<T> {
     _is_grad: bool,
@@ -8,7 +8,7 @@ pub struct SoftmaxBuilder<T> {
 }
 
 impl<T> NNModuleBuilder<T> for SoftmaxBuilder<T>
-where
+where T: NNNecessaryTraits
 {
     type BuiltObject = NNModuleType<T>;
 

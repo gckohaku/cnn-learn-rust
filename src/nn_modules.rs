@@ -14,10 +14,10 @@ use std::fmt::Debug;
 
 pub use cross_entropy_loss::CrossEntropyLoss;
 pub use linear::Linear;
-use ndarray::{ArrayD, ArrayViewD};
+use ndarray::{ArrayD, ArrayViewD, ScalarOperand};
 pub use nn_data_flow_node::NNDataFlowNodeIndexInfo;
 pub use nn_data_flow_tree::NNDataFlowTree;
-use num_traits::{AsPrimitive, ConstOne, ConstZero, Float, Num, NumRef};
+use num_traits::{AsPrimitive, ConstOne, ConstZero, Float, Num, NumAssign, NumRef};
 pub use relu::ReLU;
 pub use softmax::Softmax;
 pub use softmax_and_celoss::SoftmaxAndCELoss;
@@ -33,6 +33,8 @@ pub trait NNModule<T>: Debug {
     fn necessary_parameter_value(&self) -> usize;
 
     fn forward(&mut self, input: &NNForwardInput<'_, '_, T>) -> ArrayD<T>;
+    // 逆伝播処理
+    fn propagate_grad(&mut self, grad: Option<&ArrayViewD<T>>, eta: T) -> ArrayD<T>;
 }
 
 pub trait NNModuleBuilder<T> {
@@ -42,7 +44,7 @@ pub trait NNModuleBuilder<T> {
 }
 
 #[derive(Debug, Clone)]
-pub enum NNModuleType<T> {
+pub enum NNModuleType<T> where T: NNNecessaryTraits {
     InputTensor(InputTensor<T>),
     Linear(Linear<T>),
     ReLU(ReLU<T>),
@@ -52,9 +54,9 @@ pub enum NNModuleType<T> {
     // Custom(Box<dyn NNModule<T>>),
 }
 
-pub trait NNNecessaryTraits: Send + Sync + Debug + Float + ConstOne + ConstZero + 'static {}
+pub trait NNNecessaryTraits: Send + Sync + Debug + Float + ConstOne + ConstZero + NumAssign + 'static {}
 
-impl<T> NNNecessaryTraits for T where T: Send + Sync + Debug + Float + ConstOne + ConstZero + 'static
+impl<T> NNNecessaryTraits for T where T: Send + Sync + Debug + Float + ConstOne + ConstZero + NumAssign + 'static
 {}
 
 impl<T> NNModule<T> for NNModuleType<T>
@@ -81,6 +83,18 @@ where
             NNModuleType::Softmax(s) => s.forward(input),
             NNModuleType::CrossEntropyLoss(s) => s.forward(input),
             NNModuleType::SoftmaxAndCELoss(s) => s.forward(input),
+            // NNModuleType::Custom(s) => s.forward(input),
+        }
+    }
+
+    fn propagate_grad(&mut self, grad: Option<&ArrayViewD<T>>, eta: T) -> ArrayD<T> {
+        match self {
+            NNModuleType::InputTensor(s) => s.propagate_grad(grad, eta),
+            NNModuleType::Linear(s) => s.propagate_grad(grad, eta),
+            NNModuleType::ReLU(s) => s.propagate_grad(grad, eta),
+            NNModuleType::Softmax(s) => s.propagate_grad(grad, eta),
+            NNModuleType::CrossEntropyLoss(s) => s.propagate_grad(grad, eta),
+            NNModuleType::SoftmaxAndCELoss(s) => s.propagate_grad(grad, eta),
             // NNModuleType::Custom(s) => s.forward(input),
         }
     }
