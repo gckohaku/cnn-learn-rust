@@ -22,6 +22,11 @@ where
     fn forward(&mut self, input: &super::NNForwardInput<'_, '_, T>) -> ArrayD<T> {
         return input.inputs[0].to_owned();
     }
+
+    fn propagate_grad(&mut self, grad: Option<&ndarray::ArrayViewD<T>>, eta: T) -> ArrayD<T> {
+        // 入力の勾配をそのまま返す
+        grad.unwrap().to_owned()
+    }
 }
 
 impl<T> InputTensor<T> {}

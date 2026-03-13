@@ -1,10 +1,8 @@
 use std::{
     fmt::Debug,
-    ops::{Add, Div, Mul, Sub},
 };
 
-use ndarray::{Array2, ArrayD, Ix2, LinalgScalar};
-use num_traits::{ConstZero, Float, Num};
+use ndarray::{Array2, ArrayD, Ix2};
 
 use crate::nn_modules::{CrossEntropyLoss, NNForwardInput, NNModule, NNNecessaryTraits, Softmax};
 
@@ -52,5 +50,16 @@ where
             .unwrap();
         self.grad = Some(&softmax_result_2d - &target_2d);
         loss
+    }
+
+    fn propagate_grad(&mut self, grad: Option<&ndarray::ArrayViewD<T>>, _eta: T) -> ArrayD<T> {
+        match grad {
+            None => self.grad.to_owned().unwrap().into_dyn(),
+            Some(g) => {
+                let self_2d = self.grad.to_owned().unwrap().into_dimensionality::<Ix2>().unwrap();
+                let propagated_2d = &g.to_owned().into_dimensionality::<Ix2>().unwrap();
+                (self_2d * propagated_2d).into_dyn()
+            }
+        }
     }
 }

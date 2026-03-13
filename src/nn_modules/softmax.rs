@@ -1,7 +1,6 @@
-use std::{fmt::Debug, ops::{Div, Sub}};
+use std::fmt::Debug;
 
-use ndarray::{Array2, ArrayD, Axis, Ix2, LinalgScalar, Zip};
-use num_traits::{Float, Num};
+use ndarray::{Array2, ArrayD, Axis, Ix2, Zip};
 
 use crate::nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits};
 
@@ -55,5 +54,10 @@ where
         self.output_value = Some(after_softmax.clone());
 
         after_softmax.into_dyn()
+    }
+
+    fn propagate_grad(&mut self, grad: Option<&ndarray::ArrayViewD<T>>, eta: T) -> ArrayD<T> {
+        // 現状は、softmax 単体での微分は行わない
+        grad.unwrap().to_owned()
     }
 }

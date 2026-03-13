@@ -1,9 +1,8 @@
 use std::marker::PhantomData;
 
 use ndarray::{Array1, Array2};
-use num_traits::Zero;
 
-use crate::nn_modules::{NNModule, NNModuleBuilder, NNModuleType, NNNecessaryTraits, linear::Linear};
+use crate::nn_modules::{NNModuleBuilder, NNModuleType, NNNecessaryTraits, linear::Linear};
 
 
 pub struct LinearBuilder<T> {

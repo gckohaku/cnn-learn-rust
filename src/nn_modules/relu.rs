@@ -1,7 +1,6 @@
 use std::fmt::Debug;
 
-use ndarray::{ArrayD, Zip, parallel::prelude::*};
-use num_traits::{ConstOne, ConstZero, Float, FloatConst, Num};
+use ndarray::{ArrayD, Zip};
 
 use crate::nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits};
 
@@ -27,25 +26,26 @@ where
         clone_array.par_mapv_inplace(|x| if x > T::ZERO { x } else { T::ZERO });
         self.output_value = Some(clone_array.clone());
         if self.is_grad {
-            self.grad = Some(self.calc_grad(&clone_array));
+            // self.grad = Some(self.calc_grad(&clone_array));
+            self.grad = Some(clone_array.clone());
         }
         return clone_array;
     }
 
-    fn propagate_grad(&mut self, grad: Option<&ndarray::ArrayViewD<T>>, eta: T) -> ArrayD<T> {
+    fn propagate_grad(&mut self, grad: Option<&ndarray::ArrayViewD<T>>, _eta: T) -> ArrayD<T> {
         let mut before_grad = grad.unwrap().to_owned();
-        Zip::from(&before_grad).and(&self.grad.clone().unwrap()).par_for_each(|b, s: &T| *b *= *s);
+        Zip::from(&mut before_grad).and(&self.grad.clone().unwrap()).par_for_each(|b: &mut T, s: &T| *b *= if *s > T::ZERO {*b} else {T::ZERO});
         before_grad
     }
 }
 
-impl<T> ReLU<T>
-where
-    T: Send + Sync + Num + Float + ConstOne + ConstZero,
-{
-    fn calc_grad(&mut self, result: &ArrayD<T>) -> ArrayD<T> {
-        let mut grad = result.clone();
-        grad.par_mapv_inplace(|y: T| if y > T::ZERO { T::ONE } else { T::ZERO });
-        grad
-    }
-}
+// impl<T> ReLU<T>
+// where
+//     T: Send + Sync + Num + Float + ConstOne + ConstZero,
+// {
+//     fn calc_grad(&mut self, result: &ArrayD<T>) -> ArrayD<T> {
+//         let mut grad = result.clone();
+//         grad.par_mapv_inplace(|y: T| if y > T::ZERO { T::ONE } else { T::ZERO });
+//         grad
+//     }
+// }

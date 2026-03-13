@@ -1,7 +1,6 @@
-use std::{fmt::Debug, ops::{Add, Mul}};
+use std::fmt::Debug;
 
-use ndarray::{Array2, ArrayD, Ix2, LinalgScalar, Zip, arr0};
-use num_traits::{ConstZero, Float, Num};
+use ndarray::{Array2, ArrayD, Ix2, Zip, arr0};
 
 use crate::nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits};
 
@@ -34,6 +33,11 @@ where
             .fold(T::ZERO, |t, e, o| t + (*e * *o));
 
         arr0(error).into_dyn()
+    }
+
+    fn propagate_grad(&mut self, grad: Option<&ndarray::ArrayViewD<T>>, eta: T) -> ArrayD<T> {
+        // 現状は、交差エントロピー誤差単体での微分は求めない
+        grad.unwrap().to_owned()
     }
 }
 

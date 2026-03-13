@@ -1,4 +1,4 @@
-use ndarray::{Array2, ArrayD, array};
+use ndarray::{Array2, array};
 
 use crate::nn_modules::{
     NNDataFlowTree, NNForwardInput, NNModule, NNModuleBuilder, builders::{LinearBuilder, ReLUBuilder, SoftmaxAndCELossBuilder}
@@ -24,7 +24,7 @@ pub fn run_test() {
 
     #[cfg(debug_assertions)]
     {
-        use crate::nn_modules::{Linear, NNModuleType};
+        use crate::nn_modules::{NNModuleType};
         match linear1 {
             NNModuleType::Linear(ref mut l) => {
                 use ndarray::array;
@@ -73,4 +73,6 @@ pub fn run_test() {
 	});
 
 	println!("error: {}", error);
+
+    tree.propagate_grad(None, 0.1);
 }

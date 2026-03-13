@@ -1,4 +1,4 @@
-use ndarray::{ArrayD};
+use ndarray::ArrayD;
 use num_traits::{ConstOne, ConstZero, Float};
 
 use crate::nn_modules::{
@@ -11,7 +11,7 @@ use std::{collections::VecDeque, fmt::Debug, marker::PhantomData, usize};
 #[derive(Debug, Clone)]
 pub struct NNDataFlowTree<T>
 where
-    T: Clone,
+    T: NNNecessaryTraits,
 {
     pub modules: Vec<NNModuleType<T>>,
     adjacency_list: Vec<Vec<usize>>,
@@ -23,6 +23,7 @@ where
     variables_stocks: Vec<Vec<ArrayD<T>>>,
     // input_variables_indices: Vec<Vec<usize>>,
     sequential_flow: NNSequentialNodeFlow,
+    inverse_sequential_flow: NNSequentialNodeFlow,
 }
 
 impl<'a, T> NNModule<T> for NNDataFlowTree<T>
@@ -50,11 +51,48 @@ where
             let destinations = &flow.1;
             let module = &mut self.modules[index];
 
-            if module.necessary_parameter_value() !=  self.variables_stocks[index].len() {
-                panic!("Mismatch parameter value:\n    necessary: {},\n    actual: {}.", module.necessary_parameter_value(), self.variables_stocks[index].len());
+            if module.necessary_parameter_value() != self.variables_stocks[index].len() {
+                panic!(
+                    "Mismatch parameter value:\n    necessary: {},\n    actual: {}.",
+                    module.necessary_parameter_value(),
+                    self.variables_stocks[index].len()
+                );
             }
 
-            loop_result = module.forward(&NNForwardInput { inputs: self.variables_stocks[index].iter().map(|m| m.view()).collect(), target: Some(target.clone()) });
+            loop_result = module.forward(&NNForwardInput {
+                inputs: self.variables_stocks[index]
+                    .iter()
+                    .map(|m| m.view())
+                    .collect(),
+                target: Some(target.clone()),
+            });
+
+            for dst in destinations {
+                self.variables_stocks[*dst].push(loop_result.clone());
+            }
+        }
+
+        loop_result
+    }
+
+    fn propagate_grad(&mut self, grad: Option<&ndarray::ArrayViewD<T>>, eta: T) -> ArrayD<T> {
+        let mut is_none = match grad {
+            None => true,
+            Some(_) => false,
+        };
+        let mut loop_result = ArrayD::<T>::zeros(vec![]);
+
+        // inverse_sequential_flow をそのままループするだけで、目的は達成される
+        for flow in self.inverse_sequential_flow.into_iter() {
+            let index = flow.0;
+            #[cfg(debug_assertions)]
+            dbg!(index);
+            let destinations = &flow.1;
+            let module = &mut self.modules[index];
+
+            let loop_result_view = loop_result.view();
+            loop_result = module.propagate_grad(if is_none {None} else {Some(&loop_result_view)}, eta);
+            is_none = false;
 
             for dst in destinations {
                 self.variables_stocks[*dst].push(loop_result.clone());
@@ -67,7 +105,7 @@ where
 
 impl<T> NNDataFlowTree<T>
 where
-    T: Clone + std::fmt::Debug,
+    T: NNNecessaryTraits,
 {
     pub fn new() -> Self {
         let modules = Vec::<NNModuleType<T>>::new();
@@ -79,6 +117,7 @@ where
         let variables_stocks = Vec::<Vec<ArrayD<T>>>::new();
         // let input_variables_indices = Vec::<Vec<usize>>::new();
         let sequential_flow = NNSequentialNodeFlow::new();
+        let inverse_sequential_flow = NNSequentialNodeFlow::new();
 
         Self {
             modules,
@@ -90,6 +129,7 @@ where
             variables_stocks,
             // input_variables_indices,
             sequential_flow,
+            inverse_sequential_flow,
         }
     }
 
@@ -164,6 +204,8 @@ where
             }
         }
 
+        let mut last_index: usize = 0;
+
         // キューが無くなるまで計算順序割り出し処理を継続する
         while calculation_queue.is_empty() == false {
             let current_state = calculation_queue.pop_front().unwrap();
@@ -192,14 +234,56 @@ where
                 self.sequential_flow
                     .add_destination_to_index(push_index, *dst);
             }
+
+            last_index = current_id;
         }
 
         // すべての辺の向きが逆方向であるグラフの隣接リストを作成する
         for dst in 0..self.adjacency_list.len() {
-            self.inverse_adjacency_list.resize(self.modules.len(), Vec::<usize>::new());
+            self.inverse_adjacency_list
+                .resize(self.modules.len(), Vec::<usize>::new());
 
             for from_id in &self.adjacency_list[dst] {
                 self.inverse_adjacency_list[*from_id].push(dst);
+            }
+        }
+
+        // 逆伝播時に最初に実行されるモジュールに関する処理
+        for destination in &self.inverse_adjacency_list[last_index] {
+            self.inverse_sequential_flow
+                .add(last_index, vec![*destination]);
+            // self.input_variables_indices[*destination].push(*index);
+
+            queue_match(last_index, *destination, &mut calculation_queue);
+        }
+
+        // 同様に、キューが無くなるまで計算順序を割り出していけばいい
+        while calculation_queue.is_empty() == false {
+            let current_state = calculation_queue.pop_front().unwrap();
+            let current_id = current_state.id;
+            let current_module = &self.modules[current_id];
+            let necessary_parameter_value = current_module.necessary_parameter_value();
+            let current_parameter_value = current_state.args.len();
+
+            if current_parameter_value > necessary_parameter_value {
+                panic!(
+                    "Parameter value is Exceeded\n    necessary: {}\n    current: {}",
+                    necessary_parameter_value, current_parameter_value
+                );
+            }
+            if current_parameter_value < necessary_parameter_value {
+                calculation_queue.push_back(current_state);
+                continue;
+            }
+
+            // パラメータの数がちょうど求められていた数の場合は、self.inverse_sequential_flow に情報を入れ、calculation_queue に必要な情報を入れる
+            let destinations = &self.inverse_adjacency_list[current_id];
+            let push_index = self.inverse_sequential_flow.add(current_id, vec![]) - 1;
+
+            for dst in destinations {
+                queue_match(current_id, *dst, &mut calculation_queue);
+                self.inverse_sequential_flow
+                    .add_destination_to_index(push_index, *dst);
             }
         }
     }

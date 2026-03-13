@@ -14,10 +14,10 @@ use std::fmt::Debug;
 
 pub use cross_entropy_loss::CrossEntropyLoss;
 pub use linear::Linear;
-use ndarray::{ArrayD, ArrayViewD, ScalarOperand};
+use ndarray::{ArrayD, ArrayViewD};
 pub use nn_data_flow_node::NNDataFlowNodeIndexInfo;
 pub use nn_data_flow_tree::NNDataFlowTree;
-use num_traits::{AsPrimitive, ConstOne, ConstZero, Float, Num, NumAssign, NumRef};
+use num_traits::{ConstOne, ConstZero, Float, NumAssign};
 pub use relu::ReLU;
 pub use softmax::Softmax;
 pub use softmax_and_celoss::SoftmaxAndCELoss;
