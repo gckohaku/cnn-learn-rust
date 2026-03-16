@@ -14,13 +14,15 @@ pub fn run_test() {
     let mut linear1 = LinearBuilder::<ElementType>::new()
         .input_node_value(4)
         .output_node_value(3)
+        .is_grad(true)
         .build();
-    let relu = ReLUBuilder::<ElementType>::new().build();
+    let relu = ReLUBuilder::<ElementType>::new().is_grad(true).build();
     let mut linear2 = LinearBuilder::<ElementType>::new()
         .input_node_value(3)
         .output_node_value(3)
+        .is_grad(true)
         .build();
-    let output_module = SoftmaxAndCELossBuilder::<ElementType>::new().build();
+    let output_module = SoftmaxAndCELossBuilder::<ElementType>::new().is_grad(true).build();
 
     #[cfg(debug_assertions)]
     {
@@ -66,7 +68,7 @@ pub fn run_test() {
     dbg!(&tree);
 
 	let input = Array2::<ElementType>::from(array![[0.5, 0.1, 1.0, 0.25]]).into_dyn();
-	let target = Array2::<ElementType>::from(array![[0.0, 0.0, 1.0]]).into_dyn();
+	let target = Array2::<ElementType>::from(array![[1.0, 0.0, 0.0]]).into_dyn();
 	let error = &tree.forward(&NNForwardInput::<ElementType> {
 		inputs: vec![input.view()],
 		target: Some(target.view()),

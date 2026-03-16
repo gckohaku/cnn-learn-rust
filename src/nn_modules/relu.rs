@@ -29,12 +29,15 @@ where
             // self.grad = Some(self.calc_grad(&clone_array));
             self.grad = Some(clone_array.clone());
         }
-        return clone_array;
+        
+        clone_array
     }
 
     fn propagate_grad(&mut self, grad: Option<&ndarray::ArrayViewD<T>>, _eta: T) -> ArrayD<T> {
         let mut before_grad = grad.unwrap().to_owned();
-        Zip::from(&mut before_grad).and(&self.grad.clone().unwrap()).par_for_each(|b: &mut T, s: &T| *b *= if *s > T::ZERO {*b} else {T::ZERO});
+        Zip::from(&mut before_grad).and(&self.grad.clone().unwrap()).par_for_each(|b: &mut T, s: &T| *b = if *s > T::ZERO {*b} else {T::ZERO});
+        #[cfg(debug_assertions)]
+        dbg!(&before_grad);
         before_grad
     }
 }

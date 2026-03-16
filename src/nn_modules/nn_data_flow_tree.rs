@@ -14,6 +14,7 @@ where
     T: NNNecessaryTraits,
 {
     pub modules: Vec<NNModuleType<T>>,
+    pub is_grad: bool,
     adjacency_list: Vec<Vec<usize>>,
     inverse_adjacency_list: Vec<Vec<usize>>,
     current_count: usize,
@@ -85,14 +86,13 @@ where
         // inverse_sequential_flow をそのままループするだけで、目的は達成される
         for flow in self.inverse_sequential_flow.into_iter() {
             let index = flow.0;
-            #[cfg(debug_assertions)]
-            dbg!(index);
             let destinations = &flow.1;
             let module = &mut self.modules[index];
 
             let loop_result_view = loop_result.view();
             loop_result = module.propagate_grad(if is_none {None} else {Some(&loop_result_view)}, eta);
             is_none = false;
+            
 
             for dst in destinations {
                 self.variables_stocks[*dst].push(loop_result.clone());
@@ -109,6 +109,7 @@ where
 {
     pub fn new() -> Self {
         let modules = Vec::<NNModuleType<T>>::new();
+        let is_grad = false;
         let adjacency_list = Vec::<Vec<usize>>::new();
         let inverse_adjacency_list = Vec::<Vec<usize>>::new();
         let current_count = 0;
@@ -121,6 +122,7 @@ where
 
         Self {
             modules,
+            is_grad,
             adjacency_list,
             inverse_adjacency_list,
             current_count,

@@ -47,7 +47,7 @@ where T: NNNecessaryTraits
 }
 
 impl<T> SoftmaxAndCELossBuilder<T> {
-    fn is_grad(mut self, value: bool) -> Self {
+    pub fn is_grad(mut self, value: bool) -> Self {
         self._is_grad = value;
         self
     }

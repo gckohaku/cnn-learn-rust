@@ -56,11 +56,14 @@ where
 
         // 重み、バイアスの更新
         Zip::from(&mut self.weights)
-            .and(&self.grad.clone().unwrap().t().dot(&before_grad.to_owned()))
+            .and(&self.grad.to_owned().unwrap().dot(&before_grad.to_owned()))
             .par_for_each(|weight, update| *weight -= eta * *update);
         Zip::from(&mut self.biases)
             .and(&before_grad.sum_axis(Axis(0)))
             .for_each(|bias, update| *bias -= eta * *update);
+
+        #[cfg(debug_assertions)]
+        dbg!(&self.weights, &self.biases, &propagated_to_before);
 
         propagated_to_before.into_dyn()
     }

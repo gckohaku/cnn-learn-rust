@@ -44,19 +44,14 @@ where
         Zip::from(&mut after_softmax)
             .and(&processed_transposed_value)
             .and_broadcast(&sum_exps.to_shape((batch_size, 1)).unwrap())
-            .for_each(|result, value, sum| *result = (*value / *sum));
-
-        #[cfg(debug_assertions)]
-        {
-            dbg!(&processed_transposed_value, &after_softmax);
-        }
+            .for_each(|result, value, sum| *result = *value / *sum);
 
         self.output_value = Some(after_softmax.clone());
 
         after_softmax.into_dyn()
     }
 
-    fn propagate_grad(&mut self, grad: Option<&ndarray::ArrayViewD<T>>, eta: T) -> ArrayD<T> {
+    fn propagate_grad(&mut self, grad: Option<&ndarray::ArrayViewD<T>>, _eta: T) -> ArrayD<T> {
         // 現状は、softmax 単体での微分は行わない
         grad.unwrap().to_owned()
     }
