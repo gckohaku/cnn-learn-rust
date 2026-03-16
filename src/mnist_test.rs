@@ -6,10 +6,7 @@ use crate::{
     cnn_information::{
         ActivationType, ConvolutionInformation, LayerInformation, LayerInformationContent,
         LayerType, OutputInformation, OutputType, PoolingInformation, PoolingType,
-    },
-    cnn_network::NeuralNetworkCNN,
-    rand::Rand,
-    utilities::shuffle,
+    }, cnn_network::NeuralNetworkCNN, nn_modules::{NNDataFlowTree, NNModuleBuilder, builders::{LinearBuilder, ReLUBuilder, SoftmaxAndCELossBuilder}}, rand::Rand, utilities::shuffle
 };
 
 const IMAGE_ROW_SIZE: usize = 28;
@@ -37,7 +34,22 @@ pub fn mnist_process() {
         .normalize();
 
     let mut r = Rand::new();
-    let mut nn = make_neural_network(mini_batch_sample_size);
+
+    // ニューラルネットワークの作成
+    let mut tree = NNDataFlowTree::new();
+    let mut linear1 = LinearBuilder::new().input_node_value(784).output_node_value(196).is_grad(true).build();
+    let mut relu1 = ReLUBuilder::new().is_grad(true).build();
+    let mut linear2 = LinearBuilder::new().input_node_value(196).output_node_value(49).is_grad(true).build();
+    let mut relu2 = ReLUBuilder::new().is_grad(true).build();
+    let mut linear3 = LinearBuilder::new().input_node_value(49).output_node_value(10).is_grad(true).build();
+    let mut softmax_and_celoss = SoftmaxAndCELossBuilder::new().is_grad(true).build();
+
+    let linear_info1 = &tree.add_from_root(linear1);
+    let relu_info1 = &tree.add(&linear_info1, relu1);
+    let linear_info2 = &tree.add(&relu_info1, linear2);
+    let relu_info2 = &tree.add(&linear_info2, relu2);
+    let linear_info3 = &tree.add(&relu_info2, linear3);
+    _ = &tree.add(&linear_info3, softmax_and_celoss);
 
     // 処理時間計測用
     let epochs_now = time::Instant::now();
@@ -74,67 +86,6 @@ pub fn mnist_process() {
         "epochs process duration: {:?}sec.",
         epochs_now.elapsed().as_secs_f64()
     );
-}
-
-fn make_neural_network(batch_size: usize) -> NeuralNetworkCNN {
-    NeuralNetworkCNN::new(
-        batch_size,
-        IMAGE_CHANNEL_VALUE,
-        (IMAGE_ROW_SIZE, IMAGE_ROW_SIZE),
-        vec![200, 40, 10],
-        vec![
-            LayerInformation {
-                layer_type: LayerType::Convolution,
-                information: LayerInformationContent::Convolution(ConvolutionInformation {
-                    filter_size: (3, 3),
-                    filter_value: 2,
-                    stride: 1,
-                    padding: 1,
-                    activation_type: ActivationType::ReLU,
-                }),
-            },
-            LayerInformation {
-                layer_type: LayerType::Pooling,
-                information: LayerInformationContent::Pooling(PoolingInformation {
-                    window_size: (2, 2),
-                    pooling_type: PoolingType::MaxPooling,
-                    stride: 2,
-                }),
-            },
-            LayerInformation {
-                layer_type: LayerType::Convolution,
-                information: LayerInformationContent::Convolution(ConvolutionInformation {
-                    filter_size: (3, 3),
-                    filter_value: 4,
-                    stride: 1,
-                    padding: 1,
-                    activation_type: ActivationType::ReLU,
-                }),
-            },
-            LayerInformation {
-                layer_type: LayerType::Pooling,
-                information: LayerInformationContent::Pooling(PoolingInformation {
-                    window_size: (2, 2),
-                    pooling_type: PoolingType::MaxPooling,
-                    stride: 2,
-                }),
-            },
-            LayerInformation {
-                layer_type: LayerType::Convolution,
-                information: LayerInformationContent::Convolution(ConvolutionInformation {
-                    filter_size: (3, 3),
-                    filter_value: 8,
-                    stride: 1,
-                    padding: 0,
-                    activation_type: ActivationType::ReLU,
-                }),
-            },
-        ],
-        OutputInformation {
-            node_value: 10,
-            output_type: OutputType::MultiClassClassification,
-        },
-    )
 }
 
 fn make_mini_batch_dataset(
