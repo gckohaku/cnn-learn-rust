@@ -15,8 +15,8 @@ mod nn_modules;
 mod test_nn_modules;
 
 fn main() {
-    mnist_test::mnist_process();
+    // mnist_test::mnist_process();
     // inspection_cnn::inspection();
 
-    // test_nn_modules::run_test();
+    test_nn_modules::run_test();
 }

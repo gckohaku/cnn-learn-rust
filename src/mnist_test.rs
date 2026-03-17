@@ -1,13 +1,17 @@
 use mnist::{MnistBuilder, NormalizedMnist};
-use ndarray::{Array2, Array4};
+use ndarray::{Array2, Ix0};
 use std::{io::Write, time};
 
 use crate::{
-    cnn_information::{
-        ActivationType, ConvolutionInformation, LayerInformation, LayerInformationContent,
-        LayerType, OutputInformation, OutputType, PoolingInformation, PoolingType,
-    }, cnn_network::NeuralNetworkCNN, nn_modules::{NNDataFlowTree, NNModuleBuilder, builders::{LinearBuilder, ReLUBuilder, SoftmaxAndCELossBuilder}}, rand::Rand, utilities::shuffle
+    nn_modules::{
+        NNDataFlowTree, NNForwardInput, NNModule, NNModuleBuilder,
+        builders::{LinearBuilder, ReLUBuilder, SoftmaxAndCELossBuilder},
+    },
+    rand::Rand,
+    utilities::shuffle,
 };
+
+type ElementType = f32;
 
 const IMAGE_ROW_SIZE: usize = 28;
 const IMAGE_DOT_VALUE: usize = IMAGE_ROW_SIZE * IMAGE_ROW_SIZE;
@@ -15,9 +19,9 @@ const IMAGE_CHANNEL_VALUE: usize = 1;
 
 pub fn mnist_process() {
     let epoch_value = 10;
-    let mini_batch_sample_size = 1000;
+    let mini_batch_sample_size = 6000;
 
-    let training_value = 10000;
+    let training_value = 60000;
     let validation_value = 5000;
     let test_value = 5000;
 
@@ -37,12 +41,21 @@ pub fn mnist_process() {
 
     // ニューラルネットワークの作成
     let mut tree = NNDataFlowTree::new();
-    let mut linear1 = LinearBuilder::new().input_node_value(784).output_node_value(196).is_grad(true).build();
-    let mut relu1 = ReLUBuilder::new().is_grad(true).build();
-    let mut linear2 = LinearBuilder::new().input_node_value(196).output_node_value(49).is_grad(true).build();
-    let mut relu2 = ReLUBuilder::new().is_grad(true).build();
-    let mut linear3 = LinearBuilder::new().input_node_value(49).output_node_value(10).is_grad(true).build();
-    let mut softmax_and_celoss = SoftmaxAndCELossBuilder::new().is_grad(true).build();
+    let linear1 = LinearBuilder::new()
+        .input_node_value(784)
+        .output_node_value(196)
+        .build();
+    let relu1 = ReLUBuilder::new().build();
+    let linear2 = LinearBuilder::new()
+        .input_node_value(196)
+        .output_node_value(49)
+        .build();
+    let relu2 = ReLUBuilder::new().build();
+    let linear3 = LinearBuilder::new()
+        .input_node_value(49)
+        .output_node_value(10)
+        .build();
+    let softmax_and_celoss = SoftmaxAndCELossBuilder::new().build();
 
     let linear_info1 = &tree.add_from_root(linear1);
     let relu_info1 = &tree.add(&linear_info1, relu1);
@@ -60,13 +73,21 @@ pub fn mnist_process() {
 
         let mut mini_batch_count = 0;
 
-        for indices in shuffle_index.chunks(mini_batch_sample_size) {
+        for indices in shuffle_index.chunks(mini_batch_sample_size as usize) {
             mini_batch_count += 1;
             let (inputs, expects) = make_mini_batch_dataset(indices, &mnist);
 
-            nn.forward(&inputs, &expects);
-            epoch_error += nn.get_error();
-            nn.backward(&expects, 0.01);
+            epoch_error += &tree
+                .forward(
+                    &NNForwardInput::<ElementType> {
+                        inputs: vec![inputs.view().into_dyn()],
+                        target: Some(expects.view().into_dyn()),
+                    },
+                    true,
+                )
+                .into_dimensionality::<Ix0>()
+                .unwrap().into_scalar();
+            _ = &tree.propagate_grad(None, 0.001);
 
             print!("\rmini batch count: {}", mini_batch_count);
             std::io::stdout().flush().unwrap();
@@ -75,10 +96,8 @@ pub fn mnist_process() {
         println!(
             "\nepoch {:6} error: {:13.10}",
             epoch,
-            epoch_error / training_value as f64
+            epoch_error / training_value as ElementType
         );
-        dbg!(nn.get_output());
-
     }
 
     // 処理時間表示
@@ -88,41 +107,39 @@ pub fn mnist_process() {
     );
 }
 
-fn make_mini_batch_dataset(
-    indices: &[usize],
-    dataset: &NormalizedMnist,
-) -> (Array4<f64>, Array2<f64>) {
+fn make_mini_batch_dataset<'a>(
+    indices: &'a [usize],
+    dataset: &'a NormalizedMnist,
+) -> (Array2<ElementType>, Array2<ElementType>) {
     let sample_size = indices.len();
 
-    let mut inputs_array = Vec::<f64>::new();
-    let mut expected_array = Vec::<f64>::new();
+    let mut inputs_array = Vec::<ElementType>::new();
+    let mut expected_array = Vec::<ElementType>::new();
 
     for index in indices {
-        let trn_data: &Vec<f64> = &dataset.trn_img
+        let trn_data: &Vec<ElementType> = &dataset.trn_img
             [((*index) * IMAGE_DOT_VALUE)..(((*index) + 1) * IMAGE_DOT_VALUE)]
             .iter()
-            .map(|&x| x as f64)
+            .map(|&x| x as ElementType)
             .collect();
         inputs_array.extend_from_slice(trn_data);
 
-        let trn_label: &Vec<f64> = &dataset.trn_lbl[((*index) * 10)..(((*index) + 1) * 10)]
+        let trn_label: &Vec<ElementType> = &dataset.trn_lbl[((*index) * 10)..(((*index) + 1) * 10)]
             .iter()
-            .map(|&x| x as f64)
+            .map(|&x| x as ElementType)
             .collect();
         expected_array.extend_from_slice(trn_label);
     }
 
-    let inputs = Array4::<f64>::from_shape_vec(
+    let inputs = Array2::<ElementType>::from_shape_vec(
         (
             sample_size,
-            IMAGE_CHANNEL_VALUE,
-            IMAGE_ROW_SIZE,
-            IMAGE_ROW_SIZE,
+            IMAGE_CHANNEL_VALUE * IMAGE_DOT_VALUE,
         ),
         inputs_array,
     )
     .unwrap();
-    let expects = Array2::<f64>::from_shape_vec((sample_size, 10), expected_array).unwrap();
+    let expects = Array2::<ElementType>::from_shape_vec((sample_size, 10), expected_array).unwrap();
 
-    (inputs, expects)
+    (inputs.to_owned(), expects.to_owned())
 }

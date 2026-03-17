@@ -23,23 +23,19 @@ where
         1
     }
 
-    fn forward<'a, 'b>(&mut self, input: &NNForwardInput<'a, 'b, T>) -> ArrayD<T> {
+    fn forward<'a, 'b>(&mut self, input: &NNForwardInput<'a, 'b, T>, is_grad: bool) -> ArrayD<T> {
         let input_values = input;
 
-        let softmax_result = self.softmax.forward(&input_values);
+        let softmax_result = self.softmax.forward(&input_values, is_grad);
         let softmax_result_view = softmax_result.view();
 
         let target = &input_values.target;
-
-        if self.is_grad {
-            self.grad = Some(&softmax_result.to_owned().into_dimensionality::<Ix2>().unwrap() - &target.to_owned().unwrap().into_dimensionality::<Ix2>().unwrap());
-        }
 
         let ce_loss_input = &NNForwardInput {
             inputs: vec![softmax_result_view],
             target: Some(target.clone().unwrap()),
         };
-        let loss = self.cross_entropy_loss.forward(ce_loss_input);
+        let loss = self.cross_entropy_loss.forward(ce_loss_input, is_grad);
 
         let softmax_result_2d = softmax_result.into_dimensionality::<Ix2>().unwrap();
         let target_2d = input
@@ -48,7 +44,12 @@ where
             .unwrap()
             .into_dimensionality::<Ix2>()
             .unwrap();
-        self.grad = Some(&softmax_result_2d - &target_2d);
+        
+        if is_grad {
+            // self.grad = Some(&softmax_result.to_owned().into_dimensionality::<Ix2>().unwrap() - &target.to_owned().unwrap().into_dimensionality::<Ix2>().unwrap());
+            self.grad = Some(&softmax_result_2d - &target_2d);
+        }
+        
         loss
     }
 

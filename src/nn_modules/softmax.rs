@@ -20,7 +20,7 @@ where
         1
     }
 
-    fn forward(&mut self, forward_input: &NNForwardInput<T>) -> ArrayD<T> {
+    fn forward(&mut self, forward_input: &NNForwardInput<T>, _is_grad: bool) -> ArrayD<T> {
         let input = &forward_input.inputs[0];
 
         let input_2d = input.clone().into_dimensionality::<Ix2>().unwrap();

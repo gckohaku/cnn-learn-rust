@@ -14,7 +14,6 @@ where
     T: NNNecessaryTraits,
 {
     pub modules: Vec<NNModuleType<T>>,
-    pub is_grad: bool,
     adjacency_list: Vec<Vec<usize>>,
     inverse_adjacency_list: Vec<Vec<usize>>,
     current_count: usize,
@@ -25,6 +24,7 @@ where
     // input_variables_indices: Vec<Vec<usize>>,
     sequential_flow: NNSequentialNodeFlow,
     inverse_sequential_flow: NNSequentialNodeFlow,
+    is_not_yet_executed: bool,
 }
 
 impl<'a, T> NNModule<T> for NNDataFlowTree<T>
@@ -35,7 +35,12 @@ where
         usize::MAX
     }
 
-    fn forward(&mut self, input: &NNForwardInput<'_, '_, T>) -> ArrayD<T> {
+    fn forward(&mut self, input: &NNForwardInput<'_, '_, T>, is_grad: bool) -> ArrayD<T> {
+        if self.is_not_yet_executed {
+            self.calc_sequential_node_flow();
+            self.is_not_yet_executed = false;
+        }
+
         let target = input.target.as_ref().unwrap();
         let mut loop_result = ArrayD::<T>::zeros(vec![]);
 
@@ -60,17 +65,25 @@ where
                 );
             }
 
-            loop_result = module.forward(&NNForwardInput {
-                inputs: self.variables_stocks[index]
-                    .iter()
-                    .map(|m| m.view())
-                    .collect(),
-                target: Some(target.clone()),
-            });
+            loop_result = module.forward(
+                &NNForwardInput {
+                    inputs: self.variables_stocks[index]
+                        .iter()
+                        .map(|m| m.view())
+                        .collect(),
+                    target: Some(target.clone()),
+                },
+                is_grad,
+            );
 
             for dst in destinations {
                 self.variables_stocks[*dst].push(loop_result.clone());
             }
+        }
+
+        // 順伝播が終わったら、引数のリストは消去する必要がある
+        for var in &mut self.variables_stocks {
+            var.clear();
         }
 
         loop_result
@@ -90,13 +103,24 @@ where
             let module = &mut self.modules[index];
 
             let loop_result_view = loop_result.view();
-            loop_result = module.propagate_grad(if is_none {None} else {Some(&loop_result_view)}, eta);
+            loop_result = module.propagate_grad(
+                if is_none {
+                    None
+                } else {
+                    Some(&loop_result_view)
+                },
+                eta,
+            );
             is_none = false;
-            
 
             for dst in destinations {
                 self.variables_stocks[*dst].push(loop_result.clone());
             }
+        }
+
+        // 逆伝播が終わったら、引数のリストは消去する必要がある
+        for var in &mut self.variables_stocks {
+            var.clear();
         }
 
         loop_result
@@ -109,7 +133,6 @@ where
 {
     pub fn new() -> Self {
         let modules = Vec::<NNModuleType<T>>::new();
-        let is_grad = false;
         let adjacency_list = Vec::<Vec<usize>>::new();
         let inverse_adjacency_list = Vec::<Vec<usize>>::new();
         let current_count = 0;
@@ -119,10 +142,10 @@ where
         // let input_variables_indices = Vec::<Vec<usize>>::new();
         let sequential_flow = NNSequentialNodeFlow::new();
         let inverse_sequential_flow = NNSequentialNodeFlow::new();
+        let is_not_yet_executed = true;
 
         Self {
             modules,
-            is_grad,
             adjacency_list,
             inverse_adjacency_list,
             current_count,
@@ -132,6 +155,7 @@ where
             // input_variables_indices,
             sequential_flow,
             inverse_sequential_flow,
+            is_not_yet_executed,
         }
     }
 

@@ -35,12 +35,12 @@ where
         1
     }
 
-    fn forward(&mut self, forward_input: &NNForwardInput<'_, '_, T>) -> ArrayD<T> {
+    fn forward(&mut self, forward_input: &NNForwardInput<'_, '_, T>, is_grad: bool) -> ArrayD<T> {
         let input = &forward_input.inputs[0];
         let input_2d = input.clone().into_dimensionality::<Ix2>().unwrap();
 
         // Linear 層では、勾配計算のために入力行列の転置を保持しておけばよい
-        if self.is_grad == true {
+        if is_grad == true {
             self.grad = Some(input_2d.t().to_owned());
         }
 
@@ -61,9 +61,6 @@ where
         Zip::from(&mut self.biases)
             .and(&before_grad.sum_axis(Axis(0)))
             .for_each(|bias, update| *bias -= eta * *update);
-
-        #[cfg(debug_assertions)]
-        dbg!(&self.weights, &self.biases, &propagated_to_before);
 
         propagated_to_before.into_dyn()
     }

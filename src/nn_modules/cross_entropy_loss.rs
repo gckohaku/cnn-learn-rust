@@ -19,7 +19,7 @@ where
         1
     }
 
-    fn forward<'a>(&mut self, input: &NNForwardInput<'_, '_, T>) -> ArrayD<T> {
+    fn forward<'a>(&mut self, input: &NNForwardInput<'_, '_, T>, _is_grad: bool) -> ArrayD<T> {
         let nn_result = &input.inputs[0];
         let target = input.target.as_ref().unwrap();
 

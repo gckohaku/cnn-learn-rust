@@ -32,7 +32,7 @@ pub struct NNForwardInput<'a, 'b, T> {
 pub trait NNModule<T>: Debug {
     fn necessary_parameter_value(&self) -> usize;
 
-    fn forward(&mut self, input: &NNForwardInput<'_, '_, T>) -> ArrayD<T>;
+    fn forward(&mut self, input: &NNForwardInput<'_, '_, T>, is_grad: bool) -> ArrayD<T>;
     // 逆伝播処理
     fn propagate_grad(&mut self, grad: Option<&ArrayViewD<T>>, eta: T) -> ArrayD<T>;
 }
@@ -75,14 +75,14 @@ where
         }
     }
 
-    fn forward(&mut self, input: &NNForwardInput<'_, '_, T>) -> ArrayD<T> {
+    fn forward(&mut self, input: &NNForwardInput<'_, '_, T>, is_grad: bool) -> ArrayD<T> {
         match self {
-            NNModuleType::InputTensor(s) => s.forward(input),
-            NNModuleType::Linear(s) => s.forward(input),
-            NNModuleType::ReLU(s) => s.forward(input),
-            NNModuleType::Softmax(s) => s.forward(input),
-            NNModuleType::CrossEntropyLoss(s) => s.forward(input),
-            NNModuleType::SoftmaxAndCELoss(s) => s.forward(input),
+            NNModuleType::InputTensor(s) => s.forward(input, is_grad),
+            NNModuleType::Linear(s) => s.forward(input, is_grad),
+            NNModuleType::ReLU(s) => s.forward(input, is_grad),
+            NNModuleType::Softmax(s) => s.forward(input, is_grad),
+            NNModuleType::CrossEntropyLoss(s) => s.forward(input, is_grad),
+            NNModuleType::SoftmaxAndCELoss(s) => s.forward(input, is_grad),
             // NNModuleType::Custom(s) => s.forward(input),
         }
     }
