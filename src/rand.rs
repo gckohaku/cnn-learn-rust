@@ -3,6 +3,8 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+use num_traits::{ConstOne, ConstZero, Float, Num};
+
 // PCD の XSL-RR での疑似乱数生成
 #[derive(Clone, Debug)]
 pub struct Rand {
@@ -134,18 +136,58 @@ impl Rand {
         ret_f64
     }
 
+    pub fn rand<T>(&mut self) -> T
+    where
+        T: Num + Float + ConstZero,
+    {
+        let exponent_bias: i64 = 1023;
+        let mut ret_u64 = self.next() & 0x1fffffffffffff;
+
+        if ret_u64 == 0 {
+            return T::ZERO;
+        }
+
+        let mut exponent: i64 = 0;
+
+        loop {
+            ret_u64 <<= 1;
+            exponent -= 1;
+
+            if ret_u64 & 0x10000000000000 == 0x10000000000000 {
+                break;
+            }
+        }
+
+        exponent += exponent_bias;
+
+        let ret_f64: f64 = f64::from_bits(
+            (((exponent as u64) << 52) & 0x7ff0000000000000) | (ret_u64 & 0xfffffffffffff),
+        );
+
+        T::from(ret_f64).expect("Cast from f64 is failed")
+    }
+
     /// 平均 `mu` 、分散 `sigma` の正規分布に従う乱数を生成する
     ///
     /// 通常の乱数は一様分布に従うような形になっているが、一様分布では不都合がある時に使う
-    pub fn normal(&mut self, mu: f64, sigma: f64) -> f64 {
+    pub fn normal<T>(&mut self, mu: T, sigma: T) -> T
+    where
+        T: Num + Float + ConstZero + ConstOne,
+    {
         self.normal_use_cosine(mu, sigma)
     }
 
-    pub fn normal_use_cosine(&mut self, mu: f64, sigma: f64) -> f64 {
-        let x = self.rand_f64();
-        let y = self.rand_f64();
+    pub fn normal_use_cosine<T>(&mut self, mu: T, sigma: T) -> T
+    where
+        T: Num + Float + ConstZero + ConstOne,
+    {
+        let x = self.rand::<T>();
+        let y = self.rand::<T>();
 
-        let z = (-2.0 * x.ln()).sqrt() * (2.0 * consts::PI * y).cos();
+        let two = T::ONE + T::ONE;
+
+        let z = (-two * x.ln()).sqrt()
+            * (two * T::from(consts::PI).expect("PI cannot to cast from f64 to T") * y).cos();
 
         mu + z * sigma
     }

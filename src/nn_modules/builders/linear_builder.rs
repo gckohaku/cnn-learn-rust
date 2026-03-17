@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use ndarray::{Array1, Array2};
 
-use crate::nn_modules::{NNModuleBuilder, NNModuleType, NNNecessaryTraits, linear::Linear};
+use crate::{nn_modules::{NNModuleBuilder, NNModuleType, NNNecessaryTraits, linear::Linear}, rand::Rand};
 
 
 pub struct LinearBuilder<T> {
@@ -32,8 +32,15 @@ where
     }
 
     fn build(self) -> NNModuleType<T> {
-        let weights = Array2::<T>::zeros((self._input_node_value, self._output_node_value));
+        let mut weights = Array2::<T>::zeros((self._input_node_value, self._output_node_value));
         let biases = Array1::<T>::zeros(self._output_node_value);
+
+        // 重みの He 初期化
+        let mut r = Rand::new();
+
+        let two = T::from(2.0f64).expect("failed cast from 2.0");
+
+        weights.mapv_inplace(|_x| r.normal(T::ZERO, T::from(2.0 / self._input_node_value as f64).expect("input size cannot to cast from usize to T").sqrt()));
 
         NNModuleType::Linear(Linear::<T> {
             weights,

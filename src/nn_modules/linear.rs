@@ -11,6 +11,7 @@ pub struct Linear<T> {
     pub biases: Array1<T>,
     pub is_grad: bool,
     // 重みを更新するために保持するデータ
+    // いうて grad に入れているからいらないかもしれない
     pub(super) input_value: Option<Array2<T>>,
     pub(super) grad: Option<Array2<T>>,
 }

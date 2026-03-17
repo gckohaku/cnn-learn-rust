@@ -19,7 +19,7 @@ const IMAGE_CHANNEL_VALUE: usize = 1;
 
 pub fn mnist_process() {
     let epoch_value = 10;
-    let mini_batch_sample_size = 6000;
+    let mini_batch_sample_size = 500;
 
     let training_value = 60000;
     let validation_value = 5000;
