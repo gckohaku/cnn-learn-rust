@@ -13,7 +13,7 @@ pub struct NNDataFlowTree<T>
 where
     T: NNNecessaryTraits,
 {
-    pub modules: Vec<NNModuleType<T>>,
+    pub modules: Vec<Box<dyn NNModule<T>>>,
     adjacency_list: Vec<Vec<usize>>,
     inverse_adjacency_list: Vec<Vec<usize>>,
     current_count: usize,
