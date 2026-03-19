@@ -13,7 +13,7 @@ pub struct InputTensor<T> {
 
 impl<T> NNModule<T> for InputTensor<T>
 where
-    T: Clone + std::fmt::Debug,
+    T: Clone + std::fmt::Debug + Sync + Send,
 {
     fn necessary_parameter_value(&self) -> usize {
         1

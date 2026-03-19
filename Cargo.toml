@@ -15,6 +15,7 @@ serde = { version = "1.0", features = ["derive"] }
 mnist = "0.6.0"
 num-traits = "0.2.19"
 ordered-float = "5.1"
+dyn-clone = "1.0.20"
 
 [profile.dev]
 opt-level = 1

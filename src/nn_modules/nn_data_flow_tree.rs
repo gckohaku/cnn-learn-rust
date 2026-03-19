@@ -2,7 +2,7 @@ use ndarray::ArrayD;
 use num_traits::{ConstOne, ConstZero, Float};
 
 use crate::nn_modules::{
-    NNDataFlowNodeIndexInfo, NNForwardInput, NNModule, NNModuleType, NNNecessaryTraits,
+    NNDataFlowNodeIndexInfo, NNForwardInput, NNModule, NNNecessaryTraits,
     calculation_node_state::CalculationNodeState, input_tensor::InputTensor,
     nn_sequential_node_flow::NNSequentialNodeFlow,
 };
@@ -132,7 +132,7 @@ where
     T: NNNecessaryTraits,
 {
     pub fn new() -> Self {
-        let modules = Vec::<NNModuleType<T>>::new();
+        let modules = Vec::<Box<dyn NNModule<T>>>::new();
         let adjacency_list = Vec::<Vec<usize>>::new();
         let inverse_adjacency_list = Vec::<Vec<usize>>::new();
         let current_count = 0;
@@ -159,22 +159,22 @@ where
         }
     }
 
-    pub fn add_from_root(&mut self, module: NNModuleType<T>) -> NNDataFlowNodeIndexInfo
+    pub fn add_from_root<U>(&mut self, module: U) -> NNDataFlowNodeIndexInfo
     where
         T: Send + Sync + Debug + Float + ConstOne + ConstZero + 'static,
+        U: NNModule<T> + 'static,
     {
         let parameter_value = module.necessary_parameter_value();
         for i in 0..parameter_value {
-            self.modules
-                .push(NNModuleType::InputTensor(InputTensor::<T> {
-                    phantom: PhantomData,
-                }));
+            self.modules.push(Box::new(InputTensor::<T> {
+                phantom: PhantomData,
+            }));
             self.adjacency_list.push(Vec::<usize>::new());
             self.adjacency_list[self.current_count + i].push(self.current_count + parameter_value);
         }
         self.current_count += 1;
 
-        self.modules.push(module);
+        self.modules.push(Box::new(module));
         let index = self.current_count;
         self.current_count += 1;
 
@@ -187,12 +187,12 @@ where
         NNDataFlowNodeIndexInfo { index }
     }
 
-    pub fn add(
+    pub fn add<U>(
         &mut self,
         from: &NNDataFlowNodeIndexInfo,
-        module: NNModuleType<T>,
-    ) -> NNDataFlowNodeIndexInfo {
-        self.modules.push(module);
+        module: U,
+    ) -> NNDataFlowNodeIndexInfo where U: NNModule<T> + 'static {
+        self.modules.push(Box::new(module));
         let from_index = from.index;
         let to_index = self.current_count;
         self.current_count += 1;
@@ -204,8 +204,6 @@ where
     }
 
     pub fn calc_sequential_node_flow(&mut self)
-    where
-        NNModuleType<T>: NNModule<T>,
     {
         let mut calculation_queue = VecDeque::<CalculationNodeState>::new();
 

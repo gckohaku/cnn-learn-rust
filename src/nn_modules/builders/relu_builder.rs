@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::nn_modules::{NNModuleBuilder, NNModuleType, NNNecessaryTraits, relu::ReLU};
+use crate::nn_modules::{NNModuleBuilder, NNNecessaryTraits, relu::ReLU};
 
 pub struct ReLUBuilder<T> {
     _is_grad: bool,
@@ -11,7 +11,7 @@ impl<T> NNModuleBuilder<T> for ReLUBuilder<T>
 where
     T: NNNecessaryTraits,
 {
-    type BuiltObject = NNModuleType<T>;
+    type BuiltObject = ReLU<T>;
 
     fn new() -> Self {
         let is_grad = false;
@@ -22,12 +22,12 @@ where
         }
     }
 
-    fn build(self) -> NNModuleType<T> {
-        NNModuleType::ReLU(ReLU::<T> {
+    fn build(self) -> Self::BuiltObject {
+        ReLU::<T> {
             is_grad: self._is_grad,
             output_value: None,
             grad: None,
-        })
+        }
     }
 }
 

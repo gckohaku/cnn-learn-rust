@@ -1,7 +1,8 @@
 use std::marker::PhantomData;
 
 use crate::nn_modules::{
-    NNModuleBuilder, NNModuleType, NNNecessaryTraits, SoftmaxAndCELoss, builders::{CrossEntropyLossBuilder, SoftmaxBuilder}
+    NNModuleBuilder, NNNecessaryTraits, SoftmaxAndCELoss,
+    builders::{CrossEntropyLossBuilder, SoftmaxBuilder},
 };
 
 pub struct SoftmaxAndCELossBuilder<T> {
@@ -10,9 +11,10 @@ pub struct SoftmaxAndCELossBuilder<T> {
 }
 
 impl<T> NNModuleBuilder<T> for SoftmaxAndCELossBuilder<T>
-where T: NNNecessaryTraits
+where
+    T: NNNecessaryTraits,
 {
-    type BuiltObject = NNModuleType<T>;
+    type BuiltObject = SoftmaxAndCELoss<T>;
 
     fn new() -> Self {
         let is_grad = false;
@@ -24,25 +26,15 @@ where T: NNNecessaryTraits
     }
 
     fn build(self) -> Self::BuiltObject {
-        let softmax_enum_data = SoftmaxBuilder::new().build();
-        let cross_entropy_loss_enum_data = CrossEntropyLossBuilder::new().build();
+        let softmax = SoftmaxBuilder::new().build();
+        let cross_entropy_loss = CrossEntropyLossBuilder::new().build();
 
-        let softmax = match softmax_enum_data {
-            NNModuleType::Softmax(s) => s,
-            _ => panic!("invalid type accept"),
-        };
-
-        let cross_entropy_loss = match cross_entropy_loss_enum_data {
-            NNModuleType::CrossEntropyLoss(s) => s,
-            _ => panic!("invalid type accept"),
-        };
-
-        NNModuleType::SoftmaxAndCELoss(SoftmaxAndCELoss::<T> {
+        SoftmaxAndCELoss::<T> {
             softmax,
             cross_entropy_loss,
             is_grad: self._is_grad,
             grad: None,
-        })
+        }
     }
 }
 

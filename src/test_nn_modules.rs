@@ -29,35 +29,22 @@ pub fn run_test() {
 
     #[cfg(debug_assertions)]
     {
-        use crate::nn_modules::NNModuleType;
-        match linear1 {
-            NNModuleType::Linear(ref mut l) => {
-                use ndarray::array;
+        use ndarray::array;
 
-                l.debug_set_weights(array![
-                    [0.6, 0.2, -0.5],
-                    [-0.2, 0.0, -0.8],
-                    [0.9, 0.3, 0.1],
-                    [0.4, -0.8, -0.3],
-                ]);
-                l.debug_set_biases(array![0.0, 0.1, 0.2]);
-            }
-            _ => panic!("Unexpected Behavior"),
-        }
+        linear1.debug_set_weights(array![
+            [0.6, 0.2, -0.5],
+            [-0.2, 0.0, -0.8],
+            [0.9, 0.3, 0.1],
+            [0.4, -0.8, -0.3],
+        ]);
+        linear1.debug_set_biases(array![0.0, 0.1, 0.2]);
 
-        match linear2 {
-            NNModuleType::Linear(ref mut l) => {
-                use ndarray::array;
-
-                l.debug_set_weights(array![
-                    [0.3, 0.2, -0.5],
-                    [-0.2, 0.8, 0.7],
-                    [0.6, -0.4, -0.1],
-                ]);
-                l.debug_set_biases(array![0.2, -0.1, 0.1]);
-            }
-            _ => panic!("Unexpected Behavior"),
-        }
+        linear2.debug_set_weights(array![
+            [0.3, 0.2, -0.5],
+            [-0.2, 0.8, 0.7],
+            [0.6, -0.4, -0.1],
+        ]);
+        linear2.debug_set_biases(array![0.2, -0.1, 0.1]);
     }
 
     let linear_info = tree.add_from_root(linear1);
