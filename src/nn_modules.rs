@@ -9,6 +9,7 @@ pub mod nn_sequential_node_flow;
 pub mod relu;
 pub mod softmax;
 pub mod softmax_and_celoss;
+pub mod convolution;
 
 use std::fmt::Debug;
 
@@ -17,10 +18,11 @@ pub use linear::Linear;
 use ndarray::{ArrayD, ArrayViewD};
 pub use nn_data_flow_node::NNDataFlowNodeIndexInfo;
 pub use nn_data_flow_tree::NNDataFlowTree;
-use num_traits::{ConstOne, ConstZero, Float, NumAssign};
+use num_traits::{ConstOne, ConstZero, Float, FromPrimitive, NumAssign};
 pub use relu::ReLU;
 pub use softmax::Softmax;
 pub use softmax_and_celoss::SoftmaxAndCELoss;
+pub use convolution::Convolution;
 
 use crate::nn_modules::input_tensor::InputTensor;
 
@@ -54,9 +56,9 @@ pub enum NNModuleType<T> where T: NNNecessaryTraits {
     // Custom(Box<dyn NNModule<T>>),
 }
 
-pub trait NNNecessaryTraits: Send + Sync + Debug + Float + ConstOne + ConstZero + NumAssign + 'static {}
+pub trait NNNecessaryTraits: Send + Sync + Debug + Float + ConstOne + ConstZero + NumAssign + FromPrimitive + 'static {}
 
-impl<T> NNNecessaryTraits for T where T: Send + Sync + Debug + Float + ConstOne + ConstZero + NumAssign + 'static
+impl<T> NNNecessaryTraits for T where T: Send + Sync + Debug + Float + ConstOne + ConstZero + NumAssign + FromPrimitive + 'static
 {}
 
 impl<T> NNModule<T> for NNModuleType<T>
