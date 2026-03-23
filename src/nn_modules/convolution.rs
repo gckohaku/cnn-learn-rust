@@ -1,4 +1,4 @@
-use ndarray::{Array1, Array2, Array4, ArrayD, Ix4, array};
+use ndarray::{Array1, Array4, ArrayD, Axis, Ix4, Zip};
 
 use crate::{
     cnn_transformations,
@@ -112,9 +112,19 @@ where
 		//                      -> (C_i * F_h * F_w, B * O_h * O_w)
 		let spread_grad_for_before = &spread_filter.t().dot(&spread_grad);
 
-		// ここに勾配の更新処理を書く
+        let filters_shape = self.filters.shape();
+        // (C_o, C_i * F_h * F_w) -> (C_o, C_i, F_h, F_w)
+        let reshape_grad_for_filters = spread_grad_for_filters.to_shape((filters_shape[0], filters_shape[1], filters_shape[2], filters_shape[3])).unwrap();
+        Zip::from(&mut self.filters)
+            .and(&reshape_grad_for_filters)
+            .par_for_each(|filter, update| *filter -= eta * *update);
+        Zip::from(&mut self.biases)
+            .and(&spread_grad.sum_axis(Axis(0)))
+            .for_each(|bias, update| *bias -= eta * *update);
 
-		// ここに前の層に勾配を送る (戻り値を返す) 処理を書く
+        let binding = self.input_of_forward.to_owned().unwrap();
+        let input_shape = &binding.shape();
+        cnn_transformations::col2im(spread_grad_for_before, [self.filter_size.0, self.filter_size.1], [input_shape[0], input_shape[1], input_shape[2], input_shape[3]], self.stride, self.padding);
 
         ArrayD::zeros(vec![])
     }
