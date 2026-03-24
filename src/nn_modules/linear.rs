@@ -9,7 +9,6 @@ use crate::nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits};
 pub struct Linear<T> {
     pub weights: Array2<T>,
     pub biases: Array1<T>,
-    pub is_grad: bool,
     // 重みを更新するために保持するデータ
     // いうて grad に入れているからいらないかもしれない
     pub(super) input_value: Option<Array2<T>>,
@@ -50,7 +49,11 @@ where
     }
 
     fn propagate_grad(&mut self, grad: Option<&ArrayViewD<T>>, eta: T) -> ArrayD<T> {
-        let before_grad = &grad.unwrap().to_owned().into_dimensionality::<Ix2>().unwrap();
+        let before_grad = &grad
+            .unwrap()
+            .to_owned()
+            .into_dimensionality::<Ix2>()
+            .unwrap();
 
         // 伝播させる勾配の計算
         let propagated_to_before = before_grad.dot(&self.weights.t());
@@ -75,7 +78,6 @@ where
         writeln!(f, "Linear {{")?;
         writeln!(f, "    weights shape: {:?}", self.weights.shape())?;
         writeln!(f, "    biases shape: {:?}", self.biases.shape())?;
-        writeln!(f, "    is_grad: {:?}", self.is_grad)?;
         writeln!(f, "    grad: {:?}", self.grad)?;
         writeln!(f, "}}")?;
         Ok(())

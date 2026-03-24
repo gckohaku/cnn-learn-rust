@@ -15,17 +15,13 @@ pub fn run_test() {
     let mut linear1 = LinearBuilder::<ElementType>::new()
         .input_node_value(4)
         .output_node_value(3)
-        .is_grad(true)
         .build();
-    let relu = ReLUBuilder::<ElementType>::new().is_grad(true).build();
+    let relu = ReLUBuilder::<ElementType>::new().build();
     let mut linear2 = LinearBuilder::<ElementType>::new()
         .input_node_value(3)
         .output_node_value(3)
-        .is_grad(true)
         .build();
-    let output_module = SoftmaxAndCELossBuilder::<ElementType>::new()
-        .is_grad(true)
-        .build();
+    let output_module = SoftmaxAndCELossBuilder::<ElementType>::new().build();
 
     #[cfg(debug_assertions)]
     {

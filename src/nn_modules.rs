@@ -10,6 +10,7 @@ pub mod relu;
 pub mod softmax;
 pub mod softmax_and_celoss;
 pub mod convolution;
+pub mod pooling;
 
 use std::fmt::Debug;
 
@@ -23,6 +24,7 @@ pub use relu::ReLU;
 pub use softmax::Softmax;
 pub use softmax_and_celoss::SoftmaxAndCELoss;
 pub use convolution::Convolution;
+pub use pooling::Pooling;
 
 use crate::nn_modules::input_tensor::InputTensor;
 

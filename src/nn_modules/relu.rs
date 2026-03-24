@@ -6,7 +6,6 @@ use crate::nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits};
 
 #[derive(Debug, Clone)]
 pub struct ReLU<T> {
-    pub is_grad: bool,
     // 勾配計算のために保持するデータ
     pub(super) output_value: Option<ArrayD<T>>,
     pub(super) grad: Option<ArrayD<T>>,
@@ -42,7 +41,7 @@ where
 
 // impl<T> ReLU<T>
 // where
-//     T: Send + Sync + Num + Float + ConstOne + ConstZero,
+//     T: NNNecessaryTraits,
 // {
 //     fn calc_grad(&mut self, result: &ArrayD<T>) -> ArrayD<T> {
 //         let mut grad = result.clone();

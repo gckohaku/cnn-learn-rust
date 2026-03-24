@@ -5,7 +5,6 @@ use crate::nn_modules::{
 };
 
 pub struct SoftmaxAndCELossBuilder<T> {
-    _is_grad: bool,
     _phantom: PhantomData<T>,
 }
 
@@ -15,10 +14,8 @@ where T: NNNecessaryTraits
     type BuiltObject = NNModuleType<T>;
 
     fn new() -> Self {
-        let is_grad = false;
 
         Self {
-            _is_grad: is_grad,
             _phantom: PhantomData,
         }
     }
@@ -40,15 +37,7 @@ where T: NNNecessaryTraits
         NNModuleType::SoftmaxAndCELoss(SoftmaxAndCELoss::<T> {
             softmax,
             cross_entropy_loss,
-            is_grad: self._is_grad,
             grad: None,
         })
-    }
-}
-
-impl<T> SoftmaxAndCELossBuilder<T> {
-    pub fn is_grad(mut self, value: bool) -> Self {
-        self._is_grad = value;
-        self
     }
 }

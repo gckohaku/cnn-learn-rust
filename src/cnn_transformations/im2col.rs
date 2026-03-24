@@ -2,6 +2,8 @@ use ndarray::{Array2, Array4, Array6, Slice, s};
 use ndarray_ndimage::{PadMode, pad};
 use num_traits::{Float, FromPrimitive, Num};
 
+use crate::nn_modules::NNNecessaryTraits;
+
 pub fn im2col<T>(
     inputs: &Array4<T>,
     filters: &Array4<T>,
@@ -83,11 +85,14 @@ where
     (input_col_matrix.to_owned(), filter_col_matrix.to_owned())
 }
 
-pub fn im2col_for_pooling(
-    inputs: &Array4<f64>,
+pub fn im2col_for_pooling<T>(
+    inputs: &Array4<T>,
     stride: usize,
     window_size: (usize, usize),
-) -> Array2<f64> {
+) -> Array2<T>
+where
+    T: NNNecessaryTraits,
+{
     // if inputs.ndim() != 4 {
     //     panic!("次元数が4でない");
     // }
@@ -105,7 +110,7 @@ pub fn im2col_for_pooling(
         (input_size.1 - window_size.1) / stride + 1,
     );
 
-    let mut processing_tensor: Array6<f64> = Array6::zeros((
+    let mut processing_tensor: Array6<T> = Array6::zeros((
         batch_value,
         input_channel_value,
         window_size.0,
