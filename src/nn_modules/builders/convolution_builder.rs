@@ -5,9 +5,8 @@ use ndarray::{Array1, Array4};
 use crate::nn_modules::{Convolution, NNModuleBuilder, NNNecessaryTraits};
 
 pub struct ConvolutionBuilder<T> {
-    _batch_size: usize,
     _input_channel_value: usize,
-	_output_channel_value: usize,
+	// _output_channel_value: usize,
     _input_image_size: (usize, usize),
     _filter_value: usize,
     _filter_size: (usize, usize),
@@ -23,19 +22,17 @@ where
     type BuiltObject = Convolution<T>;
 
     fn new() -> Self {
-        let _batch_size = 1usize;
         let _input_channel_value = 1usize;
-		let _output_channel_value = 1usize;
+		// let _output_channel_value = 1usize;
         let _input_image_size = (1usize, 1usize);
         let _filter_value = 1usize;
         let _filter_size = (1usize, 1usize);
 		let _stride = 1usize;
-		let _padding = 1usize;
+		let _padding = 0usize;
 
         Self {
-            _batch_size,
             _input_channel_value,
-			_output_channel_value,
+			// _output_channel_value,
             _input_image_size,
             _filter_value,
             _filter_size,
@@ -47,7 +44,7 @@ where
 
     fn build(self) -> Self::BuiltObject {
         let filters = Array4::<T>::zeros((
-            self._output_channel_value,
+            self._filter_value,
             self._input_channel_value,
             self._filter_size.0,
             self._filter_size.1,
@@ -69,20 +66,15 @@ where
 }
 
 impl<T> ConvolutionBuilder<T> {
-	pub fn batch_size(mut self, size: usize) -> Self {
-		self._batch_size = size;
-		self
-	}
-
 	pub fn input_channel_value(mut self, value: usize) -> Self {
 		self._input_channel_value = value;
 		self
 	}
 
-	pub fn output_channel_value(mut self, value: usize) -> Self {
-		self._output_channel_value = value;
-		self
-	}
+	// pub fn output_channel_value(mut self, value: usize) -> Self {
+	// 	self._output_channel_value = value;
+	// 	self
+	// }
 
 	pub fn input_image_size(mut self, size: (usize, usize)) -> Self {
 		self._input_image_size = size;
