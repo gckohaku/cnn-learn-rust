@@ -7,12 +7,12 @@ use crate::{
 
 #[derive(Clone, Debug)]
 pub struct Convolution<T> {
-    filters: Array4<T>,
-    biases: Array1<T>,
-    stride: usize,
-    padding: usize,
-    filter_size: (usize, usize),
-    input_of_forward: Option<Array4<T>>,
+    pub(super) filters: Array4<T>,
+    pub(super) biases: Array1<T>,
+    pub(super) stride: usize,
+    pub(super) padding: usize,
+    pub(super) filter_size: (usize, usize),
+    pub(super) input_of_forward: Option<Array4<T>>,
 }
 
 impl<T> NNModule<T> for Convolution<T>

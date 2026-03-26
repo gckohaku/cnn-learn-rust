@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use ndarray::{Array1, Array2, ArrayD, Axis, Ix4, Zip};
 
 use crate::{
@@ -8,11 +10,12 @@ use crate::{
 
 #[derive(Debug)]
 pub struct Pooling<T> {
-    pooling_type: PoolingType,
-    window: Array2<T>,
-    window_size: (usize, usize),
-    stride: usize,
-    pooling_mask: Array1<usize>,
+    pub(super) pooling_type: PoolingType,
+    // pub(super) window: Array2<T>,
+    pub(super) window_size: (usize, usize),
+    pub(super) stride: usize,
+    pub(super) pooling_mask: Option<Array1<usize>>,
+    pub(super) _phantom: PhantomData<T>,
 }
 
 impl<T> NNModule<T> for Pooling<T>
@@ -70,7 +73,9 @@ where
                     *res = max_value;
                 });
 
-            self.pooling_mask = mask.to_owned();
+            if is_grad {
+                self.pooling_mask = Some(mask.to_owned());
+            }
 
             let reshape_pooling = after_pooling
                 .to_shape((
@@ -90,7 +95,7 @@ where
     fn propagate_grad(
         &mut self,
         grad: Option<&ndarray::ArrayViewD<T>>,
-        eta: T,
+        _eta: T,
     ) -> ndarray::ArrayD<T> {
         let mut result_tensor = ArrayD::<T>::zeros(vec![]);
 
@@ -103,7 +108,7 @@ where
             //     .into_dimensionality::<Ix4>()
             //     .unwrap();
 
-            let pooling_ncols = self.pooling_mask.len();
+            let pooling_ncols = self.pooling_mask.to_owned().unwrap().len();
 
             let temporary_owned_grad = grad.unwrap().to_owned();
             let vectored_pooled = temporary_owned_grad.to_shape(pooling_ncols).unwrap();
@@ -115,10 +120,10 @@ where
             // mask が指すインデックスにそれぞれの勾配を渡す
             Zip::from(spread_grad_for_before.axis_iter_mut(Axis(0)))
                 .and(&vectored_pooled)
-                .and(&self.pooling_mask)
+                .and(&self.pooling_mask.to_owned().unwrap())
                 .par_for_each(|mut v, d, m| v[*m] = *d);
 
-			result_tensor = spread_grad_for_before.into_dyn().to_owned();
+            result_tensor = spread_grad_for_before.into_dyn().to_owned();
         }
 
         result_tensor
