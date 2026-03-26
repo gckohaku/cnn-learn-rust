@@ -11,6 +11,7 @@ pub mod softmax;
 pub mod softmax_and_celoss;
 pub mod convolution;
 pub mod pooling;
+pub mod flatten;
 
 use std::fmt::Debug;
 
@@ -25,6 +26,7 @@ pub use softmax::Softmax;
 pub use softmax_and_celoss::SoftmaxAndCELoss;
 pub use convolution::Convolution;
 pub use pooling::Pooling;
+pub use flatten::Flatten;
 
 use crate::nn_modules::input_tensor::InputTensor;
 
