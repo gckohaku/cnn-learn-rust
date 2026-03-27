@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::nn_modules::{NNModuleBuilder, NNNecessaryTraits, ReshapeTensor};
+use crate::nn_modules::{NNModuleBuilder, NNModuleType, NNNecessaryTraits, ReshapeTensor};
 
 pub struct ReshapeTensorBuilder<T> {
     _shape: Vec<usize>,
@@ -11,7 +11,7 @@ impl<T> NNModuleBuilder<T> for ReshapeTensorBuilder<T>
 where
     T: NNNecessaryTraits,
 {
-    type BuiltObject = ReshapeTensor<T>;
+    type BuiltObject = NNModuleType<T>;
 
     fn new() -> Self {
         let _shape = Vec::<usize>::new();
@@ -25,17 +25,17 @@ where
     fn build(self) -> Self::BuiltObject {
         let shape = self._shape;
 
-        ReshapeTensor::<T> {
+        NNModuleType::ReshapeTensor(ReshapeTensor::<T> {
             shape,
-			before_shape: None,
+            before_shape: None,
             _phantom: PhantomData,
-        }
+        })
     }
 }
 
 impl<T> ReshapeTensorBuilder<T> {
-	pub fn shape(mut self, shape: Vec<usize>) -> Self {
-		self._shape = shape;
-		self
-	}
+    pub fn shape(mut self, shape: Vec<usize>) -> Self {
+        self._shape = shape;
+        self
+    }
 }

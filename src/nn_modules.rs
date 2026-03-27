@@ -10,7 +10,7 @@ pub mod relu;
 pub mod softmax;
 pub mod softmax_and_celoss;
 pub mod convolution;
-pub mod pooling;
+pub mod max_pooling;
 pub mod reshape_tensor;
 
 use std::fmt::Debug;
@@ -25,7 +25,7 @@ pub use relu::ReLU;
 pub use softmax::Softmax;
 pub use softmax_and_celoss::SoftmaxAndCELoss;
 pub use convolution::Convolution;
-pub use pooling::Pooling;
+pub use max_pooling::MaxPooling;
 pub use reshape_tensor::ReshapeTensor;
 
 use crate::nn_modules::input_tensor::InputTensor;
@@ -57,6 +57,9 @@ pub enum NNModuleType<T> where T: NNNecessaryTraits {
     Softmax(Softmax<T>),
     CrossEntropyLoss(CrossEntropyLoss<T>),
     SoftmaxAndCELoss(SoftmaxAndCELoss<T>),
+    Convolution(Convolution<T>),
+    MaxPooling(MaxPooling<T>),
+    ReshapeTensor(ReshapeTensor<T>),
     // Custom(Box<dyn NNModule<T>>),
 }
 
@@ -77,6 +80,9 @@ where
             NNModuleType::Softmax(s) => s.necessary_parameter_value(),
             NNModuleType::CrossEntropyLoss(s) => s.necessary_parameter_value(),
             NNModuleType::SoftmaxAndCELoss(s) => s.necessary_parameter_value(),
+            NNModuleType::Convolution(s) => s.necessary_parameter_value(),
+            NNModuleType::MaxPooling(s) => s.necessary_parameter_value(),
+            NNModuleType::ReshapeTensor(s) => s.necessary_parameter_value(),
             // NNModuleType::Custom(s) => s.necessary_parameter_value(),
         }
     }
@@ -89,6 +95,9 @@ where
             NNModuleType::Softmax(s) => s.forward(input, is_grad),
             NNModuleType::CrossEntropyLoss(s) => s.forward(input, is_grad),
             NNModuleType::SoftmaxAndCELoss(s) => s.forward(input, is_grad),
+            NNModuleType::Convolution(s) => s.forward(input, is_grad),
+            NNModuleType::MaxPooling(s) => s.forward(input, is_grad),
+            NNModuleType::ReshapeTensor(s) => s.forward(input, is_grad),
             // NNModuleType::Custom(s) => s.forward(input),
         }
     }
@@ -101,6 +110,9 @@ where
             NNModuleType::Softmax(s) => s.propagate_grad(grad, eta),
             NNModuleType::CrossEntropyLoss(s) => s.propagate_grad(grad, eta),
             NNModuleType::SoftmaxAndCELoss(s) => s.propagate_grad(grad, eta),
+            NNModuleType::Convolution(s) => s.propagate_grad(grad, eta),
+            NNModuleType::MaxPooling(s) => s.propagate_grad(grad, eta),
+            NNModuleType::ReshapeTensor(s) => s.propagate_grad(grad, eta),
             // NNModuleType::Custom(s) => s.forward(input),
         }
     }

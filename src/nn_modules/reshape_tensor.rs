@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::nn_modules::{NNModule, NNNecessaryTraits};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ReshapeTensor<T> {
     pub(super) shape: Vec<usize>,
     pub(super) before_shape: Option<Vec<usize>>,

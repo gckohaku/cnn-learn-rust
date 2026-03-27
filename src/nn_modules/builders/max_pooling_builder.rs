@@ -1,30 +1,24 @@
 use std::marker::PhantomData;
 
-use crate::{
-    cnn_information::PoolingType,
-    nn_modules::{NNModuleBuilder, NNNecessaryTraits, Pooling},
-};
+use crate::nn_modules::{MaxPooling, NNModuleBuilder, NNModuleType, NNNecessaryTraits};
 
-pub struct PoolingBuilder<T> {
-    _pooling_type: PoolingType,
+pub struct MaxPoolingBuilder<T> {
     _window_size: (usize, usize),
     _stride: usize,
     _phantom: PhantomData<T>,
 }
 
-impl<T> NNModuleBuilder<T> for PoolingBuilder<T>
+impl<T> NNModuleBuilder<T> for MaxPoolingBuilder<T>
 where
     T: NNNecessaryTraits,
 {
-    type BuiltObject = Pooling<T>;
+    type BuiltObject = NNModuleType<T>;
 
     fn new() -> Self {
-        let _pooling_type = PoolingType::MaxPooling;
         let _window_size = (1usize, 1usize);
         let _stride = 1usize;
 
-        PoolingBuilder::<T> {
-            _pooling_type,
+        MaxPoolingBuilder::<T> {
             _window_size,
             _stride,
             _phantom: PhantomData,
@@ -32,26 +26,19 @@ where
     }
 
     fn build(self) -> Self::BuiltObject {
-        let pooling_type = self._pooling_type;
         let window_size = self._window_size;
         let stride = self._stride;
 
-        Pooling::<T> {
-            pooling_type,
+        NNModuleType::MaxPooling(MaxPooling::<T> {
             window_size,
             stride,
             pooling_mask: None,
             _phantom: PhantomData,
-        }
+        })
     }
 }
 
-impl<T> PoolingBuilder<T> {
-    pub fn pooling_type(mut self, t: PoolingType) -> Self {
-        self._pooling_type = t;
-        self
-    }
-
+impl<T> MaxPoolingBuilder<T> {
     pub fn window_size(mut self, size: (usize, usize)) -> Self {
         self._window_size = size;
         self

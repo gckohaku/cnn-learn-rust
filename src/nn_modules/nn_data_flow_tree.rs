@@ -54,6 +54,8 @@ where
         // sequential_flow をそのままループすれば大丈夫なはず
         for flow in self.sequential_flow.into_iter() {
             let index = flow.0;
+            #[cfg(debug_assertions)]
+            dbg!(index);
             let destinations = &flow.1;
             let module = &mut self.modules[index];
 
