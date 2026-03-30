@@ -28,11 +28,13 @@ where
     fn build(self) -> Self::BuiltObject {
         let window_size = self._window_size;
         let stride = self._stride;
+        let input_shape = Vec::<usize>::new();
 
         NNModuleType::MaxPooling(MaxPooling::<T> {
             window_size,
             stride,
             pooling_mask: None,
+            input_shape,
             _phantom: PhantomData,
         })
     }

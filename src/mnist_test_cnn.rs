@@ -22,7 +22,7 @@ const IMAGE_CHANNEL_VALUE: usize = 1;
 
 pub fn mnist_process() {
     let epoch_value = 10;
-    let mini_batch_sample_size = 500;
+    let mini_batch_sample_size = 100;
 
     let training_value = 60000;
     let validation_value = 5000;
@@ -52,7 +52,7 @@ pub fn mnist_process() {
         .filter_value(2)
         .padding(1)
         .build();
-    let pool1 = MaxPoolingBuilder::new().window_size((2, 2)).build();
+    let pool1 = MaxPoolingBuilder::new().window_size((2, 2)).stride(2).build();
     let conv2 = ConvolutionBuilder::new()
         .input_channel_value(2)
         .filter_value(4)
@@ -60,7 +60,7 @@ pub fn mnist_process() {
         .filter_size((3, 3))
         .padding(1)
         .build();
-    let pool2 = MaxPoolingBuilder::new().window_size((2, 2)).build();
+    let pool2 = MaxPoolingBuilder::new().window_size((2, 2)).stride(2).build();
     let conv3 = ConvolutionBuilder::new()
         .input_channel_value(4)
         .input_image_size((7, 7))

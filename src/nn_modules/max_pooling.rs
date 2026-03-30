@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use ndarray::{Array1, Array2, ArrayD, ArrayViewD, Axis, Ix4, Zip};
+use ndarray::{Array1, Array2, ArrayD, ArrayViewD, Axis, Ix4, Zip, parallel::prelude::{IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator}};
 
 use crate::{
     cnn_transformations,
@@ -12,6 +12,7 @@ pub struct MaxPooling<T> {
     pub(super) window_size: (usize, usize),
     pub(super) stride: usize,
     pub(super) pooling_mask: Option<Array1<usize>>,
+    pub(super) input_shape: Vec<usize>,
     pub(super) _phantom: PhantomData<T>,
 }
 
@@ -34,8 +35,6 @@ where
             .unwrap();
         let input_shape = input_4d.shape();
 
-        // max pooling 以外を用いる時は、match で分岐させ、それぞれの処理も関数に分けた方が良さそう
-
         // やっていること自体は平坦化してベクトル処理がしやすい形にしてから max pooling
         // 処理が終わったら形状を戻すことも忘れずに
         let spread_input = cnn_transformations::im2col_for_pooling(
@@ -46,14 +45,9 @@ where
 
         let window_value = self.window_size.0 * self.window_size.1;
         let spread_cols_value =
-            input_shape[0] * input_shape[1] * input_shape[2] * input_shape[3];
+            input_shape[0] * input_shape[1] * input_shape[2] * input_shape[3] / window_value;
         let mut mask = Array1::zeros(spread_cols_value);
         let mut after_pooling = Array1::zeros(spread_cols_value);
-
-        #[cfg(debug_assertions)]
-        {
-            dbg!(&after_pooling.shape(), &mask.shape(), &spread_input.shape());
-        }
 
         Zip::from(after_pooling.view_mut())
             .and(mask.view_mut())
@@ -73,10 +67,6 @@ where
                 *res = max_value;
             });
 
-        if is_grad {
-            self.pooling_mask = Some(mask.to_owned());
-        }
-
         let reshape_pooling = after_pooling
             .to_shape((
                 input_shape[0],
@@ -86,6 +76,11 @@ where
             ))
             .unwrap();
 
+        if is_grad {
+            self.pooling_mask = Some(mask.to_owned());
+            self.input_shape = input_shape.par_iter().map(|v| *v).collect();
+        }
+
         reshape_pooling.into_dyn().to_owned()
     }
 
@@ -94,6 +89,7 @@ where
         grad: Option<&ArrayViewD<T>>,
         _eta: T,
     ) -> ArrayD<T> {
+
         let pooling_ncols = self.pooling_mask.to_owned().unwrap().len();
 
         let temporary_owned_grad = grad.unwrap().to_owned();
@@ -109,6 +105,6 @@ where
             .and(&self.pooling_mask.to_owned().unwrap())
             .par_for_each(|mut v, d, m| v[*m] = *d);
 
-        spread_grad_for_before.into_dyn().to_owned()
+        spread_grad_for_before.to_shape(self.input_shape.clone()).unwrap().into_dyn().to_owned()
     }
 }

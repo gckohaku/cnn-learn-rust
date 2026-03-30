@@ -93,10 +93,6 @@ pub fn im2col_for_pooling<T>(
 where
     T: NNNecessaryTraits,
 {
-    // if inputs.ndim() != 4 {
-    //     panic!("次元数が4でない");
-    // }
-
     // 出力データ (行列) のサイズを計算
     // そのために、まずは入力データのそれぞれの次元のサイズを取得
     let inputs_shape = inputs.shape();

@@ -2,7 +2,10 @@ use std::marker::PhantomData;
 
 use ndarray::{Array1, Array4};
 
-use crate::nn_modules::{Convolution, NNModuleBuilder, NNModuleType, NNNecessaryTraits};
+use crate::{
+    nn_modules::{Convolution, NNModuleBuilder, NNModuleType, NNNecessaryTraits},
+    rand::Rand,
+};
 
 pub struct ConvolutionBuilder<T> {
     _input_channel_value: usize,
@@ -40,7 +43,7 @@ where
     }
 
     fn build(self) -> Self::BuiltObject {
-        let filters = Array4::<T>::zeros((
+        let mut filters = Array4::<T>::zeros((
             self._filter_value,
             self._input_channel_value,
             self._filter_size.0,
@@ -50,6 +53,22 @@ where
         let stride = self._stride;
         let padding = self._padding;
         let filter_size = self._filter_size;
+
+        // 重みの He 初期化
+        let mut r = Rand::new();
+
+        filters.mapv_inplace(|_x| {
+            r.normal(
+                T::ZERO,
+                T::from(
+                    2.0 / (self._input_channel_value
+                        * self._input_image_size.0
+                        * self._input_image_size.1) as f64,
+                )
+                .expect("input size cannot to cast from usize to T")
+                .sqrt(),
+            )
+        });
 
         NNModuleType::Convolution(Convolution::<T> {
             filters,

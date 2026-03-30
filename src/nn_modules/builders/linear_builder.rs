@@ -37,8 +37,6 @@ where
         // 重みの He 初期化
         let mut r = Rand::new();
 
-        // let two = T::from(2.0f64).expect("failed cast from 2.0");
-
         weights.mapv_inplace(|_x| {
             r.normal(
                 T::ZERO,

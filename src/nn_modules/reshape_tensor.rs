@@ -24,19 +24,22 @@ where
     ) -> ndarray::ArrayD<T> {
         let input_tensor = &input.inputs[0];
 
-		if is_grad {
-			let shape = input_tensor.shape();
-			self.before_shape = Some(shape.iter().cloned().collect());
-		}
-        
+        if is_grad {
+            let shape = input_tensor.shape();
+            self.before_shape = Some(shape.iter().cloned().collect());
+        }
 
         let shaped_tensor = input_tensor.to_shape(self.shape.clone()).unwrap();
-		shaped_tensor.to_owned()
+        shaped_tensor.to_owned()
     }
 
-	fn propagate_grad(&mut self, grad: Option<&ndarray::ArrayViewD<T>>, _eta: T) -> ndarray::ArrayD<T> {
-		let propagated_tensor = grad.unwrap();
-		let shaped_tensor = propagated_tensor.to_shape(self.before_shape.to_owned().unwrap());
-		shaped_tensor.unwrap().to_owned()
-	}
+    fn propagate_grad(
+        &mut self,
+        grad: Option<&ndarray::ArrayViewD<T>>,
+        _eta: T,
+    ) -> ndarray::ArrayD<T> {
+        let propagated_tensor = grad.unwrap();
+        let shaped_tensor = propagated_tensor.to_shape(self.before_shape.to_owned().unwrap());
+        shaped_tensor.unwrap().to_owned()
+    }
 }
