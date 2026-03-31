@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use ndarray::{Array1, Array4};
 
 use crate::{
-    nn_modules::{Convolution, NNModuleBuilder, NNModuleType, NNNecessaryTraits},
+    nn_modules::{Convolution, NNModuleBuilder, NNNecessaryTraits},
     rand::Rand,
 };
 
@@ -21,7 +21,7 @@ impl<T> NNModuleBuilder<T> for ConvolutionBuilder<T>
 where
     T: NNNecessaryTraits,
 {
-    type BuiltObject = NNModuleType<T>;
+    type BuiltObject = Convolution<T>;
 
     fn new() -> Self {
         let _input_channel_value = 1usize;
@@ -70,14 +70,14 @@ where
             )
         });
 
-        NNModuleType::Convolution(Convolution::<T> {
+        Convolution::<T> {
             filters,
             biases,
             stride,
             padding,
             filter_size,
             input_of_forward: None,
-        })
+        }
     }
 }
 

@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::nn_modules::{MaxPooling, NNModuleBuilder, NNModuleType, NNNecessaryTraits};
+use crate::nn_modules::{MaxPooling, NNModuleBuilder, NNNecessaryTraits};
 
 pub struct MaxPoolingBuilder<T> {
     _window_size: (usize, usize),
@@ -12,7 +12,7 @@ impl<T> NNModuleBuilder<T> for MaxPoolingBuilder<T>
 where
     T: NNNecessaryTraits,
 {
-    type BuiltObject = NNModuleType<T>;
+    type BuiltObject = MaxPooling<T>;
 
     fn new() -> Self {
         let _window_size = (1usize, 1usize);
@@ -30,13 +30,13 @@ where
         let stride = self._stride;
         let input_shape = Vec::<usize>::new();
 
-        NNModuleType::MaxPooling(MaxPooling::<T> {
+        MaxPooling::<T> {
             window_size,
             stride,
             pooling_mask: None,
             input_shape,
             _phantom: PhantomData,
-        })
+        }
     }
 }
 
