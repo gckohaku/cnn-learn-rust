@@ -1,12 +1,18 @@
-use ndarray::{Array2, Array4, Slice, s};
+use std::ops::AddAssign;
 
-pub fn col2im(
-    spread_value: &Array2<f64>,
+use ndarray::{Array2, Array4, Dim, Slice, Zip, s};
+use num_traits::{Float, FromPrimitive, Num};
+
+pub fn col2im<T>(
+    spread_value: &Array2<T>,
     filter_size: [usize; 2],
     target_shape: [usize; 4],
     stride: usize,
     padding: usize,
-) -> Array4<f64> {
+) -> Array4<T>
+where
+    T: Clone + Copy + Send + Sync + Num + Float + FromPrimitive + AddAssign,
+{
     let channel_value = target_shape[1];
     let sample_value = target_shape[0];
     let input_size = (target_shape[2], target_shape[3]);
@@ -37,7 +43,7 @@ pub fn col2im(
     cols.swap_axes(1, 2);
 
     // (B, C_i, I_h * 2P + S - 1, I_w * 2P + S - 1)
-    let mut images = Array4::<f64>::zeros((
+    let mut images = Array4::<T>::zeros((
         sample_value,
         channel_value,
         input_size.0 + 2 * padding + stride - 1,
@@ -48,16 +54,22 @@ pub fn col2im(
         let h_limit = h + stride * output_size.0;
         for w in 0..filter_size[1] {
             let w_limit = w + stride * output_size.1;
-            let mut image_slice = images.slice_mut(s![
+            let mut image_slice: ndarray::ArrayBase<ndarray::ViewRepr<&mut T>, Dim<[usize; 4]>> = images.slice_mut(s![
                 ..,
                 ..,
                 Slice::from(h..h_limit).step_by(stride.try_into().unwrap()),
                 Slice::from(w..w_limit).step_by(stride.try_into().unwrap())
             ]);
-			image_slice += &cols.slice(s![.., .., h, w, .., ..]);
+            // image_slice += &cols.slice(s![.., .., h, w, .., ..]);
+            Zip::from(&mut image_slice).and(&cols.slice(s![.., .., h, w, .., ..])).par_for_each(|image, col| *image += *col);
         }
     }
 
-	let return_tensor = images.slice(s![.., .., padding..(input_size.0 + padding), padding..(input_size.1 + padding)]);
-	return_tensor.to_owned()
+    let return_tensor = images.slice(s![
+        ..,
+        ..,
+        padding..(input_size.0 + padding),
+        padding..(input_size.1 + padding)
+    ]);
+    return_tensor.to_owned()
 }
