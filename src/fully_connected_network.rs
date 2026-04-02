@@ -1,9 +1,7 @@
-use std::iter::zip;
-
 use ndarray::{Array, Array1, Array2, Axis, Zip, parallel::prelude::IntoParallelRefIterator};
 
 use crate::{
-    cnn_information::{LayerInformation, OutputInformation, OutputType},
+    cnn_information::{OutputInformation, OutputType},
     rand::Rand,
 };
 

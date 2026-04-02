@@ -1,11 +1,14 @@
 use mnist::{MnistBuilder, NormalizedMnist};
-use ndarray::{Array2, Ix0};
+use ndarray::{Array2, Array4, Ix0};
 use std::{io::Write, time};
 
 use crate::{
     nn_modules::{
         NNDataFlowTree, NNForwardInput, NNModule, NNModuleBuilder,
-        builders::{LinearBuilder, ReLUBuilder, SoftmaxAndCELossBuilder},
+        builders::{
+            ConvolutionBuilder, LinearBuilder, MaxPoolingBuilder, ReLUBuilder,
+            ReshapeTensorBuilder, SoftmaxAndCELossBuilder,
+        },
     },
     rand::Rand,
     utilities::shuffle,
@@ -18,10 +21,10 @@ const IMAGE_DOT_VALUE: usize = IMAGE_ROW_SIZE * IMAGE_ROW_SIZE;
 const IMAGE_CHANNEL_VALUE: usize = 1;
 
 pub fn mnist_process() {
-    let epoch_value = 10;
-    let mini_batch_sample_size = 500;
+    let epoch_value = 3;
+    let mini_batch_sample_size = 75;
 
-    let training_value = 60000;
+    let training_value = 10050;
     let validation_value = 5000;
     let test_value = 5000;
 
@@ -41,28 +44,57 @@ pub fn mnist_process() {
 
     // ニューラルネットワークの作成
     let mut tree = NNDataFlowTree::new();
+
+    let conv1 = ConvolutionBuilder::new()
+        .input_channel_value(1)
+        .input_image_size((IMAGE_ROW_SIZE, IMAGE_ROW_SIZE))
+        .filter_size((3, 3))
+        .filter_value(2)
+        .padding(1)
+        .build();
+    let pool1 = MaxPoolingBuilder::new().window_size((2, 2)).stride(2).build();
+    let conv2 = ConvolutionBuilder::new()
+        .input_channel_value(2)
+        .filter_value(4)
+        .input_image_size((14, 14))
+        .filter_size((3, 3))
+        .padding(1)
+        .build();
+    let pool2 = MaxPoolingBuilder::new().window_size((2, 2)).stride(2).build();
+    let conv3 = ConvolutionBuilder::new()
+        .input_channel_value(4)
+        .input_image_size((7, 7))
+        .filter_size((3, 3))
+        .filter_value(8)
+        .build();
+
+    let reshape = ReshapeTensorBuilder::new()
+        .shape(vec![mini_batch_sample_size, 200])
+        .build();
+
     let linear1 = LinearBuilder::new()
-        .input_node_value(784)
-        .output_node_value(196)
+        .input_node_value(200)
+        .output_node_value(40)
         .build();
     let relu1 = ReLUBuilder::new().build();
     let linear2 = LinearBuilder::new()
-        .input_node_value(196)
-        .output_node_value(49)
-        .build();
-    let relu2 = ReLUBuilder::new().build();
-    let linear3 = LinearBuilder::new()
-        .input_node_value(49)
+        .input_node_value(40)
         .output_node_value(10)
         .build();
     let softmax_and_celoss = SoftmaxAndCELossBuilder::new().build();
 
-    let linear_info1 = &tree.add_from_root(linear1);
+    let conv_info1 = &tree.add_from_root(conv1);
+    let pool_info1 = &tree.add(&conv_info1, pool1);
+    let conv_info2 = &tree.add(&pool_info1, conv2);
+    let pool_info2 = &tree.add(&conv_info2, pool2);
+    let conv_info3 = &tree.add(&pool_info2, conv3);
+
+    let reshape_info = &tree.add(&conv_info3, reshape);
+
+    let linear_info1 = &tree.add(&reshape_info, linear1);
     let relu_info1 = &tree.add(&linear_info1, relu1);
     let linear_info2 = &tree.add(&relu_info1, linear2);
-    let relu_info2 = &tree.add(&linear_info2, relu2);
-    let linear_info3 = &tree.add(&relu_info2, linear3);
-    _ = &tree.add(&linear_info3, softmax_and_celoss);
+    let _output = &tree.add(&linear_info2, softmax_and_celoss);
 
     // 処理時間計測用
     let epochs_now = time::Instant::now();
@@ -86,7 +118,8 @@ pub fn mnist_process() {
                     true,
                 )
                 .into_dimensionality::<Ix0>()
-                .unwrap().into_scalar();
+                .unwrap()
+                .into_scalar();
             _ = &tree.propagate_grad(None, 0.001);
 
             print!("\rmini batch count: {}", mini_batch_count);
@@ -110,7 +143,7 @@ pub fn mnist_process() {
 fn make_mini_batch_dataset<'a>(
     indices: &'a [usize],
     dataset: &'a NormalizedMnist,
-) -> (Array2<ElementType>, Array2<ElementType>) {
+) -> (Array4<ElementType>, Array2<ElementType>) {
     let sample_size = indices.len();
 
     let mut inputs_array = Vec::<ElementType>::new();
@@ -131,10 +164,12 @@ fn make_mini_batch_dataset<'a>(
         expected_array.extend_from_slice(trn_label);
     }
 
-    let inputs = Array2::<ElementType>::from_shape_vec(
+    let inputs = Array4::<ElementType>::from_shape_vec(
         (
             sample_size,
-            IMAGE_CHANNEL_VALUE * IMAGE_DOT_VALUE,
+            IMAGE_CHANNEL_VALUE,
+            IMAGE_ROW_SIZE,
+            IMAGE_ROW_SIZE,
         ),
         inputs_array,
     )

@@ -20,8 +20,10 @@
     "editor.wordWrap": "on",
     "cSpell.words": [
         "blas",
+        "Deque",
         "fcnn",
         "inplace",
+        "mapv",
         "mnist",
         "ncols",
         "ndarray",
