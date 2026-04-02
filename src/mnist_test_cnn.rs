@@ -4,11 +4,10 @@ use std::{io::Write, time};
 
 use crate::{
     nn_modules::{
-        NNDataFlowTree, NNForwardInput, NNModule, NNModuleBuilder,
-        builders::{
+        NNDataFlowTree, NNForwardInput, NNModule, NNModuleBuilder, ReshapeTensor, builders::{
             ConvolutionBuilder, LinearBuilder, MaxPoolingBuilder, ReLUBuilder,
             ReshapeTensorBuilder, SoftmaxAndCELossBuilder,
-        },
+        }
     },
     rand::Rand,
     utilities::shuffle,
@@ -25,8 +24,8 @@ pub fn mnist_process() {
     let mini_batch_sample_size = 75;
 
     let training_value = 10050;
-    let validation_value = 5000;
-    let test_value = 5000;
+    let validation_value = 10000;
+    let test_value = 0;
 
     let mnist = MnistBuilder::new()
         .label_format_one_hot()
@@ -40,6 +39,8 @@ pub fn mnist_process() {
         .finalize()
         .normalize();
 
+    let validation_chunk_size = 100usize;
+
     let mut r = Rand::new();
 
     // ニューラルネットワークの作成
@@ -52,7 +53,10 @@ pub fn mnist_process() {
         .filter_value(2)
         .padding(1)
         .build();
-    let pool1 = MaxPoolingBuilder::new().window_size((2, 2)).stride(2).build();
+    let pool1 = MaxPoolingBuilder::new()
+        .window_size((2, 2))
+        .stride(2)
+        .build();
     let conv2 = ConvolutionBuilder::new()
         .input_channel_value(2)
         .filter_value(4)
@@ -60,7 +64,10 @@ pub fn mnist_process() {
         .filter_size((3, 3))
         .padding(1)
         .build();
-    let pool2 = MaxPoolingBuilder::new().window_size((2, 2)).stride(2).build();
+    let pool2 = MaxPoolingBuilder::new()
+        .window_size((2, 2))
+        .stride(2)
+        .build();
     let conv3 = ConvolutionBuilder::new()
         .input_channel_value(4)
         .input_image_size((7, 7))
@@ -131,6 +138,38 @@ pub fn mnist_process() {
             epoch,
             epoch_error / training_value as ElementType
         );
+
+        println!("validation test:");
+
+        let reshape_tensor: &mut ReshapeTensor<ElementType> = tree.access_module_mut(&reshape_info).as_any_mut().downcast_mut().unwrap();
+        reshape_tensor.change_shape(vec![validation_chunk_size, 200]);
+
+        for indices in (0..validation_value).map(|x| x as usize)
+            .collect::<Vec<usize>>()
+            .chunks(validation_chunk_size as usize)
+        {
+            mini_batch_count += 1;
+            let (inputs, expects) = make_validation_data_set(indices, &mnist);
+
+            epoch_error += &tree
+                .forward(
+                    &NNForwardInput::<ElementType> {
+                        inputs: vec![inputs.view().into_dyn()],
+                        target: Some(expects.view().into_dyn()),
+                    },
+                    false,
+                )
+                .into_dimensionality::<Ix0>()
+                .unwrap()
+                .into_scalar();
+        }
+
+        let reshape_tensor2: &mut ReshapeTensor<ElementType> = tree.access_module_mut(&reshape_info).as_any_mut().downcast_mut().unwrap();
+        reshape_tensor2.change_shape(vec![mini_batch_sample_size, 200]);
+
+        // println!("collect rate: {}", validation_result.1 as f64 / validation_value as f64);
+        // println!("              ({} / {})", validation_result.1, validation_value);
+        // println!("error: {}\n", validation_result.0 / validation_value as f64);
     }
 
     // 処理時間表示
@@ -177,4 +216,47 @@ fn make_mini_batch_dataset<'a>(
     let expects = Array2::<ElementType>::from_shape_vec((sample_size, 10), expected_array).unwrap();
 
     (inputs.to_owned(), expects.to_owned())
+}
+
+fn make_validation_data_set<'a>(
+    indices: &'a [usize],
+    dataset: &'a NormalizedMnist,
+) -> (Array4<ElementType>, Array2<ElementType>) {
+    let sample_size = indices.len();
+
+    let mut inputs_array = Vec::<ElementType>::new();
+    let mut expected_array = Vec::<ElementType>::new();
+
+    for index in indices {
+        let trn_data: &Vec<ElementType> = &dataset.trn_img
+            [((*index) * IMAGE_DOT_VALUE)..(((*index) + 1) * IMAGE_DOT_VALUE)]
+            .iter()
+            .map(|&x| x as ElementType)
+            .collect();
+        inputs_array.extend_from_slice(trn_data);
+
+        let trn_label: &Vec<ElementType> = &dataset.trn_lbl[((*index) * 10)..(((*index) + 1) * 10)]
+            .iter()
+            .map(|&x| x as ElementType)
+            .collect();
+        expected_array.extend_from_slice(trn_label);
+    }
+
+    let inputs = Array4::<ElementType>::from_shape_vec(
+        (
+            sample_size,
+            IMAGE_CHANNEL_VALUE,
+            IMAGE_ROW_SIZE,
+            IMAGE_ROW_SIZE,
+        ),
+        inputs_array,
+    )
+    .unwrap();
+    let expects = Array2::<ElementType>::from_shape_vec((sample_size, 10), expected_array).unwrap();
+
+    (inputs.to_owned(), expects.to_owned())
+}
+
+fn forward_only(tree: &NNDataFlowTree<ElementType>, input: &NNForwardInput<'_, '_, ElementType>) {
+
 }

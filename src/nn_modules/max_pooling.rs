@@ -3,8 +3,7 @@ use std::marker::PhantomData;
 use ndarray::{Array1, Array2, ArrayD, ArrayViewD, Axis, Ix4, Zip, parallel::prelude::{IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator}};
 
 use crate::{
-    cnn_transformations,
-    nn_modules::{NNModule, NNNecessaryTraits},
+    cnn_transformations, impl_as_any_with_mut, nn_modules::{NNModule, NNNecessaryTraits}
 };
 
 #[derive(Debug, Clone)]
@@ -107,4 +106,6 @@ where
 
         spread_grad_for_before.to_shape(self.input_shape.clone()).unwrap().into_dyn().to_owned()
     }
+    
+    impl_as_any_with_mut!();
 }

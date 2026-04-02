@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use ndarray::{Array2, ArrayD, Axis, Ix2, Zip};
 
-use crate::nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits};
+use crate::{impl_as_any_with_mut, nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits}};
 
 #[derive(Debug, Clone)]
 pub struct Softmax<T> {
@@ -55,4 +55,6 @@ where
         // 現状は、softmax 単体での微分は行わない
         grad.unwrap().to_owned()
     }
+
+    impl_as_any_with_mut!();
 }

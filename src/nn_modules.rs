@@ -13,7 +13,7 @@ pub mod convolution;
 pub mod max_pooling;
 pub mod reshape_tensor;
 
-use std::fmt::Debug;
+use std::{any::Any, fmt::Debug};
 
 pub use cross_entropy_loss::CrossEntropyLoss;
 use dyn_clone::{DynClone, clone_trait_object};
@@ -42,9 +42,26 @@ pub trait NNModule<T>: Debug + DynClone + Send + Sync {
     fn forward(&mut self, input: &NNForwardInput<'_, '_, T>, is_grad: bool) -> ArrayD<T>;
     // 逆伝播処理
     fn propagate_grad(&mut self, grad: Option<&ArrayViewD<T>>, eta: T) -> ArrayD<T>;
+
+    // 抽象型から具体型に変換する際に必要
+    fn as_any(&self) -> &dyn Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
 clone_trait_object!(<T> NNModule<T>);
+
+#[macro_export]
+macro_rules! impl_as_any_with_mut {
+    () => {
+        fn as_any(&self) -> &dyn std::any::Any {
+            self
+        }
+
+        fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+            self
+        }
+    };
+}
 
 pub trait NNModuleBuilder<T> {
     type BuiltObject;

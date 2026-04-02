@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::nn_modules::{NNModule, NNNecessaryTraits};
+use crate::{impl_as_any_with_mut, nn_modules::{NNModule, NNNecessaryTraits}};
 
 #[derive(Debug, Clone)]
 pub struct ReshapeTensor<T> {
@@ -41,5 +41,13 @@ where
         let propagated_tensor = grad.unwrap();
         let shaped_tensor = propagated_tensor.to_shape(self.before_shape.to_owned().unwrap());
         shaped_tensor.unwrap().to_owned()
+    }
+
+    impl_as_any_with_mut!();
+}
+
+impl<T> ReshapeTensor<T> {
+    pub fn change_shape(&mut self, shape: Vec<usize>) {
+        self.shape = shape;
     }
 }

@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use ndarray::ArrayD;
 
-use crate::nn_modules::NNModule;
+use crate::{impl_as_any_with_mut, nn_modules::{NNModule, NNNecessaryTraits}};
 
 // これは計算を行う NNModule の集合体と入力パラメータのインターフェースの役割を担う
 // NNModule として扱うことで他の NNModule と同じように扱うことができる
@@ -13,7 +13,7 @@ pub struct InputTensor<T> {
 
 impl<T> NNModule<T> for InputTensor<T>
 where
-    T: Clone + std::fmt::Debug + Sync + Send,
+    T: NNNecessaryTraits,
 {
     fn necessary_parameter_value(&self) -> usize {
         1
@@ -27,6 +27,8 @@ where
         // 入力の勾配をそのまま返す
         grad.unwrap().to_owned()
     }
+
+    impl_as_any_with_mut!();
 }
 
 impl<T> InputTensor<T> {}

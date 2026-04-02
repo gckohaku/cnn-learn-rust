@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use ndarray::{ArrayD, Zip};
 
-use crate::nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits};
+use crate::{impl_as_any_with_mut, nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits}};
 
 #[derive(Debug, Clone)]
 pub struct ReLU<T> {
@@ -38,6 +38,8 @@ where
         Zip::from(&mut before_grad).and(&self.grad.clone().unwrap()).par_for_each(|b: &mut T, s: &T| *b = if *s > T::ZERO {*b} else {T::ZERO});
         before_grad
     }
+
+    impl_as_any_with_mut!();
 }
 
 // impl<T> ReLU<T>

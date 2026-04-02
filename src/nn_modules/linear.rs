@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use ndarray::{Array1, Array2, ArrayD, ArrayViewD, Axis, Ix2, Zip};
 
-use crate::nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits};
+use crate::{impl_as_any_with_mut, nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits}};
 
 /// アフィン変換を行うニューラルネットワークモジュール
 #[derive(Clone)]
@@ -65,6 +65,8 @@ where
 
         propagated_to_before.into_dyn()
     }
+
+    impl_as_any_with_mut!();
 }
 
 impl<T> Debug for Linear<T>

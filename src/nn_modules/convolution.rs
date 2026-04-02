@@ -1,8 +1,7 @@
 use ndarray::{Array1, Array4, ArrayD, Axis, Ix4, Zip};
 
 use crate::{
-    cnn_transformations,
-    nn_modules::{NNModule, NNNecessaryTraits, reshape_tensor},
+    cnn_transformations, impl_as_any_with_mut, nn_modules::{NNModule, NNNecessaryTraits, reshape_tensor}
 };
 
 #[derive(Clone, Debug)]
@@ -153,4 +152,6 @@ where
 
         reshape_grad_for_before
     }
+
+    impl_as_any_with_mut!();
 }

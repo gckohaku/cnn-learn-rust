@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use ndarray::{Array2, ArrayD, Ix2, Zip, arr0};
 
-use crate::nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits};
+use crate::{impl_as_any_with_mut, nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits}};
 
 #[derive(Debug, Clone)]
 pub struct CrossEntropyLoss<T> {
@@ -39,6 +39,8 @@ where
         // 現状は、交差エントロピー誤差単体での微分は求めない
         grad.unwrap().to_owned()
     }
+
+    impl_as_any_with_mut!();
 }
 
 // impl<T> NNNodeNeedsParameter for CrossEntropyLoss<T> {

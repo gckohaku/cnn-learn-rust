@@ -1,11 +1,11 @@
 use ndarray::ArrayD;
 use num_traits::{ConstOne, ConstZero, Float};
 
-use crate::nn_modules::{
+use crate::{impl_as_any_with_mut, nn_modules::{
     NNDataFlowNodeIndexInfo, NNForwardInput, NNModule, NNNecessaryTraits,
     calculation_node_state::CalculationNodeState, input_tensor::InputTensor,
     nn_sequential_node_flow::NNSequentialNodeFlow,
-};
+}};
 use std::{collections::VecDeque, fmt::Debug, marker::PhantomData, usize};
 
 #[derive(Debug, Clone)]
@@ -125,6 +125,8 @@ where
 
         loop_result
     }
+
+    impl_as_any_with_mut!();
 }
 
 impl<T> NNDataFlowTree<T>
@@ -310,5 +312,13 @@ where
                     .add_destination_to_index(push_index, *dst);
             }
         }
+    }
+
+    pub fn access_module(&self, info: &NNDataFlowNodeIndexInfo) -> &dyn NNModule<T> {
+        self.modules[info.index].as_ref()
+    }
+
+    pub fn access_module_mut(&mut self, info: &NNDataFlowNodeIndexInfo) -> &mut dyn NNModule<T> {
+        self.modules[info.index].as_mut()
     }
 }

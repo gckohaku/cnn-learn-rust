@@ -4,7 +4,7 @@ use std::{
 
 use ndarray::{Array2, ArrayD, Ix2};
 
-use crate::nn_modules::{CrossEntropyLoss, NNForwardInput, NNModule, NNNecessaryTraits, Softmax};
+use crate::{impl_as_any_with_mut, nn_modules::{CrossEntropyLoss, NNForwardInput, NNModule, NNNecessaryTraits, Softmax}};
 
 #[derive(Debug, Clone)]
 pub struct SoftmaxAndCELoss<T> {
@@ -63,4 +63,6 @@ where
             }
         }
     }
+
+    impl_as_any_with_mut!();
 }
