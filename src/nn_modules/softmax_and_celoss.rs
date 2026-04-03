@@ -10,9 +10,12 @@ use crate::{impl_as_any_with_mut, nn_modules::{CrossEntropyLoss, NNForwardInput,
 pub struct SoftmaxAndCELoss<T> {
     pub softmax: Softmax<T>,
     pub cross_entropy_loss: CrossEntropyLoss<T>,
-    pub is_grad: bool,
+    pub is_test: bool,
+    // テストの結果を保持 (correct_value, test_value)
+    pub test_result: (usize, usize),
     // 勾配を求める時に利用
     pub(super) grad: Option<Array2<T>>,
+
 }
 
 impl<T> NNModule<T> for SoftmaxAndCELoss<T>
@@ -27,6 +30,7 @@ where
         let input_values = input;
 
         let softmax_result = self.softmax.forward(&input_values, is_grad);
+
         let softmax_result_view = softmax_result.view();
 
         let target = &input_values.target;
@@ -48,6 +52,11 @@ where
         if is_grad {
             // self.grad = Some(&softmax_result.to_owned().into_dimensionality::<Ix2>().unwrap() - &target.to_owned().unwrap().into_dimensionality::<Ix2>().unwrap());
             self.grad = Some(&softmax_result_2d - &target_2d);
+        }
+
+        if self.is_test {
+            let test_value = softmax_result_2d.nrows();
+            
         }
         
         loss

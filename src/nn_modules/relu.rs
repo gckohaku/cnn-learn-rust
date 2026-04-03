@@ -41,14 +41,3 @@ where
 
     impl_as_any_with_mut!();
 }
-
-// impl<T> ReLU<T>
-// where
-//     T: Send + Sync + Num + Float + ConstOne + ConstZero,
-// {
-//     fn calc_grad(&mut self, result: &ArrayD<T>) -> ArrayD<T> {
-//         let mut grad = result.clone();
-//         grad.par_mapv_inplace(|y: T| if y > T::ZERO { T::ONE } else { T::ZERO });
-//         grad
-//     }
-// }

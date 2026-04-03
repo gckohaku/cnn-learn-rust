@@ -4,10 +4,11 @@ use std::{io::Write, time};
 
 use crate::{
     nn_modules::{
-        NNDataFlowTree, NNForwardInput, NNModule, NNModuleBuilder, ReshapeTensor, builders::{
+        NNDataFlowTree, NNForwardInput, NNModule, NNModuleBuilder, ReshapeTensor,
+        builders::{
             ConvolutionBuilder, LinearBuilder, MaxPoolingBuilder, ReLUBuilder,
             ReshapeTensorBuilder, SoftmaxAndCELossBuilder,
-        }
+        },
     },
     rand::Rand,
     utilities::shuffle,
@@ -101,7 +102,7 @@ pub fn mnist_process() {
     let linear_info1 = &tree.add(&reshape_info, linear1);
     let relu_info1 = &tree.add(&linear_info1, relu1);
     let linear_info2 = &tree.add(&relu_info1, linear2);
-    let _output = &tree.add(&linear_info2, softmax_and_celoss);
+    let output_info = &tree.add(&linear_info2, softmax_and_celoss);
 
     // 処理時間計測用
     let epochs_now = time::Instant::now();
@@ -141,10 +142,17 @@ pub fn mnist_process() {
 
         println!("validation test:");
 
-        let reshape_tensor: &mut ReshapeTensor<ElementType> = tree.access_module_mut(&reshape_info).as_any_mut().downcast_mut().unwrap();
-        reshape_tensor.change_shape(vec![validation_chunk_size, 200]);
+        {
+            let reshape_tensor: &mut ReshapeTensor<ElementType> = tree
+                .access_module_mut(&reshape_info)
+                .as_any_mut()
+                .downcast_mut()
+                .unwrap();
+            reshape_tensor.change_shape(vec![validation_chunk_size, 200]);
+        }
 
-        for indices in (0..validation_value).map(|x| x as usize)
+        for indices in (0..validation_value)
+            .map(|x| x as usize)
             .collect::<Vec<usize>>()
             .chunks(validation_chunk_size as usize)
         {
@@ -164,12 +172,19 @@ pub fn mnist_process() {
                 .into_scalar();
         }
 
-        let reshape_tensor2: &mut ReshapeTensor<ElementType> = tree.access_module_mut(&reshape_info).as_any_mut().downcast_mut().unwrap();
-        reshape_tensor2.change_shape(vec![mini_batch_sample_size, 200]);
+        {
+            let reshape_tensor: &mut ReshapeTensor<ElementType> = tree
+                .access_module_mut(&reshape_info)
+                .as_any_mut()
+                .downcast_mut()
+                .unwrap();
+            reshape_tensor.change_shape(vec![mini_batch_sample_size, 200]);
+        }
 
-        // println!("collect rate: {}", validation_result.1 as f64 / validation_value as f64);
-        // println!("              ({} / {})", validation_result.1, validation_value);
-        // println!("error: {}\n", validation_result.0 / validation_value as f64);
+
+        println!("collect rate: {}", validation_result.1 as f64 / validation_value as f64);
+        println!("              ({} / {})", validation_result.1, validation_value);
+        println!("error: {}\n", validation_result.0 / validation_value as f64);
     }
 
     // 処理時間表示
@@ -257,6 +272,4 @@ fn make_validation_data_set<'a>(
     (inputs.to_owned(), expects.to_owned())
 }
 
-fn forward_only(tree: &NNDataFlowTree<ElementType>, input: &NNForwardInput<'_, '_, ElementType>) {
-
-}
+fn forward_only(tree: &NNDataFlowTree<ElementType>, input: &NNForwardInput<'_, '_, ElementType>) {}

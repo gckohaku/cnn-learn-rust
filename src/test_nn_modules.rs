@@ -24,7 +24,7 @@ pub fn run_test() {
         .is_grad(true)
         .build();
     let output_module = SoftmaxAndCELossBuilder::<ElementType>::new()
-        .is_grad(true)
+        .is_test(true)
         .build();
 
     #[cfg(debug_assertions)]
