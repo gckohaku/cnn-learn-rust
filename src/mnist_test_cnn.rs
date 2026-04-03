@@ -4,7 +4,7 @@ use std::{io::Write, time};
 
 use crate::{
     nn_modules::{
-        NNDataFlowTree, NNForwardInput, NNModule, NNModuleBuilder, ReshapeTensor,
+        NNDataFlowTree, NNForwardInput, NNModule, NNModuleBuilder, ReshapeTensor, SoftmaxAndCELoss,
         builders::{
             ConvolutionBuilder, LinearBuilder, MaxPoolingBuilder, ReLUBuilder,
             ReshapeTensorBuilder, SoftmaxAndCELossBuilder,
@@ -21,10 +21,10 @@ const IMAGE_DOT_VALUE: usize = IMAGE_ROW_SIZE * IMAGE_ROW_SIZE;
 const IMAGE_CHANNEL_VALUE: usize = 1;
 
 pub fn mnist_process() {
-    let epoch_value = 3;
+    let epoch_value = 10;
     let mini_batch_sample_size = 75;
 
-    let training_value = 10050;
+    let training_value = 60000;
     let validation_value = 10000;
     let test_value = 0;
 
@@ -140,16 +140,23 @@ pub fn mnist_process() {
             epoch_error / training_value as ElementType
         );
 
+        // 検証部分
         println!("validation test:");
 
-        {
-            let reshape_tensor: &mut ReshapeTensor<ElementType> = tree
-                .access_module_mut(&reshape_info)
+        let reshape_tensor: &mut ReshapeTensor<ElementType> = tree
+            .access_module_mut(&reshape_info)
+            .as_any_mut()
+            .downcast_mut()
+            .unwrap();
+        reshape_tensor.change_shape(vec![validation_chunk_size, 200]);
+
+        let out: &mut SoftmaxAndCELoss<ElementType> = &mut tree
+                .access_module_mut(&output_info)
                 .as_any_mut()
                 .downcast_mut()
                 .unwrap();
-            reshape_tensor.change_shape(vec![validation_chunk_size, 200]);
-        }
+            out.is_test = true;
+            out.test_correct_value = 0usize;
 
         for indices in (0..validation_value)
             .map(|x| x as usize)
@@ -158,6 +165,8 @@ pub fn mnist_process() {
         {
             mini_batch_count += 1;
             let (inputs, expects) = make_validation_data_set(indices, &mnist);
+
+            
 
             epoch_error += &tree
                 .forward(
@@ -172,19 +181,27 @@ pub fn mnist_process() {
                 .into_scalar();
         }
 
-        {
-            let reshape_tensor: &mut ReshapeTensor<ElementType> = tree
-                .access_module_mut(&reshape_info)
-                .as_any_mut()
-                .downcast_mut()
-                .unwrap();
-            reshape_tensor.change_shape(vec![mini_batch_sample_size, 200]);
-        }
+        let reshape_tensor: &mut ReshapeTensor<ElementType> = tree
+            .access_module_mut(&reshape_info)
+            .as_any_mut()
+            .downcast_mut()
+            .unwrap();
+        reshape_tensor.change_shape(vec![mini_batch_sample_size, 200]);
 
+        let out: &mut SoftmaxAndCELoss<ElementType> = &mut tree
+            .access_module_mut(&output_info)
+            .as_any_mut()
+            .downcast_mut()
+            .unwrap();
+        let result = out.test_correct_value;
+        out.is_test = false;
 
-        println!("collect rate: {}", validation_result.1 as f64 / validation_value as f64);
-        println!("              ({} / {})", validation_result.1, validation_value);
-        println!("error: {}\n", validation_result.0 / validation_value as f64);
+        println!(
+            "collect rate: {}",
+            result as ElementType / validation_value as ElementType
+        );
+        println!("              ({} / {})", result, validation_value);
+        println!("error: {}\n", epoch_error / validation_value as ElementType);
     }
 
     // 処理時間表示

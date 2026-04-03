@@ -17,10 +17,10 @@ where
     type BuiltObject = SoftmaxAndCELoss<T>;
 
     fn new() -> Self {
-        let is_grad = false;
+        let is_test = false;
 
         Self {
-            _is_test: is_grad,
+            _is_test: is_test,
             _phantom: PhantomData,
         }
     }
@@ -28,13 +28,13 @@ where
     fn build(self) -> Self::BuiltObject {
         let softmax = SoftmaxBuilder::new().build();
         let cross_entropy_loss = CrossEntropyLossBuilder::new().build();
-        let test_result = (0usize, 0usize);
+        let test_correct_value = 0usize;
 
         SoftmaxAndCELoss::<T> {
             softmax,
             cross_entropy_loss,
             is_test: self._is_test,
-            test_result,
+            test_correct_value,
             grad: None,
         }
     }
