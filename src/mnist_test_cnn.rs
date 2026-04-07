@@ -21,12 +21,12 @@ const IMAGE_DOT_VALUE: usize = IMAGE_ROW_SIZE * IMAGE_ROW_SIZE;
 const IMAGE_CHANNEL_VALUE: usize = 1;
 
 pub fn mnist_process() {
-    let epoch_value = 10;
+    let epoch_value = 20;
     let mini_batch_sample_size: usize = 125;
 
     let training_value: u32 = 60000;
-    let validation_value = 10000;
-    let test_value = 0;
+    let validation_value = 9000;
+    let test_value = 1000;
 
     let mnist = MnistBuilder::new()
         .label_format_one_hot()
@@ -41,6 +41,7 @@ pub fn mnist_process() {
         .normalize();
 
     let validation_chunk_size = 100usize;
+    let test_chunk_size = 100usize;
 
     let mut r = Rand::new();
 
@@ -128,7 +129,7 @@ pub fn mnist_process() {
                 .into_dimensionality::<Ix0>()
                 .unwrap()
                 .into_scalar();
-            _ = &tree.propagate_grad(None, 0.001);
+            _ = &tree.propagate_grad(None, 0.0002);
 
             print!("\rmini batch count: {}", mini_batch_count);
             std::io::stdout().flush().unwrap();
@@ -151,22 +152,19 @@ pub fn mnist_process() {
         reshape_tensor.change_shape(vec![validation_chunk_size, 200]);
 
         let out: &mut SoftmaxAndCELoss<ElementType> = &mut tree
-                .access_module_mut(&output_info)
-                .as_any_mut()
-                .downcast_mut()
-                .unwrap();
-            out.is_test = true;
-            out.test_correct_value = 0usize;
+            .access_module_mut(&output_info)
+            .as_any_mut()
+            .downcast_mut()
+            .unwrap();
+        out.is_test = true;
+        out.test_correct_value = 0usize;
 
         for indices in (0..validation_value)
             .map(|x| x as usize)
             .collect::<Vec<usize>>()
             .chunks(validation_chunk_size as usize)
         {
-            mini_batch_count += 1;
             let (inputs, expects) = make_validation_data_set(indices, &mnist);
-
-            
 
             epoch_error += &tree
                 .forward(
@@ -203,6 +201,60 @@ pub fn mnist_process() {
         println!("              ({} / {})", result, validation_value);
         println!("error: {}\n", epoch_error / validation_value as ElementType);
     }
+
+    println!("after leaning test:");
+
+    let reshape_tensor: &mut ReshapeTensor<ElementType> = tree
+        .access_module_mut(&reshape_info)
+        .as_any_mut()
+        .downcast_mut()
+        .unwrap();
+    reshape_tensor.change_shape(vec![validation_chunk_size, 200]);
+
+    let out: &mut SoftmaxAndCELoss<ElementType> = &mut tree
+        .access_module_mut(&output_info)
+        .as_any_mut()
+        .downcast_mut()
+        .unwrap();
+    out.is_test = true;
+    out.test_correct_value = 0usize;
+
+    let mut test_error = 0.0;
+
+    for indices in (0..test_value)
+        .map(|x| x as usize)
+        .collect::<Vec<usize>>()
+        .chunks(validation_chunk_size as usize)
+    {
+        let (inputs, expects) = make_test_data_set(indices, &mnist);
+
+        test_error += &tree
+            .forward(
+                &NNForwardInput::<ElementType> {
+                    inputs: vec![inputs.view().into_dyn()],
+                    target: Some(expects.view().into_dyn()),
+                },
+                false,
+            )
+            .into_dimensionality::<Ix0>()
+            .unwrap()
+            .into_scalar();
+    }
+
+    let out: &mut SoftmaxAndCELoss<ElementType> = &mut tree
+        .access_module_mut(&output_info)
+        .as_any_mut()
+        .downcast_mut()
+        .unwrap();
+    let result = out.test_correct_value;
+    out.is_test = false;
+
+    println!(
+        "collect rate: {}",
+        result as ElementType / test_value as ElementType
+    );
+    println!("              ({} / {})", result, test_value);
+    println!("error: {}\n", test_error / test_value as ElementType);
 
     // 処理時間表示
     println!(
@@ -260,18 +312,18 @@ fn make_validation_data_set<'a>(
     let mut expected_array = Vec::<ElementType>::new();
 
     for index in indices {
-        let trn_data: &Vec<ElementType> = &dataset.trn_img
+        let val_data: &Vec<ElementType> = &dataset.val_img
             [((*index) * IMAGE_DOT_VALUE)..(((*index) + 1) * IMAGE_DOT_VALUE)]
             .iter()
             .map(|&x| x as ElementType)
             .collect();
-        inputs_array.extend_from_slice(trn_data);
+        inputs_array.extend_from_slice(val_data);
 
-        let trn_label: &Vec<ElementType> = &dataset.trn_lbl[((*index) * 10)..(((*index) + 1) * 10)]
+        let val_label: &Vec<ElementType> = &dataset.val_lbl[((*index) * 10)..(((*index) + 1) * 10)]
             .iter()
             .map(|&x| x as ElementType)
             .collect();
-        expected_array.extend_from_slice(trn_label);
+        expected_array.extend_from_slice(val_label);
     }
 
     let inputs = Array4::<ElementType>::from_shape_vec(
@@ -289,4 +341,41 @@ fn make_validation_data_set<'a>(
     (inputs.to_owned(), expects.to_owned())
 }
 
-fn forward_only(tree: &NNDataFlowTree<ElementType>, input: &NNForwardInput<'_, '_, ElementType>) {}
+fn make_test_data_set<'a>(
+    indices: &'a [usize],
+    dataset: &'a NormalizedMnist,
+) -> (Array4<ElementType>, Array2<ElementType>) {
+    let sample_size = indices.len();
+
+    let mut inputs_array = Vec::<ElementType>::new();
+    let mut expected_array = Vec::<ElementType>::new();
+
+    for index in indices {
+        let tst_data: &Vec<ElementType> = &dataset.tst_img
+            [((*index) * IMAGE_DOT_VALUE)..(((*index) + 1) * IMAGE_DOT_VALUE)]
+            .iter()
+            .map(|&x| x as ElementType)
+            .collect();
+        inputs_array.extend_from_slice(tst_data);
+
+        let tst_label: &Vec<ElementType> = &dataset.tst_lbl[((*index) * 10)..(((*index) + 1) * 10)]
+            .iter()
+            .map(|&x| x as ElementType)
+            .collect();
+        expected_array.extend_from_slice(tst_label);
+    }
+
+    let inputs = Array4::<ElementType>::from_shape_vec(
+        (
+            sample_size,
+            IMAGE_CHANNEL_VALUE,
+            IMAGE_ROW_SIZE,
+            IMAGE_ROW_SIZE,
+        ),
+        inputs_array,
+    )
+    .unwrap();
+    let expects = Array2::<ElementType>::from_shape_vec((sample_size, 10), expected_array).unwrap();
+
+    (inputs.to_owned(), expects.to_owned())
+}

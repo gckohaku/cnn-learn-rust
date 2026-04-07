@@ -12,7 +12,7 @@ pub struct SoftmaxAndCELoss<T> {
     pub softmax: Softmax<T>,
     pub cross_entropy_loss: CrossEntropyLoss<T>,
     pub is_test: bool,
-    // テストの結果を保持 (correct_value, test_value)
+    // テストの結果を保持
     pub test_correct_value: usize,
     // 勾配を求める時に利用
     pub(super) grad: Option<Array2<T>>,
