@@ -22,9 +22,9 @@ const IMAGE_CHANNEL_VALUE: usize = 1;
 
 pub fn mnist_process() {
     let epoch_value = 10;
-    let mini_batch_sample_size = 75;
+    let mini_batch_sample_size: usize = 125;
 
-    let training_value = 60000;
+    let training_value: u32 = 60000;
     let validation_value = 10000;
     let test_value = 0;
 
@@ -113,7 +113,7 @@ pub fn mnist_process() {
 
         let mut mini_batch_count = 0;
 
-        for indices in shuffle_index.chunks(mini_batch_sample_size as usize) {
+        for indices in shuffle_index.chunks_exact(mini_batch_sample_size as usize) {
             mini_batch_count += 1;
             let (inputs, expects) = make_mini_batch_dataset(indices, &mnist);
 
