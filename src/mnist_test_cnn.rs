@@ -21,7 +21,7 @@ const IMAGE_DOT_VALUE: usize = IMAGE_ROW_SIZE * IMAGE_ROW_SIZE;
 const IMAGE_CHANNEL_VALUE: usize = 1;
 
 pub fn mnist_process() {
-    let epoch_value = 20;
+    let epoch_value = 10;
     let mini_batch_sample_size: usize = 125;
 
     let training_value: u32 = 60000;
@@ -55,13 +55,27 @@ pub fn mnist_process() {
         .filter_value(2)
         .padding(1)
         .build();
+    let conv1_2 = ConvolutionBuilder::new()
+        .input_channel_value(1)
+        .input_image_size((IMAGE_ROW_SIZE, IMAGE_ROW_SIZE))
+        .filter_size((3, 3))
+        .filter_value(4)
+        .padding(1)
+        .build();
     let pool1 = MaxPoolingBuilder::new()
         .window_size((2, 2))
         .stride(2)
         .build();
     let conv2 = ConvolutionBuilder::new()
         .input_channel_value(2)
-        .filter_value(4)
+        .filter_value(8)
+        .input_image_size((14, 14))
+        .filter_size((3, 3))
+        .padding(1)
+        .build();
+    let conv2_2 = ConvolutionBuilder::new()
+        .input_channel_value(2)
+        .filter_value(16)
         .input_image_size((14, 14))
         .filter_size((3, 3))
         .padding(1)
@@ -74,28 +88,36 @@ pub fn mnist_process() {
         .input_channel_value(4)
         .input_image_size((7, 7))
         .filter_size((3, 3))
-        .filter_value(8)
+        .filter_value(32)
         .build();
 
     let reshape = ReshapeTensorBuilder::new()
-        .shape(vec![mini_batch_sample_size, 200])
+        .shape(vec![mini_batch_sample_size, 800])
         .build();
 
     let linear1 = LinearBuilder::new()
-        .input_node_value(200)
-        .output_node_value(40)
+        .input_node_value(800)
+        .output_node_value(200)
         .build();
     let relu1 = ReLUBuilder::new().build();
     let linear2 = LinearBuilder::new()
+        .input_node_value(200)
+        .output_node_value(40)
+        .build();
+    let linear3 = LinearBuilder::new()
         .input_node_value(40)
         .output_node_value(10)
         .build();
+    let relu2 = ReLUBuilder::new().build();
+
     let softmax_and_celoss = SoftmaxAndCELossBuilder::new().build();
 
     let conv_info1 = &tree.add_from_root(conv1);
-    let pool_info1 = &tree.add(&conv_info1, pool1);
+    let conv_info1_2 = &tree.add(&conv_info1, conv1_2);
+    let pool_info1 = &tree.add(&conv_info1_2, pool1);
     let conv_info2 = &tree.add(&pool_info1, conv2);
-    let pool_info2 = &tree.add(&conv_info2, pool2);
+    let conv_info2_2 = &tree.add(&pool_info1, conv2_2);
+    let pool_info2 = &tree.add(&conv_info2_2, pool2);
     let conv_info3 = &tree.add(&pool_info2, conv3);
 
     let reshape_info = &tree.add(&conv_info3, reshape);
@@ -103,7 +125,9 @@ pub fn mnist_process() {
     let linear_info1 = &tree.add(&reshape_info, linear1);
     let relu_info1 = &tree.add(&linear_info1, relu1);
     let linear_info2 = &tree.add(&relu_info1, linear2);
-    let output_info = &tree.add(&linear_info2, softmax_and_celoss);
+    let relu_info2 = &tree.add(&linear_info2, relu2);
+    let linear_info3 = &tree.add(&relu_info2, linear3);
+    let output_info = &tree.add(&linear_info3, softmax_and_celoss);
 
     // 処理時間計測用
     let epochs_now = time::Instant::now();
@@ -129,7 +153,10 @@ pub fn mnist_process() {
                 .into_dimensionality::<Ix0>()
                 .unwrap()
                 .into_scalar();
-            _ = &tree.propagate_grad(None, ElementType::max(1e-3 - (5e-5 * (epoch as ElementType)), 1e-4));
+            _ = &tree.propagate_grad(
+                None,
+                ElementType::max(1e-3 - (1e-4 * (epoch as ElementType)), 1e-4),
+            );
 
             print!("\rmini batch count: {}", mini_batch_count);
             std::io::stdout().flush().unwrap();
