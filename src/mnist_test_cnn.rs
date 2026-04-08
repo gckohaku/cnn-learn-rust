@@ -116,7 +116,7 @@ pub fn mnist_process() {
     let conv_info1_2 = &tree.add(&conv_info1, conv1_2);
     let pool_info1 = &tree.add(&conv_info1_2, pool1);
     let conv_info2 = &tree.add(&pool_info1, conv2);
-    let conv_info2_2 = &tree.add(&pool_info1, conv2_2);
+    let conv_info2_2 = &tree.add(&conv_info2, conv2_2);
     let pool_info2 = &tree.add(&conv_info2_2, pool2);
     let conv_info3 = &tree.add(&pool_info2, conv3);
 
