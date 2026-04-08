@@ -56,7 +56,7 @@ pub fn mnist_process() {
         .padding(1)
         .build();
     let conv1_2 = ConvolutionBuilder::new()
-        .input_channel_value(1)
+        .input_channel_value(2)
         .input_image_size((IMAGE_ROW_SIZE, IMAGE_ROW_SIZE))
         .filter_size((3, 3))
         .filter_value(4)
@@ -67,14 +67,14 @@ pub fn mnist_process() {
         .stride(2)
         .build();
     let conv2 = ConvolutionBuilder::new()
-        .input_channel_value(2)
+        .input_channel_value(4)
         .filter_value(8)
         .input_image_size((14, 14))
         .filter_size((3, 3))
         .padding(1)
         .build();
     let conv2_2 = ConvolutionBuilder::new()
-        .input_channel_value(2)
+        .input_channel_value(8)
         .filter_value(16)
         .input_image_size((14, 14))
         .filter_size((3, 3))
@@ -85,7 +85,7 @@ pub fn mnist_process() {
         .stride(2)
         .build();
     let conv3 = ConvolutionBuilder::new()
-        .input_channel_value(4)
+        .input_channel_value(16)
         .input_image_size((7, 7))
         .filter_size((3, 3))
         .filter_value(32)
@@ -176,7 +176,7 @@ pub fn mnist_process() {
             .as_any_mut()
             .downcast_mut()
             .unwrap();
-        reshape_tensor.change_shape(vec![validation_chunk_size, 200]);
+        reshape_tensor.change_shape(vec![validation_chunk_size, 800]);
 
         let out: &mut SoftmaxAndCELoss<ElementType> = &mut tree
             .access_module_mut(&output_info)
@@ -211,7 +211,7 @@ pub fn mnist_process() {
             .as_any_mut()
             .downcast_mut()
             .unwrap();
-        reshape_tensor.change_shape(vec![mini_batch_sample_size, 200]);
+        reshape_tensor.change_shape(vec![mini_batch_sample_size, 800]);
 
         let out: &mut SoftmaxAndCELoss<ElementType> = &mut tree
             .access_module_mut(&output_info)
@@ -236,7 +236,7 @@ pub fn mnist_process() {
         .as_any_mut()
         .downcast_mut()
         .unwrap();
-    reshape_tensor.change_shape(vec![validation_chunk_size, 200]);
+    reshape_tensor.change_shape(vec![validation_chunk_size, 800]);
 
     let out: &mut SoftmaxAndCELoss<ElementType> = &mut tree
         .access_module_mut(&output_info)
