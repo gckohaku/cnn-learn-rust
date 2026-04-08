@@ -129,7 +129,7 @@ pub fn mnist_process() {
                 .into_dimensionality::<Ix0>()
                 .unwrap()
                 .into_scalar();
-            _ = &tree.propagate_grad(None, ElementType::max(0.001 - (0.0001 * (epoch as ElementType)), 0.0001));
+            _ = &tree.propagate_grad(None, ElementType::max(1e-3 - (5e-5 * (epoch as ElementType)), 1e-4));
 
             print!("\rmini batch count: {}", mini_batch_count);
             std::io::stdout().flush().unwrap();
