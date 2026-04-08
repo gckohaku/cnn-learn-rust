@@ -21,7 +21,7 @@ const IMAGE_DOT_VALUE: usize = IMAGE_ROW_SIZE * IMAGE_ROW_SIZE;
 const IMAGE_CHANNEL_VALUE: usize = 1;
 
 pub fn mnist_process() {
-    let epoch_value = 20;
+    let epoch_value = 10;
     let mini_batch_sample_size: usize = 125;
 
     let training_value: u32 = 60000;
@@ -129,7 +129,7 @@ pub fn mnist_process() {
                 .into_dimensionality::<Ix0>()
                 .unwrap()
                 .into_scalar();
-            _ = &tree.propagate_grad(None, 0.0002);
+            _ = &tree.propagate_grad(None, ElementType::max(0.001 - (0.0001 * (epoch as ElementType)), 0.0001));
 
             print!("\rmini batch count: {}", mini_batch_count);
             std::io::stdout().flush().unwrap();
