@@ -22,7 +22,7 @@ const IMAGE_CHANNEL_VALUE: usize = 1;
 
 pub fn mnist_process() {
     let epoch_value = 10;
-    let mini_batch_sample_size: usize = 125;
+    let mini_batch_sample_size: usize = 32;
 
     let training_value: u32 = 60000;
     let validation_value = 9000;
@@ -155,7 +155,7 @@ pub fn mnist_process() {
                 .into_scalar();
             _ = &tree.propagate_grad(
                 None,
-                ElementType::max(1e-3 - (1e-4 * (epoch as ElementType)), 1e-4),
+                ElementType::max(1e-4 - (1e-5 * (epoch as ElementType)), 1e-5),
             );
 
             print!("\rmini batch count: {}", mini_batch_count);
