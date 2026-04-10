@@ -21,7 +21,7 @@ const IMAGE_DOT_VALUE: usize = IMAGE_ROW_SIZE * IMAGE_ROW_SIZE;
 const IMAGE_CHANNEL_VALUE: usize = 1;
 
 pub fn mnist_process() {
-    let epoch_value = 1;
+    let epoch_value = 10;
     let mini_batch_sample_size: usize = 125;
 
     let training_value: u32 = 60000;

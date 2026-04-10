@@ -66,7 +66,7 @@ where
                         let most_index = s
                             .iter()
                             .enumerate()
-                            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                            .max_by(|(_, a), (_, b)| a.partial_cmp(b).expect("Panic in partial_cmp of SoftmaxAndCeloss forward process"))
                             .map(|(index, _)| index)
                             .unwrap();
                         if t[most_index] > T::ZERO {
