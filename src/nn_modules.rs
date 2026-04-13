@@ -39,7 +39,7 @@ pub struct NNForwardInput<'a, 'b, T> {
 pub trait NNModule<T>: Debug + DynClone + Send + Sync {
     fn necessary_parameter_value(&self) -> usize;
 
-    fn forward(&mut self, input: &NNForwardInput<'_, '_, T>, is_grad: bool) -> ArrayD<T>;
+    fn forward(&mut self, input: &NNForwardInput<'_, '_, T>, is_grad: bool) -> Result<ArrayD<T>, &'static str>;
     // 逆伝播処理
     fn propagate_grad(&mut self, grad: Option<&ArrayViewD<T>>, eta: T) -> ArrayD<T>;
 

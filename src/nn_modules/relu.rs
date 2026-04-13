@@ -20,7 +20,7 @@ where
         1
     }
 
-    fn forward<'a>(&mut self, forward_input: &NNForwardInput<'_, '_, T>, is_grad: bool) -> ArrayD<T> {
+    fn forward<'a>(&mut self, forward_input: &NNForwardInput<'_, '_, T>, is_grad: bool) -> Result<ArrayD<T>, &'static str> {
         let input = &forward_input.inputs[0];
         let mut clone_array = input.to_owned();
         clone_array.par_mapv_inplace(|x| if x > T::ZERO { x } else { T::ZERO });
@@ -30,7 +30,7 @@ where
             self.grad = Some(clone_array.clone());
         }
         
-        clone_array
+        Ok(clone_array)
     }
 
     fn propagate_grad(&mut self, grad: Option<&ndarray::ArrayViewD<T>>, _eta: T) -> ArrayD<T> {

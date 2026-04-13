@@ -36,7 +36,7 @@ where
         1
     }
 
-    fn forward(&mut self, forward_input: &NNForwardInput<'_, '_, T>, is_grad: bool) -> ArrayD<T> {
+    fn forward(&mut self, forward_input: &NNForwardInput<'_, '_, T>, is_grad: bool) -> Result<ArrayD<T>, &'static str> {
         let input = &forward_input.inputs[0];
         let input_2d = input.clone().into_dimensionality::<Ix2>().unwrap();
 
@@ -46,7 +46,7 @@ where
         }
 
         let result = input_2d.dot(&self.weights) + &self.biases;
-        result.into_dyn()
+        Ok(result.into_dyn())
     }
 
     fn propagate_grad(&mut self, grad: Option<&ArrayViewD<T>>, eta: T) -> ArrayD<T> {

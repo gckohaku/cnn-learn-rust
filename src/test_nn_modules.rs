@@ -63,7 +63,7 @@ pub fn run_test() {
                 target: Some(target.view()),
             },
             true,
-        );
+        ).unwrap();
 
         println!("error: {}", error);
 

@@ -19,8 +19,8 @@ where
         1
     }
 
-    fn forward(&mut self, input: &super::NNForwardInput<'_, '_, T>, _is_grad: bool) -> ArrayD<T> {
-        return input.inputs[0].to_owned();
+    fn forward(&mut self, input: &super::NNForwardInput<'_, '_, T>, _is_grad: bool) -> Result<ArrayD<T>, &'static str> {
+        Ok(input.inputs[0].to_owned())
     }
 
     fn propagate_grad(&mut self, grad: Option<&ndarray::ArrayViewD<T>>, _eta: T) -> ArrayD<T> {

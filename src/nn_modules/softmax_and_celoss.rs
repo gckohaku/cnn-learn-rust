@@ -1,6 +1,6 @@
-use std::{fmt::Debug, iter::Sum};
+use std::{fmt::Debug};
 
-use ndarray::{Array2, ArrayD, Ix2, Zip, parallel::prelude};
+use ndarray::{Array2, ArrayD, Ix2, Zip};
 
 use crate::{
     impl_as_any_with_mut,
@@ -26,10 +26,13 @@ where
         1
     }
 
-    fn forward<'a, 'b>(&mut self, input: &NNForwardInput<'a, 'b, T>, is_grad: bool) -> ArrayD<T> {
+    fn forward<'a, 'b>(&mut self, input: &NNForwardInput<'a, 'b, T>, is_grad: bool) -> Result<ArrayD<T>, &'static str> {
         let input_values = input;
 
-        let softmax_result = self.softmax.forward(&input_values, is_grad);
+        let softmax_result = match self.softmax.forward(&input_values, is_grad) {
+            Ok(res) => res,
+            Err(e) => return Err(e),
+        };
 
         let softmax_result_view = softmax_result.view();
 

@@ -2,7 +2,10 @@ use std::fmt::Debug;
 
 use ndarray::{Array2, ArrayD, Ix2, Zip, arr0};
 
-use crate::{impl_as_any_with_mut, nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits}};
+use crate::{
+    impl_as_any_with_mut,
+    nn_modules::{NNForwardInput, NNModule, NNNecessaryTraits},
+};
 
 #[derive(Debug, Clone)]
 pub struct CrossEntropyLoss<T> {
@@ -19,7 +22,11 @@ where
         1
     }
 
-    fn forward<'a>(&mut self, input: &NNForwardInput<'_, '_, T>, _is_grad: bool) -> ArrayD<T> {
+    fn forward<'a>(
+        &mut self,
+        input: &NNForwardInput<'_, '_, T>,
+        _is_grad: bool,
+    ) -> Result<ArrayD<T>, &'static str> {
         let nn_result = &input.inputs[0];
         let target = input.target.as_ref().unwrap();
 
@@ -32,10 +39,10 @@ where
             .and(&ln_output)
             .fold(T::ZERO, |t, e, o| t + (*e * *o));
 
-        arr0(error).into_dyn()
+        Ok(arr0(error).into_dyn())
     }
 
-    fn propagate_grad(&mut self, grad: Option<&ndarray::ArrayViewD<T>>, eta: T) -> ArrayD<T> {
+    fn propagate_grad(&mut self, grad: Option<&ndarray::ArrayViewD<T>>, _eta: T) -> ArrayD<T> {
         // 現状は、交差エントロピー誤差単体での微分は求めない
         grad.unwrap().to_owned()
     }

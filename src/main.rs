@@ -1,5 +1,3 @@
-use std::panic;
-
 mod cnn_activations;
 mod cnn_information;
 mod cnn_network;

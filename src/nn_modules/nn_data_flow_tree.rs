@@ -35,7 +35,7 @@ where
         usize::MAX
     }
 
-    fn forward(&mut self, input: &NNForwardInput<'_, '_, T>, is_grad: bool) -> ArrayD<T> {
+    fn forward(&mut self, input: &NNForwardInput<'_, '_, T>, is_grad: bool) -> Result<ArrayD<T>, &'static str> {
         if self.is_not_yet_executed {
             self.calc_sequential_node_flow();
             self.is_not_yet_executed = false;
@@ -74,7 +74,7 @@ where
                     target: Some(target.clone()),
                 },
                 is_grad,
-            );
+            ).unwrap();
 
             for dst in destinations {
                 self.variables_stocks[*dst].push(loop_result.clone());
@@ -86,7 +86,7 @@ where
             var.clear();
         }
 
-        loop_result
+        Ok(loop_result)
     }
 
     fn propagate_grad(&mut self, grad: Option<&ndarray::ArrayViewD<T>>, eta: T) -> ArrayD<T> {

@@ -20,7 +20,7 @@ where
         1
     }
 
-    fn forward(&mut self, forward_input: &NNForwardInput<T>, _is_grad: bool) -> ArrayD<T> {
+    fn forward(&mut self, forward_input: &NNForwardInput<T>, _is_grad: bool) -> Result<ArrayD<T>, &'static str> {
         let input = &forward_input.inputs[0];
 
         let input_2d = input.clone().into_dimensionality::<Ix2>().unwrap();
@@ -48,7 +48,7 @@ where
 
         self.output_value = Some(after_softmax.clone());
 
-        after_softmax.into_dyn()
+        Ok(after_softmax.into_dyn())
     }
 
     fn propagate_grad(&mut self, grad: Option<&ndarray::ArrayViewD<T>>, _eta: T) -> ArrayD<T> {

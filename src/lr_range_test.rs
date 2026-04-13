@@ -1,6 +1,6 @@
 use mnist::{MnistBuilder, NormalizedMnist};
 use ndarray::{Array2, Array4, Ix0};
-use std::{io::Write, time};
+use std::{collections::HashMap, fmt::format, fs::File, io::{self, BufRead, BufReader, Write}, time};
 
 use crate::{
     nn_modules::{
@@ -20,8 +20,7 @@ const IMAGE_ROW_SIZE: usize = 28;
 const IMAGE_DOT_VALUE: usize = IMAGE_ROW_SIZE * IMAGE_ROW_SIZE;
 const IMAGE_CHANNEL_VALUE: usize = 1;
 
-pub fn test() {
-    let epoch_value = 1;
+pub fn test() -> Result<(), Box<dyn std::error::Error>> {
     let mini_batch_sample_size: usize = 125;
 
     let training_value: u32 = 60000;
@@ -108,7 +107,7 @@ pub fn test() {
 
     // lr range test
     let mut training_rate: ElementType = 1e-7;
-    let rate_up_ratio: ElementType = 10.0;
+    let rate_up_ratio: ElementType = 1.01;
     let finish_rate: ElementType = 0.5;
     let mut iter_count = 0;
     let up_iter_count = 3;
@@ -116,8 +115,12 @@ pub fn test() {
     let mut is_default = true;
 
     let mut before_rate: ElementType = 0.0;
+    let mut epoch_count = 0usize;
+    let mut first_error: ElementType = 0.0;
 
-    'outer: for epoch in 1..=epoch_value {
+    let mut result_string = "".to_string();
+
+    'outer: while training_rate < finish_rate {
         let shuffle_index = shuffle::generate_shuffle_array(training_value as usize, &mut r);
         let mut error: ElementType = 0.0;
 
@@ -135,32 +138,39 @@ pub fn test() {
                     },
                     true,
                 )
+                .unwrap()
                 .into_dimensionality::<Ix0>()
                 .unwrap()
                 .into_scalar();
             _ = &tree.propagate_grad(None, training_rate);
 
-			iter_count += 1;
-            if iter_count >= up_iter_count {
-                println!(
-                    "{}",
-                    error / mini_batch_sample_size as ElementType
-                );
+            let average_error = error / mini_batch_sample_size as ElementType;
+
+            result_string += &format!(
+                "{}\t{}\n",
+                training_rate,average_error
+                
+            );
+
+            if is_default {
+                first_error = average_error;
                 is_default = false;
-                before_rate = training_rate;
-                training_rate *= rate_up_ratio;
-				iter_count = 0;
             }
 
-            if training_rate > finish_rate {
-                println!(
-                    "{}",
-                    error / mini_batch_sample_size as ElementType
-                );
+            if training_rate > finish_rate || average_error > first_error * 1.2 {
                 break 'outer;
             }
+            
+            training_rate *= rate_up_ratio;
         }
     }
+
+    // ファイル出力
+    let mut file = File::create("src/lr_range_test_results/test.txt")?;
+    // let buf = BufReader::new(io::stdin()).lines().collect::<io::Result<Vec<String>>>()?.join("\n");
+    write!(file, "{}", result_string)?;
+    file.flush()?;
+    Ok(())
 }
 
 fn make_mini_batch_dataset<'a>(

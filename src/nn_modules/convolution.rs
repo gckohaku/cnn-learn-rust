@@ -1,7 +1,7 @@
 use ndarray::{Array1, Array4, ArrayD, Axis, Ix4, Zip};
 
 use crate::{
-    cnn_transformations, impl_as_any_with_mut, nn_modules::{NNModule, NNNecessaryTraits, reshape_tensor}
+    cnn_transformations, impl_as_any_with_mut, nn_modules::{NNModule, NNNecessaryTraits}
 };
 
 #[derive(Clone, Debug)]
@@ -26,7 +26,7 @@ where
         &mut self,
         input: &super::NNForwardInput<'_, '_, T>,
         is_grad: bool,
-    ) -> ndarray::ArrayD<T> {
+    ) -> Result<ArrayD<T>, &'static str> {
         let input_4d = input.inputs[0]
             .to_owned()
             .into_dimensionality::<Ix4>()
@@ -67,7 +67,7 @@ where
             self.input_of_forward = Some(input_4d);
         }
 
-        reshape_result.to_owned().into_dyn()
+        Ok(reshape_result.to_owned().into_dyn())
     }
 
     fn propagate_grad(

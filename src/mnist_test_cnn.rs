@@ -128,6 +128,7 @@ pub fn mnist_process() {
                     },
                     true,
                 )
+                .unwrap()
                 .into_dimensionality::<Ix0>()
                 .unwrap()
                 .into_scalar();
@@ -176,6 +177,7 @@ pub fn mnist_process() {
                     },
                     false,
                 )
+                .unwrap()
                 .into_dimensionality::<Ix0>()
                 .unwrap()
                 .into_scalar();
@@ -238,6 +240,7 @@ pub fn mnist_process() {
                 },
                 false,
             )
+            .unwrap()
             .into_dimensionality::<Ix0>()
             .unwrap()
             .into_scalar();

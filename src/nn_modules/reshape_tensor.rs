@@ -1,5 +1,7 @@
 use std::marker::PhantomData;
 
+use ndarray::ArrayD;
+
 use crate::{impl_as_any_with_mut, nn_modules::{NNModule, NNNecessaryTraits}};
 
 #[derive(Debug, Clone)]
@@ -21,7 +23,7 @@ where
         &mut self,
         input: &super::NNForwardInput<'_, '_, T>,
         is_grad: bool,
-    ) -> ndarray::ArrayD<T> {
+    ) -> Result<ArrayD<T>, &'static str> {
         let input_tensor = &input.inputs[0];
 
         if is_grad {
@@ -30,7 +32,7 @@ where
         }
 
         let shaped_tensor = input_tensor.to_shape(self.shape.clone()).unwrap();
-        shaped_tensor.to_owned()
+        Ok(shaped_tensor.to_owned())
     }
 
     fn propagate_grad(

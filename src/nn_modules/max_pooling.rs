@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use ndarray::{Array1, Array2, ArrayD, ArrayViewD, Axis, Ix4, Zip, parallel::prelude::{IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator}};
+use ndarray::{Array1, Array2, ArrayD, ArrayViewD, Axis, Ix4, Zip, parallel::prelude::{IntoParallelRefIterator, ParallelIterator}};
 
 use crate::{
     cnn_transformations, impl_as_any_with_mut, nn_modules::{NNModule, NNNecessaryTraits}
@@ -27,7 +27,7 @@ where
         &mut self,
         input: &super::NNForwardInput<'_, '_, T>,
         is_grad: bool,
-    ) -> ArrayD<T> {
+    ) -> Result<ArrayD<T>, &'static str> {
         let input_4d = input.inputs[0]
             .clone()
             .into_dimensionality::<Ix4>()
@@ -80,7 +80,7 @@ where
             self.input_shape = input_shape.par_iter().map(|v| *v).collect();
         }
 
-        reshape_pooling.into_dyn().to_owned()
+        Ok(reshape_pooling.into_dyn().to_owned())
     }
 
     fn propagate_grad(

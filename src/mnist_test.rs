@@ -85,8 +85,10 @@ pub fn mnist_process() {
                     },
                     true,
                 )
+                .unwrap()
                 .into_dimensionality::<Ix0>()
-                .unwrap().into_scalar();
+                .unwrap()
+                .into_scalar();
             _ = &tree.propagate_grad(None, 0.001);
 
             print!("\rmini batch count: {}", mini_batch_count);
@@ -132,10 +134,7 @@ fn make_mini_batch_dataset<'a>(
     }
 
     let inputs = Array2::<ElementType>::from_shape_vec(
-        (
-            sample_size,
-            IMAGE_CHANNEL_VALUE * IMAGE_DOT_VALUE,
-        ),
+        (sample_size, IMAGE_CHANNEL_VALUE * IMAGE_DOT_VALUE),
         inputs_array,
     )
     .unwrap();
