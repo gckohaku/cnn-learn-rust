@@ -1,6 +1,12 @@
 use mnist::{MnistBuilder, NormalizedMnist};
 use ndarray::{Array2, Array4, Ix0};
-use std::{collections::HashMap, fmt::format, fs::File, io::{self, BufRead, BufReader, Write}, time};
+use std::{
+    collections::HashMap,
+    fmt::format,
+    fs::File,
+    io::{self, BufRead, BufReader, Write},
+    time,
+};
 
 use crate::{
     nn_modules::{
@@ -106,19 +112,18 @@ pub fn test() -> Result<(), Box<dyn std::error::Error>> {
     let _ = &tree.add(&linear_info2, softmax_and_celoss);
 
     // lr range test
-    let mut training_rate: ElementType = 1e-7;
-    let rate_up_ratio: ElementType = 1.01;
-    let finish_rate: ElementType = 0.5;
+    let mut training_rate: ElementType = 1e-5;
+    let rate_up_ratio: ElementType = 1.02;
+    let finish_rate: ElementType = 5e-3;
     let mut iter_count = 0;
-    let up_iter_count = 3;
 
     let mut is_default = true;
-
-    let mut before_rate: ElementType = 0.0;
-    let mut epoch_count = 0usize;
     let mut first_error: ElementType = 0.0;
 
     let mut result_string = "".to_string();
+
+    let expected_iter_times = finish_rate.log(rate_up_ratio) - training_rate.log(rate_up_ratio);
+    println!("expected iteration times: {}", expected_iter_times);
 
     'outer: while training_rate < finish_rate {
         let shuffle_index = shuffle::generate_shuffle_array(training_value as usize, &mut r);
@@ -146,21 +151,26 @@ pub fn test() -> Result<(), Box<dyn std::error::Error>> {
 
             let average_error = error / mini_batch_sample_size as ElementType;
 
-            result_string += &format!(
-                "{}\t{}\n",
-                training_rate,average_error
-                
-            );
+            result_string += &format!("{}\t{}\n", training_rate, average_error);
+
+            iter_count += 1;
+            print!("\r{}", iter_count);
+            std::io::stdout().flush().unwrap();
 
             if is_default {
                 first_error = average_error;
                 is_default = false;
             }
 
-            if training_rate > finish_rate || average_error > first_error * 1.2 {
+            if training_rate > finish_rate || average_error > first_error * 1.5 {
+                println!(" !end this point");
+                println!(
+                    "last_rate: {}\nfirst_error: {}\nlast_error: {}",
+                    training_rate, first_error, average_error
+                );
                 break 'outer;
             }
-            
+
             training_rate *= rate_up_ratio;
         }
     }
