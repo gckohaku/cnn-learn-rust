@@ -1,0 +1,25 @@
+[package]
+name = "cnn-learn-rust"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ndarray = { version = "0.16", default-features = false, features = [
+	"std",
+	"rayon",
+	"blas",
+] }
+ndarray-ndimage = "0.5"
+ron = "0.12"
+serde = { version = "1.0", features = ["derive"] }
+mnist = "0.6.0"
+num-traits = "0.2.19"
+ordered-float = "5.1"
+dyn-clone = "1.0.20"
+
+[profile.dev]
+opt-level = 1
+overflow-checks = false
+
+[profile.release]
+opt-level = 3

@@ -1,0 +1,38 @@
+{
+    "files.autoSave": "off",
+    "[rust]": {
+        "editor.defaultFormatter": "rust-lang.rust-analyzer",
+        "editor.insertSpaces": false,
+        "editor.tabSize": 4,
+    },
+    "rust-analyzer.checkOnSave": true,
+    "indentRainbow.indicatorStyle": "light",
+    "indentRainbow.lightIndicatorStyleLineWidth": 2,
+    "indentRainbow.colors": [
+        "rgba(255,255,64,0.25)",
+        "rgba(127,255,127,0.25)",
+        "rgba(255,127,255,0.25)",
+        "rgba(79,236,236,0.25)"
+    ],
+    "editor.insertSpaces": false,
+    "workbench.editor.wrapTabs": true,
+    "window.density.editorTabHeight": "compact",
+    "editor.wordWrap": "on",
+    "cSpell.words": [
+        "blas",
+        "Deque",
+        "fcnn",
+        "inplace",
+        "mapv",
+        "mnist",
+        "ncols",
+        "ndarray",
+        "ndim",
+        "ndimage",
+        "nrows",
+        "relu",
+        "softmax"
+    ],
+    "editor.comments.insertSpace": true,
+    "editor.guides.bracketPairs": false,
+}
