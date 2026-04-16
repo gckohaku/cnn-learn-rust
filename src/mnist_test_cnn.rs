@@ -1,6 +1,7 @@
+use chrono::{Local};
 use mnist::{MnistBuilder, NormalizedMnist};
 use ndarray::{Array2, Array4, Ix0};
-use std::{io::Write, time};
+use std::{fs::File, io::Write, time};
 
 use crate::{
     nn_modules::{
@@ -20,8 +21,8 @@ const IMAGE_ROW_SIZE: usize = 28;
 const IMAGE_DOT_VALUE: usize = IMAGE_ROW_SIZE * IMAGE_ROW_SIZE;
 const IMAGE_CHANNEL_VALUE: usize = 1;
 
-pub fn mnist_process() {
-    let epoch_value = 30;
+pub fn mnist_process() -> Result<(), Box<dyn std::error::Error>> {
+    let epoch_value = 50;
     let mini_batch_sample_size: usize = 125;
 
     let training_value: u32 = 60000;
@@ -108,6 +109,8 @@ pub fn mnist_process() {
     let linear_info2 = &tree.add(&relu_info1, linear2);
     let output_info = &tree.add(&linear_info2, softmax_and_celoss);
 
+    let mut writing_file_string: String = "epoch\tlearning rate\tlearning error\tvalidation error\tvalidation collect rate\n".to_string();
+
     // 処理時間計測用
     let epochs_now = time::Instant::now();
 
@@ -150,8 +153,12 @@ pub fn mnist_process() {
             epoch_error / training_value as ElementType
         );
 
+        writing_file_string += &format!("{}\t{}\t{}\t", epoch, epoch_learning_rate,  epoch_error / training_value as ElementType);
+
         // 検証部分
         println!("validation test:");
+
+        epoch_error = 0.0;
 
         let reshape_tensor: &mut ReshapeTensor<ElementType> = tree
             .access_module_mut(&reshape_info)
@@ -210,6 +217,8 @@ pub fn mnist_process() {
         );
         println!("              ({} / {})", result, validation_value);
         println!("error: {}\n", epoch_error / validation_value as ElementType);
+
+        writing_file_string += &format!("{}\t{}\n", epoch_error / validation_value as ElementType, result as ElementType / validation_value as ElementType);
     }
 
     println!("after leaning test:");
@@ -219,7 +228,7 @@ pub fn mnist_process() {
         .as_any_mut()
         .downcast_mut()
         .unwrap();
-    reshape_tensor.change_shape(vec![validation_chunk_size, 200]);
+    reshape_tensor.change_shape(vec![test_chunk_size, 200]);
 
     let out: &mut SoftmaxAndCELoss<ElementType> = &mut tree
         .access_module_mut(&output_info)
@@ -267,11 +276,26 @@ pub fn mnist_process() {
     println!("              ({} / {})", result, test_value);
     println!("error: {}\n", test_error / test_value as ElementType);
 
+    writing_file_string += "\nafter learning test\n";
+    writing_file_string += &format!("\tcollect rate\t{}\n", result as ElementType / test_value as ElementType);
+    writing_file_string += &format!("\terror\t{}\n", test_error / test_value as ElementType);
+
+    let epochs_process_duration = epochs_now.elapsed().as_secs_f64();
+
     // 処理時間表示
     println!(
-        "epochs process duration: {:?}sec.",
-        epochs_now.elapsed().as_secs_f64()
+        "epochs process duration: {}sec.",
+        epochs_process_duration
     );
+
+    writing_file_string += &format!("\nepochs process duration\t{}sec.", epochs_process_duration);
+
+    // ファイル出力
+    let mut file = File::create("src/learning_results/".to_string() + &Local::now().to_string() + &".txt")?;
+    // let buf = BufReader::new(io::stdin()).lines().collect::<io::Result<Vec<String>>>()?.join("\n");
+    write!(file, "{}", writing_file_string)?;
+    file.flush()?;
+    Ok(())
 }
 
 fn make_mini_batch_dataset<'a>(

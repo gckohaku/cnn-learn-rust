@@ -18,6 +18,6 @@ mod lr_range_test;
 mod learning_rate_manager;
 
 fn main() {
-    mnist_test_cnn::mnist_process();
+    let _ = mnist_test_cnn::mnist_process();
     // let _ = lr_range_test::test();
 }

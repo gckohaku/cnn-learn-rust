@@ -1,0 +1,10 @@
+epoch	learning rate	learning error	validation error	validation collect rate
+1	0.0003	1.998363	0.6940459	0.7874445
+2	0.0002677778	0.4944526	0.40299168	0.8748889
+3	0.00023555556	0.39960837	0.3653829	0.88744444
+
+after learning test
+	collect rate	0.907
+	error	0.33306324
+
+epochs process duration	33.544125905sec.
