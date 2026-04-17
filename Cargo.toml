@@ -4,18 +4,18 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-ndarray = { version = "0.16", default-features = false, features = [
+ndarray = { version = "0.17", default-features = false, features = [
 	"std",
 	"rayon",
 	"blas",
 ] }
-ndarray-ndimage = "0.5"
+ndarray-ndimage = "0.6"
 ron = "0.12"
 serde = { version = "1.0", features = ["derive"] }
-mnist = "0.6.0"
-num-traits = "0.2.19"
+mnist = "0.6"
+num-traits = "0.2"
 ordered-float = "5.1"
-dyn-clone = "1.0.20"
+dyn-clone = "1.0"
 chrono = "0.4"
 
 [profile.dev]

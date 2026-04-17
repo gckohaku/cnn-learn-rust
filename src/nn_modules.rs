@@ -12,6 +12,7 @@ pub mod softmax_and_celoss;
 pub mod convolution;
 pub mod max_pooling;
 pub mod reshape_tensor;
+pub mod batch_normalization;
 
 use std::{any::Any, fmt::Debug};
 
@@ -28,6 +29,7 @@ pub use softmax_and_celoss::SoftmaxAndCELoss;
 pub use convolution::Convolution;
 pub use max_pooling::MaxPooling;
 pub use reshape_tensor::ReshapeTensor;
+pub use batch_normalization::BatchNormalization;
 
 use crate::nn_modules::input_tensor::InputTensor;
 
