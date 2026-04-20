@@ -24,6 +24,7 @@
         "Deque",
         "fcnn",
         "inplace",
+        "linalg",
         "mapv",
         "mnist",
         "ncols",

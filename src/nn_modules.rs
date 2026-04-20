@@ -12,14 +12,14 @@ pub mod softmax_and_celoss;
 pub mod convolution;
 pub mod max_pooling;
 pub mod reshape_tensor;
-pub mod batch_normalization;
+pub mod batch_norm_2d;
 
 use std::{any::Any, fmt::Debug};
 
 pub use cross_entropy_loss::CrossEntropyLoss;
 use dyn_clone::{DynClone, clone_trait_object};
 pub use linear::Linear;
-use ndarray::{ArrayD, ArrayViewD};
+use ndarray::{ArrayD, ArrayViewD, ScalarOperand};
 pub use nn_data_flow_node::NNDataFlowNodeIndexInfo;
 pub use nn_data_flow_tree::NNDataFlowTree;
 use num_traits::{ConstOne, ConstZero, Float, FromPrimitive, NumAssign};
@@ -29,7 +29,7 @@ pub use softmax_and_celoss::SoftmaxAndCELoss;
 pub use convolution::Convolution;
 pub use max_pooling::MaxPooling;
 pub use reshape_tensor::ReshapeTensor;
-pub use batch_normalization::BatchNormalization;
+pub use batch_norm_2d::BatchNorm2d;
 
 use crate::nn_modules::input_tensor::InputTensor;
 
@@ -71,7 +71,7 @@ pub trait NNModuleBuilder<T> {
     fn build(self) -> Self::BuiltObject;
 }
 
-pub trait NNNecessaryTraits: Send + Sync + Debug + Float + ConstOne + ConstZero + NumAssign + FromPrimitive + 'static {}
+pub trait NNNecessaryTraits: Send + Sync + Debug + Float + ConstOne + ConstZero + NumAssign + FromPrimitive + ScalarOperand + 'static {}
 
-impl<T> NNNecessaryTraits for T where T: Send + Sync + Debug + Float + ConstOne + ConstZero + NumAssign + FromPrimitive + 'static
+impl<T> NNNecessaryTraits for T where T: Send + Sync + Debug + Float + ConstOne + ConstZero + NumAssign + FromPrimitive + ScalarOperand + 'static
 {}
