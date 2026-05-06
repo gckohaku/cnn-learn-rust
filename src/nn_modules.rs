@@ -1,35 +1,35 @@
+pub mod batch_norm_2d;
 pub mod builders;
 pub mod calculation_node_state;
+pub mod convolution;
 pub mod cross_entropy_loss;
 pub mod input_tensor;
 pub mod linear;
+pub mod max_pooling;
 pub mod nn_data_flow_node;
 pub mod nn_data_flow_tree;
 pub mod nn_sequential_node_flow;
 pub mod relu;
+pub mod reshape_tensor;
 pub mod softmax;
 pub mod softmax_and_celoss;
-pub mod convolution;
-pub mod max_pooling;
-pub mod reshape_tensor;
-pub mod batch_norm_2d;
 
 use std::{any::Any, fmt::Debug};
 
+pub use batch_norm_2d::BatchNorm2d;
+pub use convolution::Convolution;
 pub use cross_entropy_loss::CrossEntropyLoss;
 use dyn_clone::{DynClone, clone_trait_object};
 pub use linear::Linear;
+pub use max_pooling::MaxPooling;
 use ndarray::{ArrayD, ArrayViewD, ScalarOperand};
 pub use nn_data_flow_node::NNDataFlowNodeIndexInfo;
 pub use nn_data_flow_tree::NNDataFlowTree;
-use num_traits::{ConstOne, ConstZero, Float, FromPrimitive, NumAssign};
+use num_traits::{ConstOne, ConstZero, Float, FromPrimitive, NumAssign, One, Zero};
 pub use relu::ReLU;
+pub use reshape_tensor::ReshapeTensor;
 pub use softmax::Softmax;
 pub use softmax_and_celoss::SoftmaxAndCELoss;
-pub use convolution::Convolution;
-pub use max_pooling::MaxPooling;
-pub use reshape_tensor::ReshapeTensor;
-pub use batch_norm_2d::BatchNorm2d;
 
 use crate::nn_modules::input_tensor::InputTensor;
 
@@ -41,7 +41,11 @@ pub struct NNForwardInput<'a, 'b, T> {
 pub trait NNModule<T>: Debug + DynClone + Send + Sync {
     fn necessary_parameter_value(&self) -> usize;
 
-    fn forward(&mut self, input: &NNForwardInput<'_, '_, T>, is_grad: bool) -> Result<ArrayD<T>, &'static str>;
+    fn forward(
+        &mut self,
+        input: &NNForwardInput<'_, '_, T>,
+        is_grad: bool,
+    ) -> Result<ArrayD<T>, &'static str>;
     // 逆伝播処理
     fn propagate_grad(&mut self, grad: Option<&ArrayViewD<T>>, eta: T) -> ArrayD<T>;
 
@@ -71,7 +75,34 @@ pub trait NNModuleBuilder<T> {
     fn build(self) -> Self::BuiltObject;
 }
 
-pub trait NNNecessaryTraits: Send + Sync + Debug + Float + ConstOne + ConstZero + NumAssign + FromPrimitive + ScalarOperand + 'static {}
+pub trait NNNecessaryTraits:
+    Send
+    + Sync
+    + Debug
+    + Float
+    + One
+    + ConstOne
+    + Zero
+    + ConstZero
+    + NumAssign
+    + FromPrimitive
+    + ScalarOperand
+    + 'static
+{
+}
 
-impl<T> NNNecessaryTraits for T where T: Send + Sync + Debug + Float + ConstOne + ConstZero + NumAssign + FromPrimitive + ScalarOperand + 'static
-{}
+impl<T> NNNecessaryTraits for T where
+    T: Send
+        + Sync
+        + Debug
+        + Float
+        + One
+        + ConstOne
+        + Zero
+        + ConstZero
+        + NumAssign
+        + FromPrimitive
+        + ScalarOperand
+        + 'static
+{
+}
