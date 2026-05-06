@@ -119,7 +119,7 @@ where
             .and(self.input_minus_mu.axis_iter(Axis(0)))
             .and(&self.input_variance)
             .and(grad_for_variance.axis_iter(Axis(0)))
-            .par_map_collect(|grad_mu, grad_std, minus, var, grad_var| {
+            .par_for_each(|grad_mu, grad_std, minus, var, grad_var| {
                 let a = (-T::ONE / *var) * grad_std.sum();
                 if grad_var.len() != 1 {
                     panic!("something went wrong");
