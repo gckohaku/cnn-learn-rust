@@ -6,6 +6,7 @@ pub mod softmax_and_celoss_builder;
 pub mod convolution_builder;
 pub mod max_pooling_builder;
 pub mod reshape_tensor_builder;
+pub mod batch_norm_2d_builder;
 
 pub use linear_builder::LinearBuilder;
 pub use relu_builder::ReLUBuilder;
@@ -15,3 +16,4 @@ pub use softmax_and_celoss_builder::SoftmaxAndCELossBuilder;
 pub use convolution_builder::ConvolutionBuilder;
 pub use max_pooling_builder::MaxPoolingBuilder;
 pub use reshape_tensor_builder::ReshapeTensorBuilder;
+pub use batch_norm_2d_builder::BatchNorm2dBuilder;
