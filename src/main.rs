@@ -16,8 +16,11 @@ mod type_utilities;
 mod utilities;
 mod lr_range_test;
 mod learning_rate_manager;
+mod lr_range_test_batch_normalization;
+mod lr_range_test_without_normalization;
 
 fn main() {
-    // let _ = mnist_test_cnn::mnist_process();
-    let _ = lr_range_test::test();
+    _ = mnist_test_cnn::mnist_process();
+    // _ = lr_range_test_without_normalization::test();
+    // _ = lr_range_test_batch_normalization::test();
 }

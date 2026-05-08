@@ -59,7 +59,6 @@ pub fn test() -> Result<(), Box<dyn std::error::Error>> {
         .filter_value(2)
         .padding(1)
         .build();
-    let batch1 = BatchNorm2dBuilder::new().channel_size(2).build();
     let relu_c1 = ReLUBuilder::new().build();
     let pool1 = MaxPoolingBuilder::new()
         .window_size((2, 2))
@@ -72,7 +71,6 @@ pub fn test() -> Result<(), Box<dyn std::error::Error>> {
         .filter_size((3, 3))
         .padding(1)
         .build();
-    let batch2 = BatchNorm2dBuilder::new().channel_size(4).build();
     let relu_c2 = ReLUBuilder::new().build();
     let pool2 = MaxPoolingBuilder::new()
         .window_size((2, 2))
@@ -84,7 +82,6 @@ pub fn test() -> Result<(), Box<dyn std::error::Error>> {
         .filter_size((3, 3))
         .filter_value(8)
         .build();
-    let batch3 = BatchNorm2dBuilder::new().channel_size(8).build();
     let relu_c3 = ReLUBuilder::new().build();
 
     let reshape = ReshapeTensorBuilder::new()
@@ -104,16 +101,13 @@ pub fn test() -> Result<(), Box<dyn std::error::Error>> {
     let softmax_and_celoss = SoftmaxAndCELossBuilder::new().build();
 
     let conv_info1 = &tree.add_from_root(conv1);
-    let batch_info1 = &tree.add(&conv_info1, batch1);
-    let relu_c_info1 = &tree.add(&batch_info1, relu_c1);
+    let relu_c_info1 = &tree.add(&conv_info1, relu_c1);
     let pool_info1 = &tree.add(&relu_c_info1, pool1);
     let conv_info2 = &tree.add(&pool_info1, conv2);
-    let batch_info2 = &tree.add(&conv_info2, batch2);
-    let relu_c_info2= &tree.add(&batch_info2, relu_c2);
+    let relu_c_info2= &tree.add(&conv_info2, relu_c2);
     let pool_info2 = &tree.add(&relu_c_info2, pool2);
     let conv_info3 = &tree.add(&pool_info2, conv3);
-    let batch_info3 = &tree.add(&conv_info3, batch3);
-    let relu_c_info3= &tree.add(&batch_info3, relu_c3);
+    let relu_c_info3= &tree.add(&conv_info3, relu_c3);
 
     let reshape_info = &tree.add(&relu_c_info3, reshape);
 
