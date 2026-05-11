@@ -125,7 +125,7 @@ pub fn mnist_process() -> Result<(), Box<dyn std::error::Error>> {
     // 処理時間計測用
     let epochs_now = time::Instant::now();
 
-    let max_learning_rate = 5e-3;
+    let max_learning_rate = 1e-4;
     let min_learning_rate = 1e-5;
 
     for epoch in 1..=epoch_value {

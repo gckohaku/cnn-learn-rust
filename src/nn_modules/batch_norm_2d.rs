@@ -1,4 +1,4 @@
-use ndarray::{Array1, Array2, ArrayD, ArrayViewD, Axis, Ix4, Zip};
+use ndarray::{Array1, Array2, ArrayD, ArrayViewD, Axis, Ix4, Zip, parallel::prelude::{IntoParallelIterator, IntoParallelRefMutIterator, ParallelIterator}};
 
 use crate::{
     impl_as_any_with_mut,
@@ -100,55 +100,26 @@ where
         let grad_for_beta = grad_2d.sum_axis(Axis(0));
         let grad_for_gamma = (&grad_2d * &self.std_input).sum_axis(Axis(0));
 
-        let grad_for_std_input = &self.gamma_variance * &grad_2d;
-
-        // let dot_for_variance = grad_for_std_input.t().dot(&self.input_minus_mu);
-        let mut grad_for_variance = Array1::<T>::zeros(grad_permute_shape[3]);
-        // dbg!("variance");
-        Zip::from(&mut grad_for_variance)
-            .and(grad_for_std_input.axis_iter(Axis(1)))
-            .and(self.input_minus_mu.axis_iter(Axis(1)))
-            .and(&self.input_variance)
-            .par_for_each(|grad, input, minus, var| {
-                let scalar = T::from(-1.0 / 2.0).unwrap() * var.powf(T::from(3.0 / 2.0).unwrap());
-                let dot = input.dot(&minus);
-                *grad = scalar * dot;
-            });
-
-        let mut grad_for_mu = Array1::<T>::zeros(grad_permute_shape[3]);
-        // dbg!("mu");
-        Zip::from(&mut grad_for_mu)
-            .and(grad_for_std_input.axis_iter(Axis(1)))
-            .and(self.input_minus_mu.axis_iter(Axis(1)))
-            .and(&self.input_variance)
-            .and(&grad_for_variance)
-            .par_for_each(|grad_mu, grad_std, minus, var, grad_var| {
-                let a = (-T::ONE / *var) * grad_std.sum();
-                let b = *grad_var * T::from(2.0).unwrap() * minus.mean().unwrap();
-                *grad_mu = a - b;
-            });
-
-        let mut grad_for_input_2d = Array2::<T>::zeros((matrix_row_value, grad_permute_shape[3]));
+        _ = &self.input_variance.par_iter_mut().for_each(|x| *x = x.sqrt());
+        let grad_for_input_2d = &self.gamma_variance / (&self.input_variance * T::from(matrix_row_value).unwrap()) * (&grad_2d * T::from(matrix_row_value).unwrap() - &grad_for_beta - &grad_for_gamma * &self.std_input);
+        // let mut grad_for_input_2d = Array2::<T>::zeros((matrix_row_value, grad_permute_shape[3]));
         // dbg!("input");
-        Zip::from(grad_for_input_2d.axis_iter_mut(Axis(1)))
-            .and(grad_for_std_input.axis_iter(Axis(1)))
-            .and(&grad_for_variance)
-            .and(&grad_for_mu)
-            .and(&self.input_variance)
-            .and(self.input_minus_mu.axis_iter(Axis(1)))
-            .par_for_each(
-                |mut grad_input, grad_std, grad_var, grad_mu, input_var, minus| {
-                    let a = &grad_std * (T::ONE / *input_var);
-                    let b = &minus
-                        * (*grad_var
-                            * (T::from(2.0).unwrap() / T::from(matrix_row_value).unwrap()));
-                    let c = Array1::<T>::from_elem(
-                        matrix_row_value,
-                        T::ONE / T::from(matrix_row_value).unwrap(),
-                    ) * (*grad_mu);
-                    grad_input.assign(&(a + b + c));
-                },
-            );
+        // Zip::from(grad_for_input_2d.axis_iter_mut(Axis(1))).and(&)
+        //     .and(&self.input_variance)
+        //     .and(self.input_minus_mu.axis_iter(Axis(1)))
+        //     .par_for_each(
+        //         |mut grad_input, grad_std, grad_var, grad_mu, input_var, minus| {
+        //             let a = &grad_std * (T::ONE / *input_var);
+        //             let b = &minus
+        //                 * (*grad_var
+        //                     * (T::from(2.0).unwrap() / T::from(matrix_row_value).unwrap()));
+        //             let c = Array1::<T>::from_elem(
+        //                 matrix_row_value,
+        //                 T::ONE / T::from(matrix_row_value).unwrap(),
+        //             ) * (*grad_mu);
+        //             grad_input.assign(&(a + b + c));
+        //         },
+        //     );
 
         self.gamma_variance -= &(grad_for_gamma * eta);
         self.beta_average -= &(grad_for_beta * eta);
