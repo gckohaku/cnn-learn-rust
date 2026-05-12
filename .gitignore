@@ -1,4 +1,5 @@
 /target
 /src/lr_range_test_results/*
 !/src/lr_range_test_results/anchor
-/src/learning_results/
+/src/learning_results/*
+!/src/learning_results/anchor
