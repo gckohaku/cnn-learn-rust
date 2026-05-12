@@ -21,6 +21,5 @@ mod lr_range_test_without_normalization;
 
 fn main() {
     _ = mnist_test_cnn::mnist_process();
-    // _ = lr_range_test_without_normalization::test();
     // _ = lr_range_test_batch_normalization::test();
 }

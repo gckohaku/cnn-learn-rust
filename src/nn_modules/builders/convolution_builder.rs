@@ -14,6 +14,7 @@ pub struct ConvolutionBuilder<T> {
     _filter_size: (usize, usize),
     _stride: usize,
     _padding: usize,
+    _is_bias: bool,
     _phantom: PhantomData<T>,
 }
 
@@ -30,6 +31,7 @@ where
         let _filter_size = (1usize, 1usize);
         let _stride = 1usize;
         let _padding = 0usize;
+        let _is_bias = true;
 
         Self {
             _input_channel_value,
@@ -38,6 +40,7 @@ where
             _filter_size,
             _stride,
             _padding,
+            _is_bias,
             _phantom: PhantomData,
         }
     }
@@ -53,6 +56,7 @@ where
         let stride = self._stride;
         let padding = self._padding;
         let filter_size = self._filter_size;
+        let is_bias = self._is_bias;
 
         // 重みの He 初期化
         let mut r = Rand::new();
@@ -76,6 +80,7 @@ where
             stride,
             padding,
             filter_size,
+            is_bias,
             input_of_forward: None,
         }
     }
@@ -109,6 +114,11 @@ impl<T> ConvolutionBuilder<T> {
 
     pub fn padding(mut self, value: usize) -> Self {
         self._padding = value;
+        self
+    }
+
+    pub fn is_bias(mut self, value: bool) -> Self {
+        self._is_bias = value;
         self
     }
 }

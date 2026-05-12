@@ -124,7 +124,7 @@ pub fn test() -> Result<(), Box<dyn std::error::Error>> {
 
     // lr range test
     let mut training_rate: ElementType = 1e-7;
-    let rate_up_ratio: ElementType = 1.02;
+    let rate_up_ratio: ElementType = 1.025;
     let finish_rate: ElementType = 1e-1;
     let mut iter_count = 0;
 

@@ -1,7 +1,8 @@
 use ndarray::{Array1, Array4, ArrayD, Axis, Ix4, Zip};
 
 use crate::{
-    cnn_transformations, impl_as_any_with_mut, nn_modules::{NNModule, NNNecessaryTraits}
+    cnn_transformations, impl_as_any_with_mut,
+    nn_modules::{NNModule, NNNecessaryTraits},
 };
 
 #[derive(Clone, Debug)]
@@ -11,6 +12,7 @@ pub struct Convolution<T> {
     pub(super) stride: usize,
     pub(super) padding: usize,
     pub(super) filter_size: (usize, usize),
+    pub(super) is_bias: bool,
     pub(super) input_of_forward: Option<Array4<T>>,
 }
 
@@ -47,8 +49,11 @@ where
         let bias_length = self.filters.shape()[0];
 
         // spread_result は (C_o, B * O_h * O_w)
-        let spread_result =
-            spread_filter.dot(&spread_image) + self.biases.to_shape((bias_length, 1)).unwrap();
+        let spread_result = if self.is_bias {
+            spread_filter.dot(&spread_image) + self.biases.to_shape((bias_length, 1)).unwrap()
+        } else {
+            spread_filter.dot(&spread_image)
+        };
 
         // (C_o, B, O_h, O_w) に形状が変化する
         let mut reshape_result = spread_result
@@ -129,9 +134,11 @@ where
         Zip::from(&mut self.filters)
             .and(&reshape_grad_for_filters)
             .par_for_each(|filter, update| *filter -= eta * *update);
-        Zip::from(&mut self.biases)
-            .and(&spread_grad.sum_axis(Axis(1)))
-            .for_each(|bias, update| *bias -= eta * *update);
+        if self.is_bias {
+            Zip::from(&mut self.biases)
+                .and(&spread_grad.sum_axis(Axis(1)))
+                .for_each(|bias, update| *bias -= eta * *update);
+        }
 
         let binding = self.input_of_forward.to_owned().unwrap();
         let input_shape = &binding.shape();
