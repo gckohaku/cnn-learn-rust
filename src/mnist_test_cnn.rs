@@ -144,7 +144,7 @@ pub fn mnist_process() -> Result<(), Box<dyn std::error::Error>> {
             min_learning_rate + ((max_learning_rate - min_learning_rate) * (epoch - 1) as ElementType / 5.0)
         } else {
             min_learning_rate
-                + ((max_learning_rate - min_learning_rate) * (((((epoch - 6) % 15) as ElementType / 14.0) * PI).cos() + 1.0)
+                + ((max_learning_rate - min_learning_rate) * ((((((epoch - 6) % 20) % 15) as ElementType / 15.0) * PI).cos() + 1.0)
                     / 2.0)
         };
 
