@@ -21,6 +21,7 @@
     "cSpell.words": [
         "blas",
         "chrono",
+        "conv",
         "Deque",
         "fcnn",
         "inplace",

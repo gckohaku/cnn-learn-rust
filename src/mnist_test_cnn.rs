@@ -24,12 +24,13 @@ const IMAGE_CHANNEL_VALUE: usize = 1;
 pub fn mnist_process() -> Result<(), Box<dyn std::error::Error>> {
     let epoch_value = 61;
     let mini_batch_sample_size: usize = 125;
-
     let training_value: u32 = 60000;
     let validation_value = 9000;
     let test_value = 1000;
 
-    let mini_batches_per_epoch = training_value / mini_batch_sample_size as u32;
+    let actually_training_value = 10000;
+
+    let mini_batches_per_epoch = actually_training_value / mini_batch_sample_size as u32;
 
     let mnist = MnistBuilder::new()
         .label_format_one_hot()
@@ -55,51 +56,58 @@ pub fn mnist_process() -> Result<(), Box<dyn std::error::Error>> {
         .input_channel_value(1)
         .input_image_size((IMAGE_ROW_SIZE, IMAGE_ROW_SIZE))
         .filter_size((3, 3))
-        .filter_value(2)
+        .filter_value(16)
         .padding(1)
         .is_bias(false)
         .build();
-    let batch1 = BatchNorm2dBuilder::new().channel_size(2).build();
+    let batch1 = BatchNorm2dBuilder::new()
+        .channel_size(conv1.get_filter_value())
+        .build();
     let relu_c1 = ReLUBuilder::new().build();
     let pool1 = MaxPoolingBuilder::new()
         .window_size((2, 2))
         .stride(2)
         .build();
     let conv2 = ConvolutionBuilder::new()
-        .input_channel_value(2)
-        .filter_value(4)
+        .input_channel_value(conv1.get_filter_value())
+        .filter_value(conv1.get_filter_value() * 2)
         .input_image_size((14, 14))
         .filter_size((3, 3))
         .padding(1)
         .is_bias(false)
         .build();
-    let batch2 = BatchNorm2dBuilder::new().channel_size(4).build();
+    let batch2 = BatchNorm2dBuilder::new().channel_size(conv2.get_filter_value()).build();
     let relu_c2 = ReLUBuilder::new().build();
     let pool2 = MaxPoolingBuilder::new()
         .window_size((2, 2))
         .stride(2)
         .build();
     let conv3 = ConvolutionBuilder::new()
-        .input_channel_value(4)
+        .input_channel_value(conv2.get_filter_value())
         .input_image_size((7, 7))
         .filter_size((3, 3))
-        .filter_value(8)
+        .filter_value(conv2.get_filter_value() * 2)
         .is_bias(false)
         .build();
-    let batch3 = BatchNorm2dBuilder::new().channel_size(8).build();
+    let batch3 = BatchNorm2dBuilder::new().channel_size(conv3.get_filter_value()).build();
     let relu_c3 = ReLUBuilder::new().build();
 
     let reshape = ReshapeTensorBuilder::new()
-        .shape(vec![mini_batch_sample_size, 200])
+        .shape(vec![mini_batch_sample_size, 1600])
         .build();
 
     let linear1 = LinearBuilder::new()
-        .input_node_value(200)
-        .output_node_value(40)
+        .input_node_value(1600)
+        .output_node_value(320)
         .build();
     let relu1 = ReLUBuilder::new().build();
     let linear2 = LinearBuilder::new()
-        .input_node_value(40)
+        .input_node_value(320)
+        .output_node_value(64)
+        .build();
+    let relu2 = ReLUBuilder::new().build();
+    let linear3 = LinearBuilder::new()
+        .input_node_value(64)
         .output_node_value(10)
         .build();
 
@@ -122,7 +130,9 @@ pub fn mnist_process() -> Result<(), Box<dyn std::error::Error>> {
     let linear_info1 = &tree.add(&reshape_info, linear1);
     let relu_info1 = &tree.add(&linear_info1, relu1);
     let linear_info2 = &tree.add(&relu_info1, linear2);
-    let output_info = &tree.add(&linear_info2, softmax_and_celoss);
+    let relu_info2 = &tree.add(&linear_info2, relu2);
+    let linear_info3 = &tree.add(&relu_info2, linear3);
+    let output_info = &tree.add(&linear_info3, softmax_and_celoss);
 
     let mut writing_file_string: String =
         "epoch\tlearning rate\tlearning error\tvalidation error\tvalidation collect rate\n"
@@ -141,16 +151,21 @@ pub fn mnist_process() -> Result<(), Box<dyn std::error::Error>> {
         let mut mini_batch_count = 0;
         // let epoch_learning_rate = max_learning_rate + ((((epoch - 1) % 10) as ElementType / 9.0) * (min_learning_rate - max_learning_rate));
         let epoch_learning_rate = if (epoch - 1) % 20 <= 5 {
-            min_learning_rate + ((max_learning_rate - min_learning_rate) * ((epoch - 1) % 20) as ElementType / 5.0) * (1.0 / (2i32).pow(epoch / 20) as ElementType)
+            min_learning_rate
+                + ((max_learning_rate - min_learning_rate) * ((epoch - 1) % 20) as ElementType
+                    / 5.0)
+                    * (1.0 / (2i32).pow(epoch / 20) as ElementType)
         } else {
             min_learning_rate
-                + ((max_learning_rate - min_learning_rate) * ((((((epoch - 6) % 20) % 15) as ElementType / 15.0) * PI).cos() + 1.0)
-                    / 2.0) * (1.0 / (2i32).pow(epoch / 20) as ElementType)
+                + ((max_learning_rate - min_learning_rate)
+                    * ((((((epoch - 6) % 20) % 15) as ElementType / 15.0) * PI).cos() + 1.0)
+                    / 2.0)
+                    * (1.0 / (2i32).pow(epoch / 20) as ElementType)
         };
 
         println!("learning rate: {}", epoch_learning_rate);
 
-        for indices in shuffle_index.chunks_exact(mini_batch_sample_size as usize) {
+        for indices in shuffle_index.chunks_exact(mini_batch_sample_size as usize).take(actually_training_value as usize / mini_batch_sample_size) {
             mini_batch_count += 1;
             let (inputs, expects) = make_mini_batch_dataset(indices, &mnist);
 
@@ -178,14 +193,14 @@ pub fn mnist_process() -> Result<(), Box<dyn std::error::Error>> {
         println!(
             "\nepoch {:6} error: {:13.10}",
             epoch,
-            epoch_error / training_value as ElementType
+            epoch_error / actually_training_value as ElementType
         );
 
         writing_file_string += &format!(
             "{}\t{}\t{}\t",
             epoch,
             epoch_learning_rate,
-            epoch_error / training_value as ElementType
+            epoch_error / actually_training_value as ElementType
         );
 
         // 検証部分
@@ -198,7 +213,7 @@ pub fn mnist_process() -> Result<(), Box<dyn std::error::Error>> {
             .as_any_mut()
             .downcast_mut()
             .unwrap();
-        reshape_tensor.change_shape(vec![validation_chunk_size, 200]);
+        reshape_tensor.change_shape(vec![validation_chunk_size, 1600]);
 
         let out: &mut SoftmaxAndCELoss<ElementType> = &mut tree
             .access_module_mut(&output_info)
@@ -234,7 +249,7 @@ pub fn mnist_process() -> Result<(), Box<dyn std::error::Error>> {
             .as_any_mut()
             .downcast_mut()
             .unwrap();
-        reshape_tensor.change_shape(vec![mini_batch_sample_size, 200]);
+        reshape_tensor.change_shape(vec![mini_batch_sample_size, 1600]);
 
         let out: &mut SoftmaxAndCELoss<ElementType> = &mut tree
             .access_module_mut(&output_info)
@@ -265,7 +280,7 @@ pub fn mnist_process() -> Result<(), Box<dyn std::error::Error>> {
         .as_any_mut()
         .downcast_mut()
         .unwrap();
-    reshape_tensor.change_shape(vec![test_chunk_size, 200]);
+    reshape_tensor.change_shape(vec![test_chunk_size, 1600]);
 
     let out: &mut SoftmaxAndCELoss<ElementType> = &mut tree
         .access_module_mut(&output_info)

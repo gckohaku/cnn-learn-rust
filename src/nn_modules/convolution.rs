@@ -162,3 +162,9 @@ where
 
     impl_as_any_with_mut!();
 }
+
+impl<T> Convolution<T> {
+    pub fn get_filter_value(&self) -> usize {
+        self.biases.len()
+    }
+}
