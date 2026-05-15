@@ -25,8 +25,8 @@ pub fn mnist_process() -> Result<(), Box<dyn std::error::Error>> {
     let epoch_value = 61;
     let mini_batch_sample_size: usize = 125;
 
-    let training_value: u32 = 1000;
-    let validation_value = 1000;
+    let training_value: u32 = 60000;
+    let validation_value = 9000;
     let test_value = 1000;
 
     let mini_batches_per_epoch = training_value / mini_batch_sample_size as u32;
@@ -141,7 +141,7 @@ pub fn mnist_process() -> Result<(), Box<dyn std::error::Error>> {
         let mut mini_batch_count = 0;
         // let epoch_learning_rate = max_learning_rate + ((((epoch - 1) % 10) as ElementType / 9.0) * (min_learning_rate - max_learning_rate));
         let epoch_learning_rate = if (epoch - 1) % 20 <= 5 {
-            min_learning_rate + ((max_learning_rate - min_learning_rate) * (epoch - 1) as ElementType / 5.0)
+            min_learning_rate + ((max_learning_rate - min_learning_rate) * ((epoch - 1) % 20) as ElementType / 5.0)
         } else {
             min_learning_rate
                 + ((max_learning_rate - min_learning_rate) * ((((((epoch - 6) % 20) % 15) as ElementType / 15.0) * PI).cos() + 1.0)
