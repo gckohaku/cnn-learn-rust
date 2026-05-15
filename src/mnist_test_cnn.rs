@@ -141,11 +141,11 @@ pub fn mnist_process() -> Result<(), Box<dyn std::error::Error>> {
         let mut mini_batch_count = 0;
         // let epoch_learning_rate = max_learning_rate + ((((epoch - 1) % 10) as ElementType / 9.0) * (min_learning_rate - max_learning_rate));
         let epoch_learning_rate = if (epoch - 1) % 20 <= 5 {
-            min_learning_rate + ((max_learning_rate - min_learning_rate) * ((epoch - 1) % 20) as ElementType / 5.0)
+            min_learning_rate + ((max_learning_rate - min_learning_rate) * ((epoch - 1) % 20) as ElementType / 5.0) * (1.0 / (2i32).pow(epoch / 20) as ElementType)
         } else {
             min_learning_rate
                 + ((max_learning_rate - min_learning_rate) * ((((((epoch - 6) % 20) % 15) as ElementType / 15.0) * PI).cos() + 1.0)
-                    / 2.0)
+                    / 2.0) * (1.0 / (2i32).pow(epoch / 20) as ElementType)
         };
 
         println!("learning rate: {}", epoch_learning_rate);
